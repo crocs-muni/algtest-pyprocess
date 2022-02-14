@@ -1,0 +1,6 @@
+*.*
+jcalgtest_results
+!.gitignore
+!requirements.txt
+!*.md
+!*.py
