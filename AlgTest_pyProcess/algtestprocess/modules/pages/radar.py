@@ -63,36 +63,39 @@ class Radar(Page):
 
         return normalized
 
-    def get_graph(self, profile: ProfilePerformanceFixedJC):
+    def get_graph(self, profiles: List[ProfilePerformanceFixedJC]):
         script = tags.script()
         script.add(
             "var w = document.getElementById('chart').offsetWidth;"
             "var h = window.innerHeight -70;"
             "var colorscale = d3.scale.category10();"
         )
-        script.add("var data = [[")
-        for info, name in Radar.TOP_FUNCTIONS:
-            script.add(
-                "{"
-                f"axis:'{info}',"
-                "value:"
-                + format(
-                    1 - self.normalized[name][profile]
-                    if self.normalized[name][profile] != 0
-                    else 0,
-                    ".3f",
+        script.add("var data = [")
+        for profile in profiles:
+            script.add("[")
+            for info, name in Radar.TOP_FUNCTIONS:
+                script.add(
+                    "{"
+                    f"axis:'{info}',"
+                    "value:"
+                    + format(
+                        1 - self.normalized[name][profile]
+                        if self.normalized[name][profile] != 0
+                        else 0,
+                        ".3f",
+                    )
+                    + ","
+                    "title:'"
+                    + (
+                        format(profile.results[name].operation_avg(), ".2f") + "ms"
+                        if name in profile.results
+                        and profile.results[name].operation
+                        else "NS"
+                    )
+                    + "'},"
                 )
-                + ","
-                "title:'"
-                + (
-                    format(profile.results[name].operation_avg(), ".2f") + "ms"
-                    if name in profile.results
-                    and profile.results[name].operation
-                    else "NS"
-                )
-                + "'},"
-            )
-        script.add("],];")
+            script.add("],")
+        script.add("];")
         script.add(
             "var config = { "
             "w: w-175,"
@@ -115,7 +118,7 @@ class Radar(Page):
             tags.div(id="chart", className="col")
 
         def children_outside():
-            self.get_graph(profile)
+            self.get_graph([profile])
 
         return layout(
             doc_title=doc_title,

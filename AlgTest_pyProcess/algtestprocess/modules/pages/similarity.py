@@ -146,6 +146,9 @@ class Similarity(Page):
         p2: ProfilePerformanceFixedJC,
         similarities: List[ProfilePairSimilarity],
     ):
+        name1 = p1.test_info["Card name"]
+        name2 = p2.test_info["Card name"]
+        href = f"./compare/{name1.replace(' ', '')}_vs_{name2.replace(' ', '')}.html"
         for similarity in similarities:
             style = "width: 3em; height: 3em;"
             s = similarity.get((p1, p2))
@@ -158,10 +161,13 @@ class Similarity(Page):
             style += (
                 f"background: rgba({color});"
                 if rounded != 0
-                else "background: #f5f5f5"
+                else "background: #f5f5f5;"
             )
             tags.td(
-                rounded if rounded != 0 else "",
+                tags.a(
+                    rounded if rounded != 0 else "",
+                    href=href
+                ),
                 style=style,
             )
 

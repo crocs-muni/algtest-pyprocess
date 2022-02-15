@@ -8,6 +8,7 @@ from algtestprocess.modules.jcalgtest import (
     ProfilePerformanceFixedJC, ProfileSupportJC, ProfilePerformanceVariableJC
 )
 from algtestprocess.modules.pages.comparativetable import ComparativeTable
+from algtestprocess.modules.pages.compare import Compare
 from algtestprocess.modules.pages.executiontime import ExecutionTime
 from algtestprocess.modules.pages.page import Page
 from algtestprocess.modules.pages.radar import Radar
@@ -73,7 +74,8 @@ def run(to_run: List[Page], output_dir: str):
         "radar",
         "scalability",
         "similarity",
-        "support"
+        "support",
+        "compare"
     ], case_sensitive=False
     )
 )
@@ -111,7 +113,8 @@ def main(
         "radar",
         "scalability",
         "similarity",
-        "support"
+        "support",
+        "compare"
     } if "all" in operations else set(operations)
 
     fixed, variable, support = get_profiles(results_dir)
@@ -134,6 +137,9 @@ def main(
 
     if "support" in operations:
         to_run.append(Support(support))
+
+    if "compare" in operations:
+        to_run.append(Compare(fixed))
 
     if output_dir:
         run(to_run, output_dir)
