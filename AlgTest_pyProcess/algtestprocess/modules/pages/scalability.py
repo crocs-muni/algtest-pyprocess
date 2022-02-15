@@ -149,6 +149,9 @@ class Scalability(Page):
                     Scalability.quick_links(profile)
                 with tags.div(className="col-md-5 col-xs-5"):
                     Scalability.test_details(profile)
+
+        def children_outside():
+            with tags.div(className="container-fluid px-5"):
                 Scalability.chart_scripts_begin()
                 with tags.div(className="row"):
                     Scalability.get_charts(profile)
@@ -157,6 +160,7 @@ class Scalability(Page):
         return layout(
             doc_title=doc_title,
             children=children,
+            children_outside=children_outside,
             back_to_top=True,
             path_prefix='../'
         )

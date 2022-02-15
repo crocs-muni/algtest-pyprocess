@@ -28,9 +28,17 @@ def run_helper(
     return data
 
 
-def profile_check(r: List[PerformanceResultJC]) -> bool:
-    return all(list(map(lambda x: x.status == "OK" and x.data_length > 0, r)))
+def results_map(r: List[PerformanceResultJC]):
+    """Remove unsuccessfully measured results"""
+    return list(
+        filter(None,
+               map(lambda x:
+                   x if x.status == "OK" and x.data_length > 0 else None, r)))
 
 
-def filtered_results(items: List[Tuple[str, PerformanceResultJC]]):
-    return list(filter(lambda i: profile_check(i[1]), items))
+def filtered_results(items: List[Tuple[str, List[PerformanceResultJC]]]):
+    """
+    Function which filters results which are not successfully measured
+    """
+    return list(
+        filter(lambda x: x[1], map(lambda i: (i[0], results_map(i[1])), items)))
