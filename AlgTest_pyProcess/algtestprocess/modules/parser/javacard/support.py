@@ -5,8 +5,16 @@ from algtestprocess.modules.jcalgtest import ProfileSupportJC, SupportResultJC
 
 def get_data(path: str):
     with open(path) as f:
-        data = f.read()
-    return data, f.name.rsplit("/", 1)[1]
+        data = f.readlines()
+    return list(filter(None, map(lambda x: x.strip(), data))), \
+           f.name.rsplit("/", 1)[1]
+
+
+def satinize_category(category: str):
+    to_remove = ["\\", ",", ";", "Class ", ";supported", ",supported,time"]
+    for word in to_remove:
+        category = category.replace(word, "")
+    return category
 
 
 def parse_name_provider_atr(profile: ProfileSupportJC, filename: str):
@@ -33,7 +41,14 @@ def parse_name_provider_atr(profile: ProfileSupportJC, filename: str):
     profile.test_info["Provider"] = provided
 
 
+def add_additional_test_info(profile: ProfileSupportJC, filename):
+    profile.test_info["Github link"] = \
+        "https://github.com/crocs-muni/jcalgtest_results/blob/main/javacard/Profiles/results/" +\
+        filename.replace(" ", "")
+
+
 class SupportParser:
+    """Data parsing from csv support results for javacards"""
     ADDITIONAL_TEST_INFO = [
         "Available RAM memory",
         "Available EEPROM memory",
@@ -42,63 +57,90 @@ class SupportParser:
     ]
 
     def __init__(self, path: str):
-        self.data, self.filename = get_data(path)
+        self.lines, self.filename = get_data(path)
 
-    def parse(self, profile: ProfileSupportJC):
-        info_parsed = False
-        for line in self.data.split("\n"):
-            if not line:
-                continue
-            if "JCSystem" in line or "APDU" in line:
-                key, value = line.split(";", 1)
-                profile.jcsystem[key] = value.strip()
-            elif "CPLC" in line:
-                key, value = line.split(";", 1)
-                profile.cplc[key] = value.strip()
-            elif "javacard." in line or "javacardx." in line:
-                info_parsed = True
-                category = line\
-                    .replace("\\", "").strip(",").strip(";")\
-                .replace("Class ", "").replace(";supported", "")\
-                .replace(",supported,time", "").strip()
-            elif "variable public exponent for RSA 1024" in line:
-                category = "Variable RSA 1024 - support for variable public " \
-                           "exponent. If supported, user-defined fast " \
-                           "modular exponentiation can be executed on the " \
-                           "smart card via cryptographic coprocessor. This " \
-                           "is very specific feature and you will probably " \
-                           "not need it"
+    def parse(self):
+        category = None
+        profile = ProfileSupportJC()
+        lines = self.lines
+        i = 0
+        destinations = [
+            (["JCSystem", "APDU"], profile.jcsystem),
+            (["CPLC"], profile.cplc),
+            (["INFO:"], {}),
+            ([""], profile.test_info)
+        ]
+
+        # Named constants for fields while splitting
+        NAME = 0
+        SUPPORT = 1
+        TIME_ELAPSED = 2
+        PERSISTENT_MEMORY = 3
+        RAM_DESELECT = 4
+        RAM_RESET = 5
+
+        while i < len(lines):
+            current = lines[i]
+            if "javacard." in current or "javacardx." in current:
+                category = satinize_category(current)
+
+            # Specific category which needed to be addressed explicitly.
+            elif "Support for variable public exponent for RSA 1024" in current:
+                category = "Variable RSA 1024"
+
+            elif not category:
+                for tests, destination in destinations:
+                    if any(list(map(lambda x: x in current, tests))):
+                        key, value = re.split(r"[;,]", current, maxsplit=1)
+                        destination[key] = value
+
             else:
+                # Put specific lines into test_info
                 misplaced = any([
-                    x in line for x in SupportParser.ADDITIONAL_TEST_INFO
+                    x in current for x in SupportParser.ADDITIONAL_TEST_INFO
                 ])
-                if not info_parsed or misplaced:
-                    key, value = re.split(r"[;,]", line, maxsplit=1)
+                if misplaced:
+                    key, value = re.split(r"[;,]", current, maxsplit=1)
                     profile.test_info[key] = value
+                    i += 1
+                    continue
+
+                current = list(filter(None, re.split(r"[;,]", current)))
+
+                if len(current) < 2:
+                    i += 1
+                    continue
+
+                result = SupportResultJC()
+                result.name = current[NAME].strip()
+                result.category = category
+
+                if current[SUPPORT] in ["yes", "no"]:
+                    result.support = current[SUPPORT] == "yes"
+                    result.status = "OK"
                 else:
-                    line = list(filter(None, re.split(r"[;,]", line)))
-                    if not line or len(line) < 2:
-                        continue
-                    result = SupportResultJC()
-                    result.category = category
-                    result.name = line[0].strip()
-                    if line[1] in ["yes", "no"]:
-                        result.support = line[1] == "yes"
-                        result.status = "OK"
-                    else:
-                        result.status = line[1]
-                    if len(line) > 2 and re.match(r"\d+\.\d+", line[2]):
-                        line[2] = line[2].split()[0].rsplit(".", 1)[0]
-                        result.time_elapsed = float(line[2])
-                    if len(line) > 3 and line[3]:
-                        line[3] = line[3].split()[0]
-                        result.persistent_memory = int(line[3])
-                    if len(line) > 4 and line[4]:
-                        result.ram_deselect = int(line[4])
-                    if len(line) > 5 and line[5]:
-                        result.ram_reset = int(line[5])
-                    profile.add_result(result.name, result)
+                    result.status = current[SUPPORT]
+
+                if len(current) > TIME_ELAPSED and \
+                        re.match(r"\d+\.\d+", current[TIME_ELAPSED]):
+                    result.time_elapsed = float(
+                        current[TIME_ELAPSED].split()[0].rsplit(".")[0]
+                    )
+
+                if len(current) > PERSISTENT_MEMORY:
+                    result.persistent_memory = int(
+                        current[PERSISTENT_MEMORY].split()[0]
+                    )
+
+                if len(current) > RAM_DESELECT:
+                    result.ram_deselect = int(current[RAM_DESELECT])
+
+                if len(current) > RAM_RESET:
+                    result.ram_reset = int(current[RAM_RESET])
+                profile.add_result(result.name, result)
+
+            i += 1
+
         parse_name_provider_atr(profile, self.filename)
-        profile.test_info["Github link"] = \
-            "https://github.com/crocs-muni/jcalgtest_results/blob/main/javacard/Profiles/results/" + self.filename
+        add_additional_test_info(profile, self.filename)
         return profile

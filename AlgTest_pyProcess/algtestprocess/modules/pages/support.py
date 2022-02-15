@@ -51,10 +51,7 @@ class Support(Page):
         "javacard.security.KeyPair ALG_EC_FP on-card generation",
         "javacard.security.KeyAgreement",
         "javacard.security.Checksum",
-        "Variable RSA 1024 - support for variable public exponent. If "
-        "supported, user-defined fast modular exponentiation can be "
-        "executed on the smart card via cryptographic coprocessor. "
-        "This is very specific feature and you will probably not need it"
+        "Variable RSA 1024"
     ]
 
     def __init__(self, profiles):

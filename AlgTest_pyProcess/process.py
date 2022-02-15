@@ -51,7 +51,7 @@ def get_profiles(directory):
         lambda x: PerformanceParser(x).parse(ProfilePerformanceVariableJC()),
         filter(lambda x: "variable" in x, files)))
     profiles_support = list(map(
-        lambda x: SupportParser(x).parse(ProfileSupportJC()),
+        lambda x: SupportParser(x).parse(),
         get_files_to_process(support_dir, ".csv")))
     return profiles_fixed, profiles_variable, profiles_support
 
