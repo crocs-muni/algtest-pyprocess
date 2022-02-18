@@ -12,6 +12,9 @@ def get_data(path: str):
 
 
 def get_params(line: str, items: List[Tuple[str, str]]):
+    """
+    Function which returns dictionary with found patterns content.
+    """
     return dict([
         (key, s.group(key))
         for key, s in [(k, re.search(rgx, line)) for k, rgx in items] if s
@@ -24,6 +27,7 @@ class PerformanceParserTPM:
 
     @staticmethod
     def parse_parameters(line: str, result: PerformanceResultTPM):
+        """Parsing section with parameters using regular expressions"""
         items = [
             ("algorithm",
              r"(Algorithm|Hash algorithm):;(?P<algorithm>(0x[0-9a-fA-F]+))"),
@@ -35,7 +39,6 @@ class PerformanceParserTPM:
             ("scheme", r"\Scheme:;(?P<scheme>0x[0-9a-fA-F]+)")
         ]
         params = get_params(line, items)
-        print(params)
         result.algorithm = params.get("algorithm")
         result.key_length = params.get("key_length")
         result.mode = params.get("mode")
@@ -46,19 +49,20 @@ class PerformanceParserTPM:
 
     @staticmethod
     def parse_operation(line: str, result: PerformanceResultTPM):
+        """Parsing section with operation times using regular expressions"""
         items = [
             ("op_avg", r"avg op:;(?P<op_avg>[0-9]+\.[0-9]+)"),
             ("op_min", r"min op:;(?P<op_min>[0-9]+\.[0-9]+)"),
             ("op_max", r"max op:;(?P<op_max>[0-9]+\.[0-9]+)")
         ]
         params = get_params(line, items)
-        print(params)
         result.operation_min = params["op_min"]
         result.operation_avg = params["op_avg"]
         result.operation_max = params["op_max"]
 
     @staticmethod
     def parse_info(line: str, result: PerformanceResultTPM):
+        """Parsing section with test information using regular expressions"""
         items = [
             ("iterations", r"total iterations:;(?P<iterations>[0-9]+)"),
             ("successful", r"successful:;(?P<successful>[0-9]+\.[0-9]+)"),
@@ -66,7 +70,6 @@ class PerformanceParserTPM:
             ("error", r"error:;(?P<error>(None|[0-9a-fA-F]+))")
         ]
         params = get_params(line, items)
-        print(params)
         result.iterations = params.get("iterations")
         result.successful = params.get("successful")
         result.failed = params.get("failed")

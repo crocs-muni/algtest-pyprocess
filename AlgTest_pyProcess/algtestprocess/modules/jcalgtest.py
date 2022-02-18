@@ -132,6 +132,7 @@ class ProfilePerformanceVariableJC(ProfileJC):
 
 
 class ProfileSupportJC(ProfileJC):
+    """Java card profile with support results"""
     def __init__(self):
         super().__init__()
         self.results: Dict[MethodName, SupportResultJC] = {}

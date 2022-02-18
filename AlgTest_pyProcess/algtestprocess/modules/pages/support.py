@@ -20,6 +20,7 @@ def colored_cell(tag: Callable, content: str):
 
 
 def checkall_script(key: str, cards: List[str]):
+    """Checkbox functionality script"""
     script = tags.script()
     script.add(
         f"function checkAll{key}(divid)"
@@ -87,6 +88,7 @@ class Support(Page):
             )
             p.add(tags.b("(Many thanks folks!)"))
             p.add(tags.br())
+            # Add credits for card result donors
             for name, value in self.get_donors().items():
                 name = name.lstrip("(provided by ")
                 name = name.rstrip(")")
@@ -183,6 +185,7 @@ class Support(Page):
             )
 
     def checkbox_items(self):
+        """Put checkboxes into three columns"""
         cols = 3
         curr = 0
         split = len(self.profiles) // cols
@@ -204,6 +207,7 @@ class Support(Page):
             self.checkbox_items()
 
     def category(self, name: str, rows: Callable):
+        """Function to create category section in table"""
         with tags.tr():
             tags.td(name, className="dark")
             # TODO Introduced in JC ver. xxx column
@@ -262,6 +266,7 @@ class Support(Page):
         self.category("javacard.framework.JCSystem", self.jc_system_rows)
 
     def javacard_main_rows(self, cat: str):
+        """Create rows for given category"""
         all_keys = set([
             key for profile in self.profiles
             for key, _ in list(filter(
@@ -290,6 +295,7 @@ class Support(Page):
                         )
 
     def javacard_main(self):
+        """Create section for each category"""
         for cat in Support.CATEGORIES:
             self.category(cat, partial(self.javacard_main_rows, cat))
 

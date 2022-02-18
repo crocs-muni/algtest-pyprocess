@@ -47,7 +47,7 @@ def add_additional_test_info(profile: ProfileSupportJC, filename):
         filename.replace(" ", "")
 
 
-class SupportParser:
+class SupportParserJC:
     """Data parsing from csv support results for javacards"""
     ADDITIONAL_TEST_INFO = [
         "Available RAM memory",
@@ -97,7 +97,7 @@ class SupportParser:
             else:
                 # Put specific lines into test_info
                 misplaced = any([
-                    x in current for x in SupportParser.ADDITIONAL_TEST_INFO
+                    x in current for x in SupportParserJC.ADDITIONAL_TEST_INFO
                 ])
                 if misplaced:
                     key, value = re.split(r"[;,]", current, maxsplit=1)

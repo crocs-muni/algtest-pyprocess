@@ -16,7 +16,7 @@ def get_data(path: str):
     return data
 
 
-class PerformanceParser:
+class PerformanceParserJC:
     """Data parsing from prepared JSON card performance measurements"""
 
     BANNED = [
@@ -38,7 +38,7 @@ class PerformanceParser:
         profile.jcsystem.update(data["JCSystem"])
         profile.cplc.update(data["CPLC"])
 
-        for key in PerformanceParser.BANNED:
+        for key in PerformanceParserJC.BANNED:
             if key in profile.test_info:
                 profile.test_info.pop(key)
 

@@ -38,7 +38,7 @@ def results_map(r: List[PerformanceResultJC]):
 
 def filtered_results(items: List[Tuple[str, List[PerformanceResultJC]]]):
     """
-    Function which filters results which are not successfully measured
+    Filters empty lists of results
     """
     return list(
         filter(lambda x: x[1], map(lambda i: (i[0], results_map(i[1])), items)))

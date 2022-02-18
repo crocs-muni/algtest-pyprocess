@@ -1,7 +1,10 @@
-from typing import List, Optional
+from abc import ABC
+from typing import List, Optional, Dict
 
 
 class PerformanceResultTPM:
+    """Class to store performance results for TPMs"""
+
     def __init__(self):
         self.category: Optional[str] = None
         self.key_params: Optional[str] = None
@@ -23,7 +26,47 @@ class PerformanceResultTPM:
         self.error: Optional[str] = None
 
 
-class ProfilePerformanceTPM:
+class SupportResultTPM:
+    """Class to store support results for TPMs"""
+
+    def __init__(self):
+        self.category: Optional[str] = None
+        self.name: Optional[str] = None
+        self.value: Optional[str] = None
+
+
+def abstracmethod(args):
+    pass
+
+
+class ProfileTPM(ABC):
+    """TPM base profile class"""
+
     def __init__(self):
         self.test_info = {}
+
+    @abstracmethod
+    def add_result(self, result):
+        pass
+
+
+class ProfilePerformanceTPM(ProfileTPM):
+    """TPM profile with performance results"""
+
+    def __init__(self):
+        super().__init__()
         self.results: List[PerformanceResultTPM] = []
+
+    def add_result(self, result: PerformanceResultTPM):
+        self.results.append(result)
+
+
+class ProfileSupportTPM(ProfileTPM):
+    """TPM profile with support results"""
+
+    def __init__(self):
+        super().__init__()
+        self.results: Dict[str, SupportResultTPM] = {}
+
+    def add_result(self, result: SupportResultTPM):
+        self.results[result.name] = result

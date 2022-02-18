@@ -141,7 +141,7 @@ class Similarity(Page):
             tags.th("SW")
 
     @staticmethod
-    def compare_table_row(
+    def similarity_table_row(
         p1: ProfilePerformanceFixedJC,
         p2: ProfilePerformanceFixedJC,
         similarities: List[ProfilePairSimilarity],
@@ -171,7 +171,7 @@ class Similarity(Page):
                 style=style,
             )
 
-    def compare_table(self):
+    def similarity_table(self):
         self.profiles = self.sorted_profiles()
         groups = SimilarityFunctions.GROUPS
         similarities = [self.compute(group) for group in groups]
@@ -192,13 +192,14 @@ class Similarity(Page):
                                 )
                             for p2 in self.profiles:
                                 style = "width: 3em; height: 3em;"
+                                # Empty cells on diagonal
                                 if p1 == p2:
                                     cls = "inactive"
                                     tags.td(className=cls, style=style)
                                     tags.td(className=cls, style=style)
                                     tags.td(className=cls, style=style)
                                     continue
-                                Similarity.compare_table_row(p1, p2, sim)
+                                Similarity.similarity_table_row(p1, p2, sim)
 
     def run_single(self):
         doc_title = "JCAlgTest - Comparative table"
@@ -208,7 +209,7 @@ class Similarity(Page):
                 with tags.div(className="flex row pt-5"):
                     Similarity.intro()
                 with tags.b():
-                    self.compare_table()
+                    self.similarity_table()
 
         return layout(
             doc_title=doc_title,

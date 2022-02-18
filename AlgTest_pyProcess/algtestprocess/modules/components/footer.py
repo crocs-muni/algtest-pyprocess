@@ -36,6 +36,8 @@ def footer(path_prefix="./"):
 
     tags.a(href="#", className="back-to-top")
 
+    # Create each script tag procedurally, because undefined attributes don't
+    # work in HTML
     for script in scripts:
         type_, src, integrity, crossorigin = script
         tag = tags.script

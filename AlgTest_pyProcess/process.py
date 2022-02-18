@@ -5,7 +5,7 @@ import click
 from click import Path
 
 from algtestprocess.modules.jcalgtest import (
-    ProfilePerformanceFixedJC, ProfileSupportJC, ProfilePerformanceVariableJC
+    ProfilePerformanceFixedJC, ProfilePerformanceVariableJC
 )
 from algtestprocess.modules.pages.comparativetable import ComparativeTable
 from algtestprocess.modules.pages.compare import Compare
@@ -16,10 +16,12 @@ from algtestprocess.modules.pages.scalability import Scalability
 from algtestprocess.modules.pages.similarity import Similarity
 from algtestprocess.modules.pages.support import Support
 from algtestprocess.modules.parser.javacard.performance import \
-    PerformanceParser, create_sorted_already_measured_list, fix_error_codes, \
+    PerformanceParserJC, create_sorted_already_measured_list, fix_error_codes, \
     fix_missing_underscores, fix_missing_variable_data_lengths, convert_to_json, \
     prepare_missing_measurements, compute_stats, get_files_to_process
-from algtestprocess.modules.parser.javacard.support import SupportParser
+from algtestprocess.modules.parser.javacard.support import SupportParserJC
+from algtestprocess.modules.parser.tpm.performance import PerformanceParserTPM
+from algtestprocess.modules.parser.tpm.support import SupportParserTPM
 
 
 def fix_results(directory):
@@ -40,20 +42,34 @@ def process_results(directory: str):
     compute_stats(directory)
 
 
-def get_profiles(directory):
+def get_javacard_profiles(directory):
     performance_dir = f"{directory}/javacard/Profiles/performance/"
     support_dir = f"{directory}/javacard/Profiles/results/"
-    files = get_files_to_process(performance_dir, ".json")
+    files_performance = get_files_to_process(performance_dir, ".json")
+    files_support = get_files_to_process(support_dir, ".csv")
     profiles_fixed = list(map(
-        lambda x: PerformanceParser(x).parse(ProfilePerformanceFixedJC()),
-        filter(lambda x: "fixed" in x, files)))
+        lambda x: PerformanceParserJC(x).parse(ProfilePerformanceFixedJC()),
+        filter(lambda x: "fixed" in x, files_performance)))
     profiles_variable = list(map(
-        lambda x: PerformanceParser(x).parse(ProfilePerformanceVariableJC()),
-        filter(lambda x: "variable" in x, files)))
+        lambda x: PerformanceParserJC(x).parse(ProfilePerformanceVariableJC()),
+        filter(lambda x: "variable" in x, files_performance)))
     profiles_support = list(map(
-        lambda x: SupportParser(x).parse(),
-        get_files_to_process(support_dir, ".csv")))
+        lambda x: SupportParserJC(x).parse(), files_support))
     return profiles_fixed, profiles_variable, profiles_support
+
+
+def get_tpm_profiles(directory):
+    performance_dir = f"{directory}/tpm/profiles/performance/"
+    support_dir = f"{directory}/tpm/profiles/results/"
+    files_performance = get_files_to_process(performance_dir, ".csv")
+    files_support = get_files_to_process(support_dir, ".csv")
+    profiles_performance = list(map(
+        lambda x: PerformanceParserTPM(x).parse(), files_performance
+    ))
+    profiles_support = list(map(
+        lambda x: SupportParserTPM(x).parse(), files_support
+    ))
+    return profiles_performance, profiles_support
 
 
 def run(to_run: List[Page], output_dir: str):
@@ -62,6 +78,15 @@ def run(to_run: List[Page], output_dir: str):
 
 
 @click.command()
+@click.argument(
+    "devices",
+    required=True,
+    nargs=1,
+    type=click.Choice([
+        "javacard",
+        "tpm"
+    ], case_sensitive=False)
+)
 @click.argument(
     "operations",
     required=True,
@@ -96,6 +121,7 @@ def run(to_run: List[Page], output_dir: str):
     help="Path to folder where you want output to be stored."
 )
 def main(
+        devices: List[str],
         operations: List[str],
         results_dir: Optional[Path],
         output_dir: Optional[Path]
@@ -104,7 +130,10 @@ def main(
         print("results-dir nor output_dir was specified")
         sys.exit(1)
 
-    if "process" in operations and results_dir:
+    if "javacard" in devices and "process" in operations and results_dir:
+        # Results are fixed, generates json results, unmeasured operations
+        # from .csv files. Time consuming operation, needs to be run only
+        # once so that json data is generated for further use
         process_results(f"{results_dir}/javacard/Profiles/performance/")
 
     operations = {
@@ -117,29 +146,41 @@ def main(
         "compare"
     } if "all" in operations else set(operations)
 
-    fixed, variable, support = get_profiles(results_dir)
+    if "javacard" in devices:
+        fixed, variable, support = get_javacard_profiles(results_dir)
+
+    if "tpm" in devices:
+        performance, support = get_tpm_profiles(results_dir)
+
     to_run = []
 
     if "execution" in operations:
-        to_run.append(ExecutionTime(fixed))
+        if "javacard" in devices:
+            to_run.append(ExecutionTime(fixed))
 
     if "comparative" in operations:
-        to_run.append(ComparativeTable(fixed))
+        if "javacard" in devices:
+            to_run.append(ComparativeTable(fixed))
 
     if "radar" in operations:
-        to_run.append(Radar(fixed))
+        if "javacard" in devices:
+            to_run.append(Radar(fixed))
 
     if "scalability" in operations:
-        to_run.append(Scalability(variable))
+        if "javacard" in devices:
+            to_run.append(Scalability(variable))
 
     if "similarity" in operations:
-        to_run.append(Similarity(fixed))
+        if "javacard" in devices:
+            to_run.append(Similarity(fixed))
 
     if "support" in operations:
-        to_run.append(Support(support))
+        if "javacard" in devices:
+            to_run.append(Support(support))
 
     if "compare" in operations:
-        to_run.append(Compare(fixed))
+        if "javacard" in devices:
+            to_run.append(Compare(fixed))
 
     if output_dir:
         run(to_run, output_dir)
