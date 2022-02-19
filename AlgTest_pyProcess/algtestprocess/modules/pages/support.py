@@ -1,3 +1,4 @@
+import re
 from functools import partial
 from typing import List, Callable, Dict, Set, Optional
 
@@ -5,7 +6,7 @@ from dominate import tags
 from overrides import overrides
 
 from algtestprocess.modules.components.layout import layout
-from algtestprocess.modules.config import SupportGroups
+from algtestprocess.modules.config import SupportGroups, TPM2Identifier
 from algtestprocess.modules.jcalgtest import ProfileSupportJC
 from algtestprocess.modules.pages.page import Page
 from algtestprocess.modules.tpmalgtest import ProfileSupportTPM
@@ -438,12 +439,15 @@ class SupportTPM(Support, Page):
 
     def tpm_main(self):
         def get_content(profile, key):
+            properties = key not in TPM2Identifier.ALL_KEYS
             result = profile.results.get(key)
             if result:
                 if result.value:
-                    return result.value
+                    return result.value \
+                        if not re.match(r"0x[0-9a-f]+", result.value) \
+                        else str(int(result.value, 16))
                 return "yes"
-            return "no"
+            return "-" if properties else "no"
 
         device_name = lambda profile: profile.test_info['TPM name']
 

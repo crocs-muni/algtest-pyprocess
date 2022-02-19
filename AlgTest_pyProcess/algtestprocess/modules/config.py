@@ -224,6 +224,7 @@ class TPM2Identifier:
         0x0043: "TPM2_ALG_CFB",
         0x0044: "TPM2_ALG_ECB",
     }
+    ALGS = list(ALG_ID_STR.values())
 
     CC_STR = {
         0x0000011f: "TPM2_CC_NV_UndefineSpaceSpecial",
@@ -342,6 +343,7 @@ class TPM2Identifier:
         0x00000195: "TPM2_CC_AC_Send",
         0x00000196: "TPM2_CC_Policy_AC_SendSelect",
     }
+    CCS = list(CC_STR.values())
 
     ECC_CURVE_STR = {
         0x0001: "TPM2_ECC_NIST_P192",
@@ -353,3 +355,7 @@ class TPM2Identifier:
         0x0011: "TPM2_ECC_BN_P638",
         0x0020: "TPM2_ECC_SM2_P256",
     }
+    ECC_CURVES = list(ECC_CURVE_STR.values())
+
+    ALL_KEYS = ALGS + CCS + ECC_CURVES
+
