@@ -6,15 +6,17 @@ from algtestprocess.modules.tpmalgtest import ProfileSupportTPM, \
 def get_data(path: str):
     with open(path) as f:
         data = f.readlines()
-    return list(filter(None, map(lambda x: x.strip(), data)))
+    return list(filter(None, map(lambda x: x.strip(), data))), \
+           f.name.rsplit("/", 1)[1]
 
 
 class SupportParserTPM:
     def __init__(self, path: str):
-        self.lines = get_data(path)
+        self.lines, self.filename = get_data(path)
 
     def parse(self):
         profile = ProfileSupportTPM()
+        profile.test_info['TPM name'] = self.filename.replace(".csv", "")
         lines = self.lines
         category = None
         i = 0
@@ -50,7 +52,7 @@ class SupportParserTPM:
                 result.category = category
                 result.name = name
                 result.value = val
-
-                profile.add_result(result)
+                if result.name:
+                    profile.add_result(result)
             i += 1
         return profile

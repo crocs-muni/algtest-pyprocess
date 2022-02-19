@@ -14,7 +14,7 @@ from algtestprocess.modules.pages.page import Page
 from algtestprocess.modules.pages.radar import Radar
 from algtestprocess.modules.pages.scalability import Scalability
 from algtestprocess.modules.pages.similarity import Similarity
-from algtestprocess.modules.pages.support import Support
+from algtestprocess.modules.pages.support import SupportJC, SupportTPM
 from algtestprocess.modules.parser.javacard.performance import \
     PerformanceParserJC, create_sorted_already_measured_list, fix_error_codes, \
     fix_missing_underscores, fix_missing_variable_data_lengths, convert_to_json, \
@@ -150,7 +150,7 @@ def main(
         fixed, variable, support = get_javacard_profiles(results_dir)
 
     if "tpm" in devices:
-        performance, support = get_tpm_profiles(results_dir)
+        performance, support_tpm = get_tpm_profiles(results_dir)
 
     to_run = []
 
@@ -176,7 +176,9 @@ def main(
 
     if "support" in operations:
         if "javacard" in devices:
-            to_run.append(Support(support))
+            to_run.append(SupportJC(support))
+        if "tpm" in devices:
+            to_run.append(SupportTPM(support_tpm))
 
     if "compare" in operations:
         if "javacard" in devices:

@@ -56,7 +56,7 @@ class ProfilePerformanceTPM(ProfileTPM):
         self.results: List[PerformanceResultTPM] = []
 
     @overrides
-    def add_result(self, result: PerformanceResultTPM):
+    def add_result(self, result):
         self.results.append(result)
 
 
@@ -68,5 +68,5 @@ class ProfileSupportTPM(ProfileTPM):
         self.results: Dict[str, SupportResultTPM] = {}
 
     @overrides
-    def add_result(self, result: SupportResultTPM):
+    def add_result(self, result):
         self.results[result.name] = result

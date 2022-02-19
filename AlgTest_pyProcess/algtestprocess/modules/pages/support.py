@@ -1,5 +1,5 @@
 from functools import partial
-from typing import List, Callable, Dict
+from typing import List, Callable, Dict, Set, Optional
 
 from dominate import tags
 from overrides import overrides
@@ -8,6 +8,7 @@ from algtestprocess.modules.components.layout import layout
 from algtestprocess.modules.config import SupportGroups
 from algtestprocess.modules.jcalgtest import ProfileSupportJC
 from algtestprocess.modules.pages.page import Page
+from algtestprocess.modules.tpmalgtest import ProfileSupportTPM
 
 
 def colored_cell(tag: Callable, content: str):
@@ -36,7 +37,171 @@ def checkall_script(key: str, cards: List[str]):
     )
 
 
-class Support(Page):
+class Support:
+
+    def filter_by_support(self, device, support_groups, profiles):
+        devices = {}
+        for key, algs in support_groups:
+            devices[key] = [
+                f"{device}{i}" for i, profile in enumerate(profiles)
+                if any([
+                    profile.results.get(alg) is not None and
+                    profile.results.get(alg).support
+                    for alg in algs
+                ])
+            ]
+        return devices
+
+    def checkbox_buttons(self, device, support_groups, profiles):
+        filtered: Dict[str, List[str]] = \
+            self.filter_by_support(device, support_groups, profiles) \
+                if support_groups else {}
+        tags.input_(
+            type="button",
+            className="btn btn-outline-dark",
+            id="checkAll",
+            onclick="checkAll('grpChkBox')",
+            value="Select all")
+        tags.input_(
+            type="button",
+            className="btn btn-outline-dark",
+            id="uncheckAll",
+            onclick="uncheckAll('grpChkBox')",
+            value="Deselect all")
+        for key, devices in filtered.items():
+            replaced = key.replace(" ", "_")
+            checkall_script(replaced, devices)
+            tags.input_(
+                type="button",
+                className="btn btn-outline-dark",
+                onclick=f"checkAll{replaced}('grpChkBox')",
+                id=f"checkAll{replaced}",
+                value=f"Select all with {key}"
+            )
+
+    def checkbox_items(self, device, profiles, device_name):
+        """Put checkboxes into three columns"""
+        cols = 3
+        curr = 0
+        split = len(profiles) // cols
+        curr_div = None
+        for i, profile in enumerate(profiles):
+            if not curr_div or (curr * split < i and curr < cols):
+                curr += 1
+                curr_div = tags.div(className="col-lg-4 col-sm-4")
+            p = tags.p(style="margin:0;")
+            p.add(tags.input_(type="checkbox", name=f"{i}", id=f"{device}{i}"))
+            p.add(tags.b(f"{device}{i}"))
+            p.add(f" - {device_name(profile)}")
+            curr_div.add(p)
+
+    def checkboxes(self, device, support_groups, profiles, device_name):
+        """
+        Create checkboxes for given device profiles, optionally can
+        specify support groups for additional buttons
+        """
+        with tags.div(className="row", id="grpChkBox"):
+            with tags.div(className="btn-group", role="group"):
+                self.checkbox_buttons(device, support_groups, profiles)
+            self.checkbox_items(
+                device,
+                profiles,
+                device_name
+            )
+
+    def category(self, name: str, device: str, profiles, rows: Callable,
+                 device_name: Callable):
+        """Function to create category section in table"""
+        with tags.tr():
+            tags.td(name, className="dark")
+            # TODO Introduced in JC ver. xxx column
+            for i, profile in enumerate(profiles):
+                tags.th(
+                    f"{device}{i}",
+                    className=f"dark_index {i}",
+                    title=device_name(profile)
+                )
+        rows()
+
+    def basic_info_rows(self, basic_info_items, profiles, device_name,
+                        get_info):
+        for item in basic_info_items:
+            with tags.tr():
+                tags.td(
+                    item,
+                    className="light"
+                )
+                for profile in profiles:
+                    content = get_info(profile, item)
+                    content = content.strip(";") if content else "-"
+                    colored_cell(
+                        partial(
+                            tags.td,
+                            title=f"{device_name(profile)} : {item} : {content}"
+                        ),
+                        content
+                    )
+
+    def table_header(self, device: str, basic_info_items: List[str], profiles,
+                     device_name: Callable, get_info: Callable):
+        with tags.thead():
+            self.category(
+                name="Basic info",
+                device=device,
+                profiles=profiles,
+                rows=partial(
+                    self.basic_info_rows,
+                    basic_info_items,
+                    profiles,
+                    device_name,
+                    get_info
+                ),
+                device_name=device_name
+            )
+
+    def main_rows(self, all_keys: Set[str], profiles, get_content, device_name):
+        for key in sorted(all_keys):
+            with tags.tr():
+                tags.td(key, className="light")
+                for profile in profiles:
+                    content = get_content(profile, key)
+                    content = content.split(";")[0] if content else "-"
+                    colored_cell(
+                        partial(
+                            tags.td,
+                            title=f"{device_name(profile)} : {key} : {content}"
+                        ),
+                        content
+                    )
+
+    def run_single(self, title: str, intro: Callable, abbreviations: Callable,
+                   notes: Optional[Callable], checkboxes: Callable, table: Callable):
+        doc_title = title
+
+        def head_additions():
+            tags.link(href="./dist/supporttable_style.css", rel="stylesheet")
+            tags.script(src="./assets/js/checkboxes.js")
+
+        def children_outside():
+            with tags.div(className="container-fluid pt-5"):
+                with tags.div(className="flex row pt-5"):
+                    intro()
+                abbreviations()
+                if notes:
+                    notes()
+                checkboxes()
+                with tags.b():
+                    table()
+
+        return layout(
+            doc_title=doc_title,
+            head_additions=head_additions,
+            children_outside=children_outside,
+            back_to_top=True,
+        )
+
+
+class SupportJC(Support, Page):
     FILENAME = "table.html"
     PATH = FILENAME
     CATEGORIES = [
@@ -63,10 +228,11 @@ class Support(Page):
         with tags.div(className="col-xl-9"):
             tags.h1("List of supported JavaCard algorithms")
             tags.h4(
-                "The table provides a list of algorithms defined in JavaCard API "
-                "and supported by the particular smart card. The supported lengths "
-                "of cryptographic keys, information about available RAM and EEPROM "
-                "memory and garbage collection capabilities are also included."
+                "The table provides a list of algorithms defined in JavaCard "
+                "API and supported by the particular smart card. The supported"
+                " lengths of cryptographic keys, information about available "
+                "RAM and EEPROM memory and garbage collection capabilities are"
+                " also included."
             )
             tags.p(
                 "The set of cryptographic algorithms supported by the "
@@ -81,10 +247,11 @@ class Support(Page):
             )
             p = tags.p()
             p.add(
-                "JCAlgTest tool allows you to enumerate the supported cryptographic "
-                "algorithms specified in JavaCard 3.0.5 and earlier. This page "
-                "summarizes results obtained for cards available in our CRoCS "
-                "laboratory and also results contributed by the community "
+                "JCAlgTest tool allows you to enumerate the supported "
+                "cryptographic algorithms specified in JavaCard 3.0.5 and "
+                "earlier. This page summarizes results obtained for cards "
+                "available in our CRoCS laboratory and also results "
+                "contributed by the community "
             )
             p.add(tags.b("(Many thanks folks!)"))
             p.add(tags.br())
@@ -94,17 +261,18 @@ class Support(Page):
                 name = name.rstrip(")")
                 p.add(f"{name} ({value}x), ")
             tags.p(
-                "The basic idea is simple - if the particular algorithm/key size "
-                "is supported, then algorithm instance creation should succeed. "
-                "Otherwise, CryptoException.NO_SUCH_ALGORITHM is thrown. Such a "
-                "behavior can be employed for a quick test of supported algorithms."
-                " AlgTest applet tries to create an instance of an algorithm for "
-                "all possible constants defined in JavaCard specification and "
-                "eventually catch the exception. JCAlgTest tool also tests "
-                "additional tweaks like the possibility to use raw RSA for fast "
-                "modular multiplication (which is usable to implement classical "
-                "Diffie-Hellman key exchange) or manufacturer pre-set default ECC "
-                "curve for ECC key pair."
+                "The basic idea is simple - if the particular algorithm/key "
+                "size is supported, then algorithm instance creation should "
+                "succeed. Otherwise, CryptoException.NO_SUCH_ALGORITHM is "
+                "thrown. Such a behavior can be employed for a quick test of "
+                "supported algorithms. AlgTest applet tries to create an "
+                "instance of an algorithm for all possible constants defined "
+                "in JavaCard specification and eventually catch the exception."
+                " JCAlgTest tool also tests additional tweaks like the "
+                "possibility to use raw RSA for fast modular multiplication "
+                "(which is usable to implement classical Diffie-Hellman key "
+                "exchange) or manufacturer pre-set default "
+                "ECC curve for ECC key pair."
             )
         with tags.div(className="col-xl-3 justify-content-center"):
             tags.img(
@@ -125,15 +293,15 @@ class Support(Page):
         return donation_credits
 
     def abbreviations(self):
-        tags.h3("Tested cards abbreviations")
-        for i in range(len(self.profiles)):
+        tags.h3("Tested card abbreviations")
+        for i, profile in enumerate(self.profiles):
             tags.b(f"c{i}")
             tags.a(
-                self.profiles[i].test_info["Card name"],
-                href=self.profiles[i].test_info["Github link"]
+                profile.test_info["Card name"],
+                href=profile.test_info["Github link"]
             )
-            tags.span(", ATR=" + self.profiles[i].test_info["Card ATR"])
-            tags.span(self.profiles[i].test_info["Provider"])
+            tags.span(f", ATR={profile.test_info['Card ATR']}")
+            tags.span(profile.test_info["Provider"])
             tags.br()
 
     def notes(self):
@@ -153,151 +321,56 @@ class Support(Page):
         p.add(tags.a("https://smartcard-atr.apdu.fr/",
                      href="https://smartcard-atr.apdu.fr"))
 
-    def filter_by_support(self):
-        cards = {}
-        for key, algs in SupportGroups.GROUPS:
-            cards[key] = [
-                f"card{i}" for i in range(len(self.profiles))
-                if any([
-                    self.profiles[i].results.get(alg) is not None and
-                    self.profiles[i].results.get(alg).support
-                    for alg in algs
-                ])
-            ]
-        return cards
-
-    def checkbox_buttons(self):
-        filtered: Dict[str, List[str]] = self.filter_by_support()
-        tags.input_(type="button", className="btn btn-outline-dark",
-                    id="checkAll",
-                    onclick="checkAll('grpChkBox')", value="Select all")
-        tags.input_(type="button", className="btn btn-outline-dark",
-                    id="uncheckAll",
-                    onclick="uncheckAll('grpChkBox')", value="Deselect all")
-        for key, cards in filtered.items():
-            replaced = key.replace(" ", "_")
-            checkall_script(replaced, cards)
-            tags.input_(
-                type="button", className="btn btn-outline-dark",
-                onclick=f"checkAll{replaced}('grpChkBox')",
-                id=f"checkAll{replaced}",
-                value=f"Select all with {key}"
-            )
-
-    def checkbox_items(self):
-        """Put checkboxes into three columns"""
-        cols = 3
-        curr = 0
-        split = len(self.profiles) // cols
-        curr_div = None
-        for i in range(len(self.profiles)):
-            if not curr_div or (curr * split < i and curr < cols):
-                curr += 1
-                curr_div = tags.div(className="col-lg-4 col-sm-4")
-            p = tags.p(style="margin:0;")
-            p.add(tags.input_(type="checkbox", name=f"{i}", id=f"card{i}"))
-            p.add(tags.b(f"c{i}"))
-            p.add(f" - {self.profiles[i].test_info['Card name']}")
-            curr_div.add(p)
-
-    def checkboxes(self):
-        with tags.div(className="row", id="grpChkBox"):
-            with tags.div(className="btn-group", role="group"):
-                self.checkbox_buttons()
-            self.checkbox_items()
-
-    def category(self, name: str, rows: Callable):
-        """Function to create category section in table"""
-        with tags.tr():
-            tags.td(name, className="dark")
-            # TODO Introduced in JC ver. xxx column
-            for i in range(len(self.profiles)):
-                tags.th(
-                    f"c{i}",
-                    className=f"dark_index {i}",
-                    title=self.profiles[i].test_info["Card name"]
-                )
-        rows()
-
-    def basic_info_rows(self):
-        for item in ["AlgTest applet version", "JavaCard support version"]:
-            with tags.tr():
-                tags.td(
-                    item,
-                    className="light"
-                )
-                for profile in self.profiles:
-                    card_name = profile.test_info["Card name"]
-                    version = profile.test_info.get(item)
-                    content = version.strip(";") if version else "-"
-                    colored_cell(
-                        partial(
-                            tags.td,
-                            title=f"{card_name} : {item} : {content}"
-                        ),
-                        content
-                    )
-
-    def table_header(self):
-        with tags.thead():
-            self.category("Basic info", self.basic_info_rows)
-
-    def jc_system_rows(self):
-        all_keys = set([
-            key for profile in self.profiles
-            for key in profile.jcsystem.keys()
-        ])
-        for key in sorted(all_keys):
-            with tags.tr():
-                tags.td(key, className="light")
-                for profile in self.profiles:
-                    card_name = profile.test_info["Card name"]
-                    value = profile.jcsystem.get(key)
-                    content = value.split(";")[0] if value else "-"
-                    colored_cell(
-                        partial(
-                            tags.td,
-                            title=f"{card_name} : {key} : {content}"
-                        ),
-                        content
-                    )
-
     def jc_system(self):
-        self.category("javacard.framework.JCSystem", self.jc_system_rows)
+        device_name = lambda profile: profile.test_info['Card name']
 
-    def javacard_main_rows(self, cat: str):
-        """Create rows for given category"""
-        all_keys = set([
-            key for profile in self.profiles
-            for key, _ in list(filter(
-                lambda x: x[1].category == cat, profile.results.items()
-            ))
-        ])
-        for key in sorted(all_keys):
-            with tags.tr():
-                tags.td(key, className="light")
-                for profile in self.profiles:
-                    card_name = profile.test_info["Card name"]
-                    result = profile.results.get(key)
-                    if not result:
-                        colored_cell(tags.td, "-")
-                    else:
-                        content = ("yes" if result.support else "no") \
-                            if result.status == "OK" else "error"
-                        title = content if content in ["yes", "no"] \
-                            else result.status
-                        colored_cell(
-                            partial(
-                                tags.td,
-                                title=f"{card_name} : {key} : {title}"
-                            ),
-                            content
-                        )
+        self.category(
+            name="javacard.framework.JCSystem",
+            device="card",
+            profiles=self.profiles,
+            rows=partial(
+                self.main_rows,
+                all_keys=set([
+                    key for profile in self.profiles
+                    for key in profile.jcsystem.keys()
+                ]),
+                profiles=self.profiles,
+                get_content=lambda profile, key: profile.jcsystem.get(key),
+                device_name=device_name
+            ),
+            device_name=device_name
+        )
 
     def javacard_main(self):
-        """Create section for each category"""
-        for cat in Support.CATEGORIES:
-            self.category(cat, partial(self.javacard_main_rows, cat))
+        def get_content(profile, key):
+            result = profile.results.get(key)
+            if result:
+                return ("yes" if result.support else "no") \
+                    if result.status == "OK" else "error"
+            return "-"
+
+        device_name = lambda profile: profile.test_info['Card name']
+
+        for cat in SupportJC.CATEGORIES:
+            self.category(
+                name=cat,
+                device="card",
+                profiles=self.profiles,
+                rows=partial(
+                    self.main_rows,
+                    all_keys=set([
+                        key for profile in self.profiles
+                        for key, _ in list(filter(
+                            lambda x: x[1].category == cat,
+                            profile.results.items()
+                        ))
+                    ]),
+                    profiles=self.profiles,
+                    get_content=get_content,
+                    device_name=device_name
+                ),
+                device_name=device_name
+            )
 
     def table(self):
         with tags.table(
@@ -308,36 +381,126 @@ class Support(Page):
                 cellpadding="4",
                 className="table"
         ):
-            self.table_header()
+            self.table_header(
+                device="card",
+                basic_info_items=[
+                    "AlgTest applet version", "JavaCard support version"
+                ],
+                profiles=self.profiles,
+                device_name=lambda profile: profile.test_info['Card name'],
+                get_info=lambda profile, key: profile.test_info.get(key)
+            )
             with tags.tbody():
                 self.jc_system()
                 self.javacard_main()
 
-    def run_single(self):
-        doc_title = "JCAlgTest - Comparative table"
+    @overrides
+    def run(self, output_path: str):
+        with open(f"{output_path}/{SupportJC.FILENAME}", "w") as f:
+            f.write(self.run_single(
+                title="JCAlgTest - Support table",
+                intro=self.intro,
+                abbreviations=self.abbreviations,
+                notes=self.notes,
+                checkboxes=partial(
+                    self.checkboxes,
+                    device="card",
+                    support_groups=SupportGroups.GROUPS,
+                    profiles=self.profiles,
+                    device_name=lambda profile: profile.test_info['Card name']
+                ),
+                table=self.table
+            ))
 
-        def head_additions():
-            tags.link(href="./dist/supporttable_style.css", rel="stylesheet")
-            tags.script(src="./assets/js/checkboxes.js")
 
-        def children_outside():
-            with tags.div(className="container-fluid pt-5"):
-                with tags.div(className="flex row pt-5"):
-                    self.intro()
-                self.abbreviations()
-                self.notes()
-                self.checkboxes()
-                with tags.b():
-                    self.table()
+class SupportTPM(Support, Page):
+    FILENAME = "tpmtable.html"
+    CATEGORIES = [
+        "Quicktest_properties-fixed",
+        "Quicktest_algorithms",
+        "Quicktest_commands",
+        "Quicktest_ecc-curves"
+    ]
 
-        return layout(
-            doc_title=doc_title,
-            head_additions=head_additions,
-            children_outside=children_outside,
-            back_to_top=True,
-        )
+    def __init__(self, profiles):
+        self.profiles: List[ProfileSupportTPM] = profiles
+
+    def intro(self):
+        with tags.div(className="col-xl-9"):
+            tags.h1("List of supported TPM algorithms")
+
+    def abbreviations(self):
+        tags.h3("Tested TPM abbreviations")
+        for i, profile in enumerate(self.profiles):
+            tags.b(f"tpm{i}")
+            tags.span(profile.test_info["TPM name"])
+            tags.br()
+
+    def tpm_main(self):
+        def get_content(profile, key):
+            result = profile.results.get(key)
+            if result:
+                if result.value:
+                    return result.value
+                return "yes"
+            return "no"
+
+        device_name = lambda profile: profile.test_info['TPM name']
+
+        for cat in SupportTPM.CATEGORIES:
+            self.category(
+                name=cat,
+                device="tpm",
+                profiles=self.profiles,
+                rows=partial(
+                    self.main_rows,
+                    all_keys=set([
+                        key for profile in self.profiles
+                        for key, _ in list(filter(
+                            lambda x: x[1].category == cat,
+                            profile.results.items()
+                        ))
+                    ]),
+                    profiles=self.profiles,
+                    get_content=get_content,
+                    device_name=device_name
+                ),
+                device_name=device_name
+            )
+
+    def table(self):
+        with tags.table(
+                id="tab",
+                width="37rem",
+                border="0",
+                cellspacing="2",
+                cellpadding="4",
+                className="table"
+        ):
+            self.table_header(
+                device="card",
+                basic_info_items=["Image tag"],
+                profiles=self.profiles,
+                device_name=lambda profile: profile.test_info['TPM name'],
+                get_info=lambda profile, key: profile.test_info.get(key)
+            )
+            with tags.tbody():
+                self.tpm_main()
 
     @overrides
     def run(self, output_path: str):
-        with open(f"{output_path}/{Support.FILENAME}", "w") as f:
-            f.write(self.run_single())
+        with open(f"{output_path}/{SupportTPM.FILENAME}", "w") as f:
+            f.write(self.run_single(
+                title="TPMAlgTest - Support table",
+                intro=self.intro,
+                abbreviations=self.abbreviations,
+                notes=None,
+                checkboxes=partial(
+                    self.checkboxes,
+                    device="tpm",
+                    support_groups={},
+                    profiles=self.profiles,
+                    device_name=lambda profile: profile.test_info['TPM name']
+                ),
+                table=self.table
+            ))
