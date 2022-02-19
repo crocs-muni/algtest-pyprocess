@@ -1,5 +1,7 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 from typing import List, Optional, Dict
+
+from overrides import overrides
 
 
 class PerformanceResultTPM:
@@ -35,17 +37,13 @@ class SupportResultTPM:
         self.value: Optional[str] = None
 
 
-def abstracmethod(args):
-    pass
-
-
 class ProfileTPM(ABC):
     """TPM base profile class"""
 
     def __init__(self):
         self.test_info = {}
 
-    @abstracmethod
+    @abstractmethod
     def add_result(self, result):
         pass
 
@@ -57,6 +55,7 @@ class ProfilePerformanceTPM(ProfileTPM):
         super().__init__()
         self.results: List[PerformanceResultTPM] = []
 
+    @overrides
     def add_result(self, result: PerformanceResultTPM):
         self.results.append(result)
 
@@ -68,5 +67,6 @@ class ProfileSupportTPM(ProfileTPM):
         super().__init__()
         self.results: Dict[str, SupportResultTPM] = {}
 
+    @overrides
     def add_result(self, result: SupportResultTPM):
         self.results[result.name] = result
