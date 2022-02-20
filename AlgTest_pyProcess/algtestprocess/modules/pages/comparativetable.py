@@ -4,7 +4,7 @@ from dominate import tags
 from overrides import overrides
 
 from algtestprocess.modules.components.layout import layout
-from algtestprocess.modules.config import TopFunctions
+from algtestprocess.modules.config import TopFunctionsJC
 from algtestprocess.modules.components.simpletable import simple_table
 from algtestprocess.modules.jcalgtest import ProfilePerformanceFixedJC
 from algtestprocess.modules.pages.page import Page
@@ -58,8 +58,8 @@ class ComparativeTable(Page):
 
     def content(self):
         tf_data = [
-            (TopFunctions.SYM, "sortable_sym"),
-            (TopFunctions.ASYM, "sortable_asym"),
+            (TopFunctionsJC.SYM, "sortable_sym"),
+            (TopFunctionsJC.ASYM, "sortable_asym"),
         ]
         for tf_type, tf_id in tf_data:
             with tags.ul():

@@ -9,9 +9,9 @@ from algtestprocess.modules.pages.utils import Name, Href
 def cardlist(
         data: List[Tuple[Name, Href]],
         title: str,
-        text: Callable,
-        img: Callable,
-        alert: Optional[Callable],
+        text: Optional[Callable] = None,
+        img: Optional[Callable] = None,
+        alert: Optional[Callable] = None,
 ):
     """
     Page for referencing each card created
@@ -20,9 +20,11 @@ def cardlist(
     def children():
         with tags.div(className="row pt-5"):
             with tags.div(className="col-md-7 col-xs-7"):
-                text()
+                if text:
+                    text()
             with tags.div(className="col-md-5 col-xs-5 overflow-hidden"):
-                img()
+                if img:
+                    img()
             if alert:
                 alert()
         tags.h4("List of tested Java Cards")

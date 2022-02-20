@@ -1,7 +1,8 @@
 import os
-from typing import List, Tuple, Callable
+from typing import List, Tuple, Callable, Union, Dict
 
 from algtestprocess.modules.jcalgtest import ProfileJC, PerformanceResultJC
+from algtestprocess.modules.tpmalgtest import ProfileTPM
 
 Name = str
 Href = str
@@ -25,6 +26,28 @@ def run_helper(
         with open(path, "w") as f:
             f.write(run_single(profile))
         data.append((name, path))
+    return data
+
+
+Profile = Union[ProfileJC, ProfileTPM]
+
+
+def run_helper_multi(
+        output_path: str,
+        items: List[List[Profile]],
+        run_single: Callable,
+) -> Dict[Tuple[Profile, ...], str]:
+    if not os.path.exists(output_path):
+        os.mkdir(output_path)
+    data: Dict[Tuple[Profile, ...], str] = {}
+    for profiles in items:
+        filename = ""
+        for i, profile in enumerate(profiles):
+            filename += ("_vs_" if i > 0 else "") + profile.device_name()
+        path = f"{output_path}/{filename}.html"
+        with open(path, "w") as f:
+            f.write(run_single(profiles))
+        data[tuple(profiles)] = filename
     return data
 
 

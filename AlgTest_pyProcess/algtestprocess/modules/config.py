@@ -1,4 +1,4 @@
-class TopFunctions:
+class TopFunctionsJC:
     SYM = [
         ("SECURE RANDOM (256B)", "ALG_SECURE_RANDOM RandomData_generateData()"),
         ("SHA-1 hash (256B)", "ALG_SHA MessageDigest_doFinal()"),

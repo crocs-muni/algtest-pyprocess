@@ -4,11 +4,16 @@ from typing import List, Optional, Dict
 from overrides import overrides
 
 
-class PerformanceResultTPM:
+class MeasurementResultTPM:
+    def __init__(self):
+        self.category: Optional[str] = None
+
+
+class PerformanceResultTPM(MeasurementResultTPM):
     """Class to store performance results for TPMs"""
 
     def __init__(self):
-        self.category: Optional[str] = None
+        super().__init__()
         self.key_params: Optional[str] = None
 
         self.algorithm: Optional[str] = None
@@ -28,11 +33,11 @@ class PerformanceResultTPM:
         self.error: Optional[str] = None
 
 
-class SupportResultTPM:
+class SupportResultTPM(MeasurementResultTPM):
     """Class to store support results for TPMs"""
 
     def __init__(self):
-        self.category: Optional[str] = None
+        super().__init__()
         self.name: Optional[str] = None
         self.value: Optional[str] = None
 
@@ -42,6 +47,9 @@ class ProfileTPM(ABC):
 
     def __init__(self):
         self.test_info = {}
+
+    def device_name(self) -> Optional[str]:
+        return self.test_info.get('TPM name')
 
     @abstractmethod
     def add_result(self, result):
@@ -53,11 +61,19 @@ class ProfilePerformanceTPM(ProfileTPM):
 
     def __init__(self):
         super().__init__()
-        self.results: List[PerformanceResultTPM] = []
+        self.results: Dict[str, PerformanceResultTPM] = {}
 
     @overrides
     def add_result(self, result):
-        self.results.append(result)
+        # TODO  choose proper naming for results
+        name = f"{result.category}" if result.category else ""
+        name += f" alg: {result.algorithm}" if result.algorithm else ""
+        name += f" key_len: {result.key_length}" if result.key_length else ""
+        name += f" mode: {result.mode}" if result.mode else ""
+        name += f" encrypt/decrypt: {result.encrypt_decrypt}" if result.encrypt_decrypt else ""
+        name += f" key_params: {result.key_params}" if result.key_params else ""
+        name += f" scheme: {result.scheme}" if result.scheme else ""
+        self.results[name] = result
 
 
 class ProfileSupportTPM(ProfileTPM):

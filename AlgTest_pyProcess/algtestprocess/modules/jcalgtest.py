@@ -100,6 +100,9 @@ class ProfileJC(ABC, EnforceOverrides):
         self.jcsystem = {}
         self.cplc = {}
 
+    def device_name(self):
+        return self.test_info.get('Card name')
+
     @abstractmethod
     def add_result(self, key: MethodName, result: MeasurementResultJC):
         pass

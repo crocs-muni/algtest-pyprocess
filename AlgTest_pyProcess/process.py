@@ -11,7 +11,7 @@ from algtestprocess.modules.pages.comparativetable import ComparativeTable
 from algtestprocess.modules.pages.compare import Compare
 from algtestprocess.modules.pages.executiontime import ExecutionTime
 from algtestprocess.modules.pages.page import Page
-from algtestprocess.modules.pages.radar import Radar
+from algtestprocess.modules.pages.radar import RadarJC, RadarTPM
 from algtestprocess.modules.pages.scalability import Scalability
 from algtestprocess.modules.pages.similarity import Similarity
 from algtestprocess.modules.pages.support import SupportJC, SupportTPM
@@ -164,7 +164,9 @@ def main(
 
     if "radar" in operations:
         if "javacard" in devices:
-            to_run.append(Radar(fixed))
+            to_run.append(RadarJC(fixed))
+        if "tpm" in devices:
+            to_run.append(RadarTPM(performance))
 
     if "scalability" in operations:
         if "javacard" in devices:

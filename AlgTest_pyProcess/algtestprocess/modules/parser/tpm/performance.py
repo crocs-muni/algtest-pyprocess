@@ -8,7 +8,7 @@ from algtestprocess.modules.tpmalgtest import ProfilePerformanceTPM, \
 def get_data(path: str):
     with open(path) as f:
         data = f.readlines()
-    return list(map(lambda x: x.strip(), data))
+    return list(map(lambda x: x.strip(), data)), f.name.rsplit("/", 1)[1]
 
 
 def get_params(line: str, items: List[Tuple[str, str]]):
@@ -23,7 +23,7 @@ def get_params(line: str, items: List[Tuple[str, str]]):
 
 class PerformanceParserTPM:
     def __init__(self, path: str):
-        self.lines = list(filter(None, get_data(path)))
+        self.lines, self.filename = list(filter(None, get_data(path)))
 
     @staticmethod
     def parse_parameters(line: str, result: PerformanceResultTPM):
@@ -56,9 +56,9 @@ class PerformanceParserTPM:
             ("op_max", r"max op:;(?P<op_max>[0-9]+\.[0-9]+)")
         ]
         params = get_params(line, items)
-        result.operation_min = params["op_min"]
-        result.operation_avg = params["op_avg"]
-        result.operation_max = params["op_max"]
+        result.operation_min = float(params["op_min"])
+        result.operation_avg = float(params["op_avg"])
+        result.operation_max = float(params["op_max"])
 
     @staticmethod
     def parse_info(line: str, result: PerformanceResultTPM):
@@ -78,7 +78,8 @@ class PerformanceParserTPM:
     def parse(self):
         category = None
         profile = ProfilePerformanceTPM()
-        lines = self.lines
+        profile.test_info['TPM name'] = self.filename.replace(".csv", "")
+        lines = list(filter(None, self.lines))
         i = 0
         while i < len(lines):
             items = lines[i].split(";", 1)
@@ -90,10 +91,11 @@ class PerformanceParserTPM:
                 i = i + 1
             if category and i + 2 < len(lines):
                 result = PerformanceResultTPM()
+                result.category = category
                 PerformanceParserTPM.parse_parameters(lines[i], result)
                 PerformanceParserTPM.parse_operation(lines[i + 1], result)
                 PerformanceParserTPM.parse_info(lines[i + 2], result)
-                profile.results.append(result)
+                profile.add_result(result)
                 i = i + 2
             i = i + 1
         return profile

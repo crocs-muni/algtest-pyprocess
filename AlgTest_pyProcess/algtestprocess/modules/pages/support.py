@@ -1,15 +1,15 @@
 import re
 from functools import partial
-from typing import List, Callable, Dict, Set, Optional
+from typing import List, Callable, Dict, Set, Optional, Tuple, Union
 
 from dominate import tags
 from overrides import overrides
 
 from algtestprocess.modules.components.layout import layout
 from algtestprocess.modules.config import SupportGroups, TPM2Identifier
-from algtestprocess.modules.jcalgtest import ProfileSupportJC
+from algtestprocess.modules.jcalgtest import ProfileSupportJC, ProfileJC
 from algtestprocess.modules.pages.page import Page
-from algtestprocess.modules.tpmalgtest import ProfileSupportTPM
+from algtestprocess.modules.tpmalgtest import ProfileSupportTPM, ProfileTPM
 
 
 def colored_cell(tag: Callable, content: str):
@@ -38,9 +38,18 @@ def checkall_script(key: str, cards: List[str]):
     )
 
 
+SupportGroup = Tuple[str, List[str]]
+
+Profile = Union[ProfileSupportJC, ProfileSupportTPM]
+
+
 class Support:
 
-    def filter_by_support(self, device, support_groups, profiles):
+    def filter_by_support(
+            self,
+            device: str,
+            support_groups: List[SupportGroup],
+            profiles: List[Profile]):
         devices = {}
         for key, algs in support_groups:
             devices[key] = [
@@ -53,10 +62,14 @@ class Support:
             ]
         return devices
 
-    def checkbox_buttons(self, device, support_groups, profiles):
+    def checkbox_buttons(
+            self,
+            device: str,
+            support_groups: List[SupportGroup],
+            profiles: List[Profile]):
         filtered: Dict[str, List[str]] = \
             self.filter_by_support(device, support_groups, profiles) \
-                if support_groups else {}
+            if support_groups else {}
         tags.input_(
             type="button",
             className="btn btn-outline-dark",
@@ -80,7 +93,7 @@ class Support:
                 value=f"Select all with {key}"
             )
 
-    def checkbox_items(self, device, profiles, device_name):
+    def checkbox_items(self, device: str, profiles: List[Profile]):
         """Put checkboxes into three columns"""
         cols = 3
         curr = 0
@@ -93,10 +106,14 @@ class Support:
             p = tags.p(style="margin:0;")
             p.add(tags.input_(type="checkbox", name=f"{i}", id=f"{device}{i}"))
             p.add(tags.b(f"{device}{i}"))
-            p.add(f" - {device_name(profile)}")
+            p.add(f" - {profile.device_name()}")
             curr_div.add(p)
 
-    def checkboxes(self, device, support_groups, profiles, device_name):
+    def checkboxes(
+            self,
+            device: str,
+            support_groups: List[SupportGroup],
+            profiles: List[Profile]):
         """
         Create checkboxes for given device profiles, optionally can
         specify support groups for additional buttons
@@ -107,11 +124,9 @@ class Support:
             self.checkbox_items(
                 device,
                 profiles,
-                device_name
             )
 
-    def category(self, name: str, device: str, profiles, rows: Callable,
-                 device_name: Callable):
+    def category(self, name: str, device: str, profiles, rows: Callable):
         """Function to create category section in table"""
         with tags.tr():
             tags.td(name, className="dark")
@@ -120,12 +135,11 @@ class Support:
                 tags.th(
                     f"{device}{i}",
                     className=f"dark_index {i}",
-                    title=device_name(profile)
+                    title=profile.device_name()
                 )
         rows()
 
-    def basic_info_rows(self, basic_info_items, profiles, device_name,
-                        get_info):
+    def basic_info_rows(self, basic_info_items, profiles, get_info):
         for item in basic_info_items:
             with tags.tr():
                 tags.td(
@@ -138,13 +152,17 @@ class Support:
                     colored_cell(
                         partial(
                             tags.td,
-                            title=f"{device_name(profile)} : {item} : {content}"
+                            title=f"{profile.device_name()} : {item} : {content}"
                         ),
                         content
                     )
 
-    def table_header(self, device: str, basic_info_items: List[str], profiles,
-                     device_name: Callable, get_info: Callable):
+    def table_header(
+            self,
+            device: str,
+            basic_info_items: List[str],
+            profiles: List[Profile],
+            get_info: Callable):
         with tags.thead():
             self.category(
                 name="Basic info",
@@ -154,13 +172,15 @@ class Support:
                     self.basic_info_rows,
                     basic_info_items,
                     profiles,
-                    device_name,
                     get_info
                 ),
-                device_name=device_name
             )
 
-    def main_rows(self, all_keys: Set[str], profiles, get_content, device_name):
+    def main_rows(
+            self,
+            all_keys: Set[str],
+            profiles: List[Profile],
+            get_content: Callable):
         for key in sorted(all_keys):
             with tags.tr():
                 tags.td(key, className="light")
@@ -170,13 +190,19 @@ class Support:
                     colored_cell(
                         partial(
                             tags.td,
-                            title=f"{device_name(profile)} : {key} : {content}"
+                            title=f"{profile.device_name()} : {key} : {content}"
                         ),
                         content
                     )
 
-    def run_single(self, title: str, intro: Callable, abbreviations: Callable,
-                   notes: Optional[Callable], checkboxes: Callable, table: Callable):
+    def run_single(
+            self,
+            title: str,
+            intro: Callable,
+            abbreviations: Callable,
+            notes: Optional[Callable],
+            checkboxes: Callable,
+            table: Callable):
         doc_title = title
 
         def head_additions():
@@ -323,8 +349,6 @@ class SupportJC(Support, Page):
                      href="https://smartcard-atr.apdu.fr"))
 
     def jc_system(self):
-        device_name = lambda profile: profile.test_info['Card name']
-
         self.category(
             name="javacard.framework.JCSystem",
             device="card",
@@ -337,9 +361,7 @@ class SupportJC(Support, Page):
                 ]),
                 profiles=self.profiles,
                 get_content=lambda profile, key: profile.jcsystem.get(key),
-                device_name=device_name
             ),
-            device_name=device_name
         )
 
     def javacard_main(self):
@@ -349,8 +371,6 @@ class SupportJC(Support, Page):
                 return ("yes" if result.support else "no") \
                     if result.status == "OK" else "error"
             return "-"
-
-        device_name = lambda profile: profile.test_info['Card name']
 
         for cat in SupportJC.CATEGORIES:
             self.category(
@@ -368,9 +388,7 @@ class SupportJC(Support, Page):
                     ]),
                     profiles=self.profiles,
                     get_content=get_content,
-                    device_name=device_name
                 ),
-                device_name=device_name
             )
 
     def table(self):
@@ -388,7 +406,6 @@ class SupportJC(Support, Page):
                     "AlgTest applet version", "JavaCard support version"
                 ],
                 profiles=self.profiles,
-                device_name=lambda profile: profile.test_info['Card name'],
                 get_info=lambda profile, key: profile.test_info.get(key)
             )
             with tags.tbody():
@@ -408,7 +425,6 @@ class SupportJC(Support, Page):
                     device="card",
                     support_groups=SupportGroups.GROUPS,
                     profiles=self.profiles,
-                    device_name=lambda profile: profile.test_info['Card name']
                 ),
                 table=self.table
             ))
@@ -449,8 +465,6 @@ class SupportTPM(Support, Page):
                 return "yes"
             return "-" if properties else "no"
 
-        device_name = lambda profile: profile.test_info['TPM name']
-
         for cat in SupportTPM.CATEGORIES:
             self.category(
                 name=cat,
@@ -467,9 +481,7 @@ class SupportTPM(Support, Page):
                     ]),
                     profiles=self.profiles,
                     get_content=get_content,
-                    device_name=device_name
                 ),
-                device_name=device_name
             )
 
     def table(self):
@@ -485,7 +497,6 @@ class SupportTPM(Support, Page):
                 device="card",
                 basic_info_items=["Image tag"],
                 profiles=self.profiles,
-                device_name=lambda profile: profile.test_info['TPM name'],
                 get_info=lambda profile, key: profile.test_info.get(key)
             )
             with tags.tbody():
@@ -495,7 +506,7 @@ class SupportTPM(Support, Page):
     def run(self, output_path: str):
         with open(f"{output_path}/{SupportTPM.FILENAME}", "w") as f:
             f.write(self.run_single(
-                title="TPMAlgTest - Support table",
+                title="tpm-algtest - Support table",
                 intro=self.intro,
                 abbreviations=self.abbreviations,
                 notes=None,
@@ -504,7 +515,6 @@ class SupportTPM(Support, Page):
                     device="tpm",
                     support_groups={},
                     profiles=self.profiles,
-                    device_name=lambda profile: profile.test_info['TPM name']
                 ),
                 table=self.table
             ))
