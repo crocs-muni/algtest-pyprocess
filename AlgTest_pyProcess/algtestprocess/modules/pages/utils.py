@@ -6,10 +6,11 @@ from algtestprocess.modules.tpmalgtest import ProfileTPM
 
 Name = str
 Href = str
+Profile = Union[ProfileJC, ProfileTPM]
 
 
 def run_helper(
-        output_path: str, profiles: List[ProfileJC], run_single: Callable
+        output_path: str, profiles: List[Profile], run_single: Callable
 ) -> List[Tuple[Name, Href]]:
     """
     Function which repeatedly calls run_single method and saves
@@ -20,16 +21,12 @@ def run_helper(
         os.mkdir(output_path)
     data: List[Tuple[str, str]] = []
     for profile in profiles:
-        name = profile.test_info["Card name"]
-        filename = name.replace(" ", "")
-        path = f"{output_path}/{filename}.html"
+        name = profile.device_name()
+        path = f"{output_path}/{name}.html"
         with open(path, "w") as f:
-            f.write(run_single(profile))
+            f.write(run_single(profile=profile))
         data.append((name, path))
     return data
-
-
-Profile = Union[ProfileJC, ProfileTPM]
 
 
 def run_helper_multi(

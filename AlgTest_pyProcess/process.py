@@ -9,7 +9,8 @@ from algtestprocess.modules.jcalgtest import (
 )
 from algtestprocess.modules.pages.comparativetable import ComparativeTable
 from algtestprocess.modules.pages.compare import Compare
-from algtestprocess.modules.pages.executiontime import ExecutionTime
+from algtestprocess.modules.pages.executiontime import ExecutionTimeJC, \
+    ExecutionTimeTPM
 from algtestprocess.modules.pages.page import Page
 from algtestprocess.modules.pages.radar import RadarJC, RadarTPM
 from algtestprocess.modules.pages.scalability import Scalability
@@ -154,9 +155,11 @@ def main(
 
     to_run = []
 
-    if "execution" in operations:
+    if "execution-time" in operations:
         if "javacard" in devices:
-            to_run.append(ExecutionTime(fixed))
+            to_run.append(ExecutionTimeJC(fixed))
+        if "tpm" in devices:
+            to_run.append(ExecutionTimeTPM(performance))
 
     if "comparative" in operations:
         if "javacard" in devices:

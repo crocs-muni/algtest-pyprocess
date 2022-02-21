@@ -1,13 +1,11 @@
-from typing import List
+from typing import List, Optional
 
 from dominate import tags
 
-from algtestprocess.modules.components.header import header
-
 
 def simple_table(
-    data: List[List[str]],
-    table_header: List[str],
+    data: List[List[Optional[str]]],
+    table_header: Optional[List[str]] = None,
     table_cls: str = "",
     table_id: str = "",
     th_cls: str = "",
@@ -16,7 +14,10 @@ def simple_table(
     with tags.table(
         className="table table-bordered table-hover " + table_cls, id=table_id
     ):
-        if header:
+        if not table_header:
+            table_header = []
+
+        if table_header:
             with tags.thead():
                 with tags.tr():
                     for cell in table_header:
@@ -33,7 +34,7 @@ def simple_table(
                         ):
                             col_span = len(table_header) - len(trow) + 1
                         tags.td(
-                            trow[i],
+                            trow[i] if trow[i] else "-",
                             className="border-top border-bottom",
                             colspan=col_span,
                         )
