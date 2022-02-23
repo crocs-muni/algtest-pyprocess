@@ -1,6 +1,7 @@
 import re
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
+from algtestprocess.modules.config import TPM2Identifier
 from algtestprocess.modules.tpmalgtest import ProfilePerformanceTPM, \
     PerformanceResultTPM
 
@@ -21,6 +22,16 @@ def get_params(line: str, items: List[Tuple[str, str]]):
     ])
 
 
+def to_int(item: Optional[str], base: int):
+    return int(item, base) if item else None
+
+
+def get_algorithm(algorithm: str):
+    if algorithm and re.match(r"0x[0-9a-f]+", algorithm):
+        return TPM2Identifier.ALG_ID_STR.get(int(algorithm, 16))
+    return algorithm
+
+
 class PerformanceParserTPM:
     def __init__(self, path: str):
         self.lines, self.filename = list(filter(None, get_data(path)))
@@ -28,6 +39,7 @@ class PerformanceParserTPM:
     @staticmethod
     def parse_parameters(line: str, result: PerformanceResultTPM):
         """Parsing section with parameters using regular expressions"""
+
         items = [
             ("algorithm",
              r"(Algorithm|Hash algorithm):;(?P<algorithm>(0x[0-9a-fA-F]+))"),
@@ -39,13 +51,13 @@ class PerformanceParserTPM:
             ("scheme", r"\Scheme:;(?P<scheme>0x[0-9a-fA-F]+)")
         ]
         params = get_params(line, items)
-        result.algorithm = params.get("algorithm")
-        result.key_length = params.get("key_length")
-        result.mode = params.get("mode")
+        result.algorithm = get_algorithm(params.get("algorithm"))
+        result.key_length = to_int(params.get("key_length"), 10)
+        result.mode = get_algorithm(params.get("mode"))
         result.encrypt_decrypt = params.get("encrypt_decrypt")
-        result.data_length = params.get("data_length")
+        result.data_length = to_int(params.get("data_length"), 10)
         result.key_params = params.get("key_params")
-        result.scheme = params.get("scheme")
+        result.scheme = get_algorithm(params.get("scheme"))
 
     @staticmethod
     def parse_operation(line: str, result: PerformanceResultTPM):
@@ -70,9 +82,9 @@ class PerformanceParserTPM:
             ("error", r"error:;(?P<error>(None|[0-9a-fA-F]+))")
         ]
         params = get_params(line, items)
-        result.iterations = params.get("iterations")
-        result.successful = params.get("successful")
-        result.failed = params.get("failed")
+        result.iterations = to_int(params.get("iterations"), 10)
+        result.successful = to_int(params.get("successful"), 10)
+        result.failed = to_int(params.get("failed"), 10)
         result.error = params.get("error")
 
     def parse(self):

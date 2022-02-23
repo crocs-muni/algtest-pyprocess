@@ -3,6 +3,8 @@ from typing import List, Optional, Dict
 
 from overrides import overrides
 
+from algtestprocess.modules.config import TPM2Identifier
+
 
 class MeasurementResultTPM:
     def __init__(self):
@@ -66,13 +68,11 @@ class ProfilePerformanceTPM(ProfileTPM):
     @overrides
     def add_result(self, result):
         # TODO  choose proper naming for results
-        name = f"{result.category}" if result.category else ""
-        name += f" alg: {result.algorithm}" if result.algorithm else ""
-        name += f" key_len: {result.key_length}" if result.key_length else ""
-        name += f" mode: {result.mode}" if result.mode else ""
-        name += f" encrypt/decrypt: {result.encrypt_decrypt}" if result.encrypt_decrypt else ""
-        name += f" key_params: {result.key_params}" if result.key_params else ""
-        name += f" scheme: {result.scheme}" if result.scheme else ""
+        name = f"{result.category}"
+        name += f" {result.algorithm}" if result.algorithm else ""
+        name += f" {result.mode}" if result.mode else ""
+        name += f" {result.encrypt_decrypt}" if result.encrypt_decrypt else ""
+        name += f" {result.scheme}" if result.scheme else ""
         self.results[name] = result
 
 
