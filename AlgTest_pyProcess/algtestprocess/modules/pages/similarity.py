@@ -148,7 +148,7 @@ class Similarity(Page):
     ):
         name1 = p1.test_info["Card name"]
         name2 = p2.test_info["Card name"]
-        href = f"./compare/{name1.replace(' ', '')}_vs_{name2.replace(' ', '')}.html"
+        href = f"./compare/{name1}_vs_{name2}.html"
         for similarity in similarities:
             style = "width: 3em; height: 3em;"
             s = similarity.get((p1, p2))

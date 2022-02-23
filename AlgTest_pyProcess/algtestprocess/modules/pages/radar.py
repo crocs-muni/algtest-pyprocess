@@ -291,6 +291,7 @@ class RadarTPM(Radar, Page):
         def operation_avg(result: PerformanceResultTPM):
             return result.operation_avg if result.operation_avg else 0
 
+        output_path = f"{output_path}/{RadarTPM.SUBFOLDER_NAME}"
         data = run_helper_multi(
             output_path,
             items=[[profile] for profile in self.profiles],
