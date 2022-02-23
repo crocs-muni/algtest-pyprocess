@@ -99,21 +99,27 @@ class ComparativeTable(Page):
     def run_single(self):
         doc_title = "JCAlgTest - Comparative table"
 
-        def head_additions():
-            tags.script(
-                type="text/javascript", src="./dist/jquery.tablesorter.js"
-            )
-            tags.script(type="text/javascript", src="./dist/custom-sorter.js")
-
         def children():
             ComparativeTable.intro()
             ComparativeTable.alert()
             self.content()
 
+        def children_outside():
+            tags.script(
+                "$(document).ready(function() {"
+                "$('#sortable_sym').DataTable();"
+                "} );"
+            )
+            tags.script(
+                "$(document).ready(function() {"
+                "$('#sortable_asym').DataTable();"
+                "} );"
+            )
+
         return layout(
             doc_title=doc_title,
-            head_additions=head_additions,
-            children=children
+            children=children,
+            children_outside=children_outside
         )
 
     @overrides

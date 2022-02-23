@@ -31,6 +31,18 @@ def footer(path_prefix="./"):
             f"{path_prefix}/assets/js/ie10-viewport-bug-workaround.js",
             None,
             None
+        ),
+        (
+            "text/javascript",
+            "https://cdn.datatables.net/1.11.4/js/jquery.dataTables.min.js",
+            None,
+            None
+        ),
+        (
+            "text/javascript",
+            "https://cdn.datatables.net/1.11.4/js/dataTables.bootstrap5.min.js",
+            None,
+            None
         )
     ]
 
