@@ -34,11 +34,9 @@ class Radar:
                     for profile in profiles
                 ]
             )
-            if max_avg <= 0:
-                continue
             normalized[f] = {}
             for profile in profiles:
-                if f in profile.results:
+                if f in profile.results and max_avg > 0:
                     normalized[f][profile] = \
                         operation_avg(profile.results[f]) / (1.11 * max_avg)
                 else:

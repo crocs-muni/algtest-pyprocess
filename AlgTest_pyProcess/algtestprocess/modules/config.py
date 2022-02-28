@@ -55,7 +55,7 @@ class TopFunctionsJC:
     ALL = list(map(lambda x: x[1], SYM + ASYM))
 
 
-class SimilarityFunctions:
+class SimilarityFunctionsJC:
     RSA = [
         "TYPE_RSA_PRIVATE LENGTH_RSA_1024 ALG_RSA_NOPAD Cipher_doFinal()",
         "TYPE_RSA_PRIVATE LENGTH_RSA_2048 ALG_RSA_NOPAD Cipher_doFinal()",
@@ -110,6 +110,103 @@ class SimilarityFunctions:
 
     GROUPS = [RSA, RSA_CRT, ECC, ENC, HASH, SW]
 
+    ABBREVIATIONS = ["RSA", "RSA_CRT", "ECC", "ENC", "HASH", "SW"]
+
+
+class SimilarityFunctionsTPM:
+    RSA_ENC_DEC = [
+        'TPM2_RSA_Decrypt RSA 1024 TPM2_ALG_NULL',
+        'TPM2_RSA_Decrypt RSA 1024 TPM2_ALG_OAEP',
+        'TPM2_RSA_Decrypt RSA 1024 TPM2_ALG_RSAES',
+        'TPM2_RSA_Decrypt RSA 2048 TPM2_ALG_NULL',
+        'TPM2_RSA_Decrypt RSA 2048 TPM2_ALG_OAEP',
+        'TPM2_RSA_Decrypt RSA 2048 TPM2_ALG_RSAES',
+        'TPM2_RSA_Encrypt RSA 1024 TPM2_ALG_NULL',
+        'TPM2_RSA_Encrypt RSA 1024 TPM2_ALG_OAEP',
+        'TPM2_RSA_Encrypt RSA 1024 TPM2_ALG_RSAES',
+        'TPM2_RSA_Encrypt RSA 2048 TPM2_ALG_NULL',
+        'TPM2_RSA_Encrypt RSA 2048 TPM2_ALG_OAEP',
+        'TPM2_RSA_Encrypt RSA 2048 TPM2_ALG_RSAES',
+    ]
+
+    RSA_SIGN = [
+        'TPM2_Sign RSA 1024 TPM2_ALG_RSAPSS',
+        'TPM2_Sign RSA 1024 TPM2_ALG_RSASSA',
+        'TPM2_Sign RSA 2048 TPM2_ALG_RSAPSS',
+        'TPM2_Sign RSA 2048 TPM2_ALG_RSASSA',
+        'TPM2_VerifySignature RSA 1024 TPM2_ALG_RSAPSS',
+        'TPM2_VerifySignature RSA 1024 TPM2_ALG_RSASSA',
+        'TPM2_VerifySignature RSA 2048 TPM2_ALG_RSAPSS',
+        'TPM2_VerifySignature RSA 2048 TPM2_ALG_RSASSA',
+    ]
+
+    ECC = [
+        'TPM2_Sign TPM2_ECC_BN_P256 TPM2_ALG_ECDSA',
+        'TPM2_Sign TPM2_ECC_BN_P256 TPM2_ALG_ECSCHNORR',
+        'TPM2_Sign TPM2_ECC_BN_P256 TPM2_ALG_SM2',
+        'TPM2_Sign TPM2_ECC_NIST_P224 TPM2_ALG_ECDSA',
+        'TPM2_Sign TPM2_ECC_NIST_P224 TPM2_ALG_ECSCHNORR',
+        'TPM2_Sign TPM2_ECC_NIST_P224 TPM2_ALG_SM2',
+        'TPM2_Sign TPM2_ECC_NIST_P256 TPM2_ALG_ECDSA',
+        'TPM2_Sign TPM2_ECC_NIST_P256 TPM2_ALG_ECSCHNORR',
+        'TPM2_Sign TPM2_ECC_NIST_P256 TPM2_ALG_SM2',
+        'TPM2_VerifySignature TPM2_ECC_BN_P256 TPM2_ALG_ECDSA',
+        'TPM2_VerifySignature TPM2_ECC_BN_P256 TPM2_ALG_ECSCHNORR',
+        'TPM2_VerifySignature TPM2_ECC_NIST_P224 TPM2_ALG_ECDSA',
+        'TPM2_VerifySignature TPM2_ECC_NIST_P224 TPM2_ALG_ECSCHNORR',
+        'TPM2_VerifySignature TPM2_ECC_NIST_P256 TPM2_ALG_ECDSA',
+        'TPM2_VerifySignature TPM2_ECC_NIST_P256 TPM2_ALG_ECSCHNORR'
+    ]
+
+    ENC = [
+        'TPM2_EncryptDecrypt TPM2_ALG_AES TPM2_ALG_CBC decrypt',
+        'TPM2_EncryptDecrypt TPM2_ALG_AES TPM2_ALG_CBC decrypt',
+        'TPM2_EncryptDecrypt TPM2_ALG_AES TPM2_ALG_CBC encrypt',
+        'TPM2_EncryptDecrypt TPM2_ALG_AES TPM2_ALG_CBC encrypt',
+        'TPM2_EncryptDecrypt TPM2_ALG_AES TPM2_ALG_CFB decrypt',
+        'TPM2_EncryptDecrypt TPM2_ALG_AES TPM2_ALG_CFB decrypt',
+        'TPM2_EncryptDecrypt TPM2_ALG_AES TPM2_ALG_CFB encrypt',
+        'TPM2_EncryptDecrypt TPM2_ALG_AES TPM2_ALG_CFB encrypt',
+        'TPM2_EncryptDecrypt TPM2_ALG_AES TPM2_ALG_CTR decrypt',
+        'TPM2_EncryptDecrypt TPM2_ALG_AES TPM2_ALG_CTR decrypt',
+        'TPM2_EncryptDecrypt TPM2_ALG_AES TPM2_ALG_CTR decrypt',
+        'TPM2_EncryptDecrypt TPM2_ALG_AES TPM2_ALG_CTR encrypt',
+        'TPM2_EncryptDecrypt TPM2_ALG_AES TPM2_ALG_CTR encrypt',
+        'TPM2_EncryptDecrypt TPM2_ALG_AES TPM2_ALG_CTR encrypt',
+        'TPM2_EncryptDecrypt TPM2_ALG_AES TPM2_ALG_ECB decrypt',
+        'TPM2_EncryptDecrypt TPM2_ALG_AES TPM2_ALG_ECB decrypt',
+        'TPM2_EncryptDecrypt TPM2_ALG_AES TPM2_ALG_ECB encrypt',
+        'TPM2_EncryptDecrypt TPM2_ALG_AES TPM2_ALG_ECB encrypt',
+        'TPM2_EncryptDecrypt TPM2_ALG_AES TPM2_ALG_OFB decrypt',
+        'TPM2_EncryptDecrypt TPM2_ALG_AES TPM2_ALG_OFB decrypt',
+        'TPM2_EncryptDecrypt TPM2_ALG_AES TPM2_ALG_OFB decrypt',
+        'TPM2_EncryptDecrypt TPM2_ALG_AES TPM2_ALG_OFB encrypt',
+        'TPM2_EncryptDecrypt TPM2_ALG_AES TPM2_ALG_OFB encrypt',
+        'TPM2_EncryptDecrypt TPM2_ALG_AES TPM2_ALG_OFB encrypt',
+    ]
+
+    CREATE = [
+        'TPM2_Create HMAC',
+        'TPM2_Create RSA 1024',
+        'TPM2_Create RSA 2048',
+        'TPM2_Create TPM2_ALG_AES 128',
+        'TPM2_Create TPM2_ALG_AES 192',
+        'TPM2_Create TPM2_ALG_AES 256',
+        'TPM2_Create TPM2_ECC_BN_P256',
+        'TPM2_Create TPM2_ECC_NIST_P224',
+        'TPM2_Create TPM2_ECC_NIST_P256',
+    ]
+
+    HASH = [
+        'TPM2_Hash TPM2_ALG_SHA',
+        'TPM2_Hash TPM2_ALG_SHA256',
+    ]
+
+    ALL = RSA_ENC_DEC + RSA_SIGN + ECC + ENC + CREATE + HASH
+
+    GROUPS = [RSA_ENC_DEC, RSA_SIGN, ECC, ENC, CREATE, HASH]
+
+    ABBREVIATIONS = ["RSA Enc/Dec", "RSA Sign/Verify", "ECC", "ENC", "CREATE", "HASH"]
 
 class SupportGroups:
     ECC_ALGS = [

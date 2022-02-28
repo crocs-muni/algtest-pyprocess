@@ -1,20 +1,196 @@
+from functools import partial
 from math import sqrt
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Callable, Union
 
 from dominate import tags
 from overrides import overrides
 
 from algtestprocess.modules.components.layout import layout
-from algtestprocess.modules.config import SimilarityFunctions
-from algtestprocess.modules.jcalgtest import ProfilePerformanceFixedJC
+from algtestprocess.modules.config import SimilarityFunctionsJC, \
+    SimilarityFunctionsTPM
+from algtestprocess.modules.jcalgtest import ProfilePerformanceFixedJC, \
+    PerformanceResultJC
 from algtestprocess.modules.pages.page import Page
+from algtestprocess.modules.tpmalgtest import ProfilePerformanceTPM, \
+    PerformanceResultTPM
 
-ProfilePairSimilarity = Dict[
-    Tuple[ProfilePerformanceFixedJC, ProfilePerformanceFixedJC], float
-]
+Profile = Union[ProfilePerformanceFixedJC, ProfilePerformanceTPM]
+ProfilePairSimilarity = Dict[Tuple[Profile, Profile], float]
+Normalized = Dict[str, Dict[Profile, int]]
 
 
-class Similarity(Page):
+class Similarity:
+
+    def normalize(
+            self,
+            profiles: List[Profile],
+            functions: List[str],
+            operation_avg: Callable
+    ) -> Normalized:
+        normalized = {}
+        for f in functions:
+            max_avg = max(
+                [
+                    operation_avg(profile.results[f])
+                    if f in profile.results
+                    else 0
+                    for profile in profiles
+                ]
+            )
+            normalized[f] = {}
+            for profile in profiles:
+                if f in profile.results and max_avg > 0:
+                    normalized[f][profile] = (
+                            operation_avg(profile.results[f]) / max_avg
+                    )
+                else:
+                    normalized[f][profile] = 0
+        return normalized
+
+    def compute(
+            self,
+            profiles: List[Profile],
+            normalized: Normalized,
+            functions: List[str]
+    ) -> ProfilePairSimilarity:
+        similarity = {}
+        for p1 in profiles:
+            for p2 in profiles:
+                if p1 == p2:
+                    continue
+                total = 0
+                num = 0
+                for f in functions:
+                    if normalized[f][p1] != 0 and normalized[f][p2] != 0:
+                        total += (normalized[f][p1] - normalized[f][p2]) ** 2
+                        num += 1
+                total = abs(sqrt(total / num) - 1) if total != 0 else 0
+                total = total ** 2
+                similarity[(p1, p2)] = total
+        return similarity
+
+    def sorted_profiles(
+            self,
+            profiles: List[Profile],
+            similarities: List[ProfilePairSimilarity],
+    ) -> List[Profile]:
+        pairs = []
+        for p1 in profiles:
+            total = 0
+            for p2 in profiles:
+                if p1 == p2:
+                    continue
+                for s in similarities:
+                    total += s[(p1, p2)]
+            pairs.append((p1, total))
+        pairs.sort(key=lambda x: x[1], reverse=True)
+        return list(map(lambda x: x[0], pairs))
+
+    def compare_table_header(
+            self,
+            profiles: List[Profile],
+            group_abbreviations: List[str]
+    ):
+        with tags.tr():
+            for i in range(3):
+                tags.th(group_abbreviations[i])
+            for profile in profiles:
+                tags.th(
+                    profile.device_name(),
+                    colspan=3,
+                    rowspan=2,
+                )
+        with tags.tr():
+            for i in range(3, 6):
+                tags.th(group_abbreviations[i])
+
+    @staticmethod
+    def similarity_table_row(
+            p1: Profile,
+            p2: Profile,
+            similarities: List[ProfilePairSimilarity],
+    ):
+        name1 = p1.device_name()
+        name2 = p2.device_name()
+        href = f"./compare/{name1}_vs_{name2}.html"
+        for similarity in similarities:
+            style = "width: 3em; height: 3em;"
+            s = similarity.get((p1, p2))
+            color = (
+                f"140, 200, 120, {format(s, '.2f')}"
+                if s > 0.5
+                else f"200, 120, 140, {format(1 - s, '.2f')}"
+            )
+            rounded = round(100 * s)
+            style += (
+                f"background: rgba({color});"
+                if rounded != 0
+                else "background: #f5f5f5;"
+            )
+            tags.td(
+                tags.a(
+                    rounded if rounded != 0 else "",
+                    href=href
+                ),
+                style=style,
+            )
+
+    def similarity_table(
+            self,
+            profiles: List[Profile],
+            similarities: List[ProfilePairSimilarity],
+            group_abbreviations: List[str]
+    ):
+        with tags.table(className="compare", cellspacing=0):
+            with tags.tbody():
+                self.compare_table_header(
+                    profiles=profiles,
+                    group_abbreviations=group_abbreviations
+                )
+                for p1 in profiles:
+                    for i, sim in enumerate(
+                            [similarities[:3], similarities[3:]]
+                    ):
+                        with tags.tr():
+                            if i == 0:
+                                tags.th(
+                                    p1.device_name(),
+                                    colspan=3,
+                                    rowspan=2,
+                                )
+                            for p2 in profiles:
+                                style = "width: 3em; height: 3em;"
+                                # Empty cells on diagonal
+                                if p1 == p2:
+                                    cls = "inactive"
+                                    tags.td(className=cls, style=style)
+                                    tags.td(className=cls, style=style)
+                                    tags.td(className=cls, style=style)
+                                    continue
+                                Similarity.similarity_table_row(p1, p2, sim)
+
+    def run_single(
+            self,
+            doc_title: str,
+            intro: Callable,
+            similarity_table: Callable
+
+    ):
+
+        def children_outside():
+            with tags.div(className="container-fluid pt-5"):
+                with tags.div(className="flex row pt-5"):
+                    intro()
+                with tags.b():
+                    similarity_table()
+
+        return layout(
+            doc_title=doc_title,
+            children_outside=children_outside
+        )
+
+
+class SimilarityJC(Page, Similarity):
     FILENAME = "similarity-table.html"
     PATH = FILENAME
 
@@ -70,153 +246,81 @@ class Similarity(Page):
             "by the main CPU."
         )
 
-    def normalize(self, functions):
-        normalized = {}
-        for f in functions:
-            max_avg = max(
-                [
-                    profile.results[f].operation_avg()
-                    if f in profile.results and profile.results[f].operation
-                    else 0
-                    for profile in self.profiles
-                ]
-            )
-            normalized[f] = {}
-            for profile in self.profiles:
-                if f in profile.results and profile.results[f].baseline:
-                    normalized[f][profile] = (
-                        profile.results[f].operation_avg() / max_avg
-                    )
-                else:
-                    normalized[f][profile] = 0
-        return normalized
+    @overrides
+    def run(self, output_path: str):
 
-    def compute(self, functions: List[str]) -> ProfilePairSimilarity:
-        normalized = self.normalize(functions)
-        similarity = {}
-        for p1 in self.profiles:
-            for p2 in self.profiles:
-                if p1 == p2:
-                    continue
-                total = 0
-                num = 0
-                for f in functions:
-                    if normalized[f][p1] != 0 and normalized[f][p2] != 0:
-                        total += (normalized[f][p1] - normalized[f][p2]) ** 2
-                        num += 1
-                total = abs(sqrt(total / num) - 1) if total != 0 else 0
-                total = total ** 2
-                similarity[(p1, p2)] = total
-        return similarity
+        def operation_avg(result: PerformanceResultJC):
+            return result.operation_avg() if result.operation else 0
 
-    def sorted_profiles(self):
-        groups = SimilarityFunctions.GROUPS
-        similarities = [self.compute(group) for group in groups]
-        pairs = []
-        for p1 in self.profiles:
-            total = 0
-            for p2 in self.profiles:
-                if p1 == p2:
-                    continue
-                for s in similarities:
-                    total += s[(p1, p2)]
-            pairs.append((p1, total))
-        pairs.sort(key=lambda x: x[1], reverse=True)
-        return list(map(lambda x: x[0], pairs))
-
-    def compare_table_header(self):
-        with tags.tr():
-            tags.th("RSA")
-            tags.th("RSA CRT")
-            tags.th("ECC")
-            for profile in self.profiles:
-                tags.th(
-                    profile.test_info["Card name"],
-                    colspan=3,
-                    rowspan=2,
-                )
-        with tags.tr():
-            tags.th("Enc")
-            tags.th("Hash")
-            tags.th("SW")
-
-    @staticmethod
-    def similarity_table_row(
-        p1: ProfilePerformanceFixedJC,
-        p2: ProfilePerformanceFixedJC,
-        similarities: List[ProfilePairSimilarity],
-    ):
-        name1 = p1.test_info["Card name"]
-        name2 = p2.test_info["Card name"]
-        href = f"./compare/{name1}_vs_{name2}.html"
-        for similarity in similarities:
-            style = "width: 3em; height: 3em;"
-            s = similarity.get((p1, p2))
-            color = (
-                f"140, 200, 120, {format(s, '.2f')}"
-                if s > 0.5
-                else f"200, 120, 140, {format(1 - s, '.2f')}"
-            )
-            rounded = round(100 * s)
-            style += (
-                f"background: rgba({color});"
-                if rounded != 0
-                else "background: #f5f5f5;"
-            )
-            tags.td(
-                tags.a(
-                    rounded if rounded != 0 else "",
-                    href=href
-                ),
-                style=style,
-            )
-
-    def similarity_table(self):
-        self.profiles = self.sorted_profiles()
-        groups = SimilarityFunctions.GROUPS
-        similarities = [self.compute(group) for group in groups]
-
-        with tags.table(className="compare", cellspacing=0):
-            with tags.tbody():
-                self.compare_table_header()
-                for p1 in self.profiles:
-                    for i, sim in enumerate(
-                        [similarities[:3], similarities[3:]]
-                    ):
-                        with tags.tr():
-                            if i == 0:
-                                tags.th(
-                                    p1.test_info["Card name"],
-                                    colspan=3,
-                                    rowspan=2,
-                                )
-                            for p2 in self.profiles:
-                                style = "width: 3em; height: 3em;"
-                                # Empty cells on diagonal
-                                if p1 == p2:
-                                    cls = "inactive"
-                                    tags.td(className=cls, style=style)
-                                    tags.td(className=cls, style=style)
-                                    tags.td(className=cls, style=style)
-                                    continue
-                                Similarity.similarity_table_row(p1, p2, sim)
-
-    def run_single(self):
-        doc_title = "JCAlgTest - Comparative table"
-
-        def children_outside():
-            with tags.div(className="container-fluid pt-5"):
-                with tags.div(className="flex row pt-5"):
-                    Similarity.intro()
-                with tags.b():
-                    self.similarity_table()
-
-        return layout(
-            doc_title=doc_title,
-            children_outside=children_outside
+        normalized = self.normalize(
+            profiles=self.profiles,
+            functions=SimilarityFunctionsJC.ALL,
+            operation_avg=operation_avg
         )
+        similarities = [
+            self.compute(
+                profiles=self.profiles,
+                normalized=normalized,
+                functions=group
+            )
+            for group in SimilarityFunctionsJC.GROUPS
+        ]
+
+        with open(f"{output_path}/{SimilarityJC.FILENAME}", "w") as f:
+            f.write(self.run_single(
+                doc_title="JCAlgTest - Similarity table",
+                intro=self.intro,
+                similarity_table=partial(
+                    self.similarity_table,
+                    similarities=similarities,
+                    profiles=self.sorted_profiles(
+                        profiles=self.profiles,
+                        similarities=similarities
+                    ),
+                    group_abbreviations=SimilarityFunctionsJC.ABBREVIATIONS,
+                )
+            ))
+
+class SimilarityTPM(Similarity, Page):
+    FILENAME = "similarity-table-tpm.html"
+
+    def __init__(self, profiles):
+        self.profiles: List[ProfilePerformanceTPM] = profiles
+
+    def intro(self):
+        tags.h1("Similarity of TPMs based on their performance")
 
     @overrides
     def run(self, output_path: str):
-        with open(f"{output_path}/{Similarity.FILENAME}", "w") as f:
-            f.write(self.run_single())
+        def operation_avg(result: PerformanceResultTPM):
+            return result.operation_avg if result.operation_avg else 0
+
+        normalized = self.normalize(
+            profiles=self.profiles,
+            functions=SimilarityFunctionsTPM.ALL,
+            operation_avg=operation_avg
+        )
+        similarities = [
+            self.compute(
+                profiles=self.profiles,
+                normalized=normalized,
+                functions=group
+            )
+            for group in SimilarityFunctionsTPM.GROUPS
+        ]
+
+        with open(f"{output_path}/{SimilarityTPM.FILENAME}", "w") as f:
+            f.write(self.run_single(
+                doc_title="tpm2-algtest - Similarity table",
+                intro=self.intro,
+                similarity_table=partial(
+                    self.similarity_table,
+                    similarities=similarities,
+                    profiles=self.sorted_profiles(
+                        profiles=self.profiles,
+                        similarities=similarities
+                    ),
+                    group_abbreviations=SimilarityFunctionsTPM.ABBREVIATIONS
+                )
+            ))
+

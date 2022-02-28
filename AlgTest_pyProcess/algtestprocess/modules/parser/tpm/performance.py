@@ -32,6 +32,17 @@ def get_algorithm(algorithm: str):
     return algorithm
 
 
+def get_key_params(key_params: str):
+    if key_params and re.match(r"ECC 0x[0-9a-f]+", key_params):
+        key_params = to_int(key_params.split()[1], 16)
+        return TPM2Identifier.ECC_CURVE_STR[key_params]
+    if key_params and re.match(r"SYMCIPHER 0x[0-9a-f]+", key_params):
+        key_params = key_params.split()
+        alg = to_int(key_params[1], 16)
+        return f"{TPM2Identifier.ALG_ID_STR[alg]} {key_params[2]}"
+    return key_params
+
+
 class PerformanceParserTPM:
     def __init__(self, path: str):
         self.lines, self.filename = list(filter(None, get_data(path)))
@@ -56,7 +67,7 @@ class PerformanceParserTPM:
         result.mode = get_algorithm(params.get("mode"))
         result.encrypt_decrypt = params.get("encrypt_decrypt")
         result.data_length = to_int(params.get("data_length"), 10)
-        result.key_params = params.get("key_params")
+        result.key_params = get_key_params(params.get("key_params"))
         result.scheme = get_algorithm(params.get("scheme"))
 
     @staticmethod

@@ -1,9 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import List, Optional, Dict
+from typing import Optional, Dict
 
 from overrides import overrides
-
-from algtestprocess.modules.config import TPM2Identifier
 
 
 class MeasurementResultTPM:
@@ -67,13 +65,14 @@ class ProfilePerformanceTPM(ProfileTPM):
 
     @overrides
     def add_result(self, result):
-        # TODO  choose proper naming for results
         name = f"{result.category}"
+        name += f" {result.key_params}" if result.key_params else ""
         name += f" {result.algorithm}" if result.algorithm else ""
         name += f" {result.mode}" if result.mode else ""
         name += f" {result.encrypt_decrypt}" if result.encrypt_decrypt else ""
         name += f" {result.scheme}" if result.scheme else ""
         self.results[name] = result
+        return name
 
 
 class ProfileSupportTPM(ProfileTPM):

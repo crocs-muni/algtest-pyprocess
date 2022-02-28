@@ -14,7 +14,7 @@ from algtestprocess.modules.pages.executiontime import ExecutionTimeJC, \
 from algtestprocess.modules.pages.page import Page
 from algtestprocess.modules.pages.radar import RadarJC, RadarTPM
 from algtestprocess.modules.pages.scalability import Scalability
-from algtestprocess.modules.pages.similarity import Similarity
+from algtestprocess.modules.pages.similarity import SimilarityJC, SimilarityTPM
 from algtestprocess.modules.pages.support import SupportJC, SupportTPM
 from algtestprocess.modules.parser.javacard.performance import \
     PerformanceParserJC, create_sorted_already_measured_list, fix_error_codes, \
@@ -177,7 +177,9 @@ def main(
 
     if "similarity" in operations:
         if "javacard" in devices:
-            to_run.append(Similarity(fixed))
+            to_run.append(SimilarityJC(fixed))
+        if "tpm" in devices:
+            to_run.append(SimilarityTPM(performance))
 
     if "support" in operations:
         if "javacard" in devices:
