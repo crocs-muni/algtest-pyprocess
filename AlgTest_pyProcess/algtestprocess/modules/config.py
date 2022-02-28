@@ -359,3 +359,34 @@ class TPM2Identifier:
 
     ALL_KEYS = ALGS + CCS + ECC_CURVES
 
+
+CARD_EXCEPTION_TO_STRING = {
+    'f101': 'CryptoException_ILLEGAL_VALUE',
+    'f102': 'CryptoException_UNINITIALIZED_KEY',
+    'f103': 'CryptoException_NO_SUCH_ALGORITHM',
+    'f104': 'CryptoException_INVALID_INIT',
+    'f105': 'CryptoException_ILLEGAL_USE',
+    'f201': 'SystemException_ILLEGAL_VALUE',
+    'f202': 'SystemException_NO_TRANSIENT_SPACE',
+    'f203': 'SystemException_ILLEGAL_TRANSIENT',
+    'f204': 'SystemException_ILLEGAL_AID',
+    'f205': 'SystemException_NO_RESOURCE',
+    'f206': 'SystemException_ILLEGAL_USE',
+    'f301': 'PINException_ILLEGAL_VALUE',
+    'f302': 'PINException_ILLEGAL_STATE',
+    'f401': 'TransactionException_IN_PROGRESS',
+    'f402': 'TransactionException_NOT_IN_PROGRESS',
+    'f403': 'TransactionException_BUFFER_FULL',
+    'f404': 'TransactionException_INTERNAL_FAILURE',
+    'f405': 'TransactionException_ILLEGAL_USE',
+    'f500': 'CardRuntimeException',
+    'ff01': 'Exception_GENERIC',
+    'ff02': 'ArrayIndexOutOfBoundsException',
+    'ff03': 'ArithmeticException',
+    'ff04': 'ArrayStoreException',
+    'ff05': 'NullPointerException',
+    'ff06': 'NegativeArraySizeException',
+    'ff': 'Exception_GENERIC',
+    '6a81': 'FUNC_NOT_SUPPORTED',
+    '6f00': 'Exception_GENERIC'
+}
