@@ -1,8 +1,13 @@
+from typing import List
+
 from dominate import tags
 
+from algtestprocess.modules.components.utils import inline_assets, AssetsPaths
 
-def head(path_prefix="./"):
+
+def head(additions: List[str], path_prefix="./", inline: bool = False):
     """Common <head> for generated pages"""
+
     with tags.head():
         tags.meta(charset="utf-8")
         tags.meta(http_equiv="X-UA-Compatible", content="IE=edge")
@@ -15,20 +20,40 @@ def head(path_prefix="./"):
                     "gathering various performance properties of Java cards.",
         )
         tags.meta(name="author", content="JCAlgTest")
-        # TODO: switch for local css loading
-        tags.link(
-            href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css",
-            rel="stylesheet",
-            integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3",
-            crossorigin="anonymous",
-        )
-        tags.link(
-            rel="stylesheet",
-            type="text/css",
-            href=path_prefix + "dist/style.css",
-        )
-        tags.script(
-            src="https://code.jquery.com/jquery-3.6.0.min.js",
-            integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=",
-            crossorigin="anonymous",
-        )
+
+        if not inline:
+            tags.link(
+                href=f"{path_prefix}/{AssetsPaths.BOOTSTRAP_CSS}",
+                type="text/css",
+                rel="stylesheet",
+            )
+            tags.link(
+                rel="stylesheet",
+                type="text/css",
+                href=f"{path_prefix}/{AssetsPaths.STYLE_CSS}",
+            )
+            tags.script(
+                src=f"{path_prefix}/{AssetsPaths.JQUERY_JS}",
+                type="text/javascript"
+            )
+            for addition in additions:
+                if "css" in addition:
+                    tags.link(
+                        rel="stylesheet",
+                        type="text/css",
+                        href=f"{path_prefix}/{addition}"
+                    )
+                elif "js" in addition:
+                    tags.script(
+                        src=f"{path_prefix}/{addition}",
+                        type="text/javascript"
+                    )
+
+        else:
+            paths = [
+                f"./{AssetsPaths.BOOTSTRAP_CSS}",
+                f"./{AssetsPaths.STYLE_CSS}",
+            ] + [f"./{addition}" for addition in additions if "css" in addition]
+            inline_assets(paths)
+
+

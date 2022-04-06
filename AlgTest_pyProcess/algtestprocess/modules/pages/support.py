@@ -6,6 +6,7 @@ from dominate import tags
 from overrides import overrides
 
 from algtestprocess.modules.components.layout import layout
+from algtestprocess.modules.components.utils import AssetsPaths
 from algtestprocess.modules.config import SupportGroups, TPM2Identifier
 from algtestprocess.modules.jcalgtest import ProfileSupportJC, ProfileJC
 from algtestprocess.modules.pages.page import Page
@@ -206,9 +207,10 @@ class Support:
             notebook: bool = False):
         doc_title = title
 
-        def head_additions():
-            tags.link(href="./dist/supporttable_style.css", rel="stylesheet")
-            tags.script(src="./assets/js/checkboxes.js")
+        additions = [
+            AssetsPaths.SUPPORTTABLE_CSS,
+            AssetsPaths.CHECKBOXES_JS
+        ]
 
         def children_outside():
             with tags.div(className="container-fluid pt-5"):
@@ -223,7 +225,7 @@ class Support:
 
         return layout(
             doc_title=doc_title,
-            head_additions=head_additions,
+            asset_additions=additions,
             children_outside=children_outside,
             back_to_top=True,
             notebook=notebook

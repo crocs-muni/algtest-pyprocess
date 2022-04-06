@@ -173,8 +173,8 @@ class Similarity:
             self,
             doc_title: str,
             intro: Callable,
-            similarity_table: Callable
-
+            similarity_table: Callable,
+            notebook: bool = False
     ):
 
         def children_outside():
@@ -186,7 +186,8 @@ class Similarity:
 
         return layout(
             doc_title=doc_title,
-            children_outside=children_outside
+            children_outside=children_outside,
+            notebook=notebook
         )
 
 
@@ -248,7 +249,6 @@ class SimilarityJC(Page, Similarity):
 
     @overrides
     def run(self, output_path: Optional[str] = None, notebook: bool = False):
-
         def operation_avg(result: PerformanceResultJC):
             return result.operation_avg() if result.operation else 0
 
@@ -267,17 +267,17 @@ class SimilarityJC(Page, Similarity):
         ]
 
         html = self.run_single(
-                doc_title="JCAlgTest - Similarity table",
-                intro=self.intro,
-                similarity_table=partial(
-                    self.similarity_table,
-                    similarities=similarities,
-                    profiles=self.sorted_profiles(
-                        profiles=self.profiles,
-                        similarities=similarities
-                    ),
-                    group_abbreviations=SimilarityFunctionsJC.ABBREVIATIONS,
-                )
+            doc_title="JCAlgTest - Similarity table",
+            intro=self.intro,
+            similarity_table=partial(
+                self.similarity_table,
+                similarities=similarities,
+                profiles=self.sorted_profiles(
+                    profiles=self.profiles,
+                    similarities=similarities
+                ),
+                group_abbreviations=SimilarityFunctionsJC.ABBREVIATIONS,
+            )
         )
 
         if not notebook and output_path:
@@ -285,6 +285,7 @@ class SimilarityJC(Page, Similarity):
                 f.write(html)
 
         return html
+
 
 class SimilarityTPM(Similarity, Page):
     FILENAME = "similarity-table-tpm.html"
@@ -315,22 +316,23 @@ class SimilarityTPM(Similarity, Page):
         ]
 
         html = self.run_single(
-                doc_title="tpm2-algtest - Similarity table",
-                intro=self.intro,
-                similarity_table=partial(
-                    self.similarity_table,
-                    similarities=similarities,
-                    profiles=self.sorted_profiles(
-                        profiles=self.profiles,
-                        similarities=similarities
-                    ),
-                    group_abbreviations=SimilarityFunctionsTPM.ABBREVIATIONS
-                )
+            doc_title="tpm2-algtest - Similarity table",
+            intro=self.intro,
+            similarity_table=partial(
+                self.similarity_table,
+                similarities=similarities,
+                profiles=self.sorted_profiles(
+                    profiles=self.profiles,
+                    similarities=similarities
+                ),
+                group_abbreviations=SimilarityFunctionsTPM.ABBREVIATIONS
+            ),
+            notebook=notebook
         )
 
-        if not notebook and output_path:
-            with open(f"{output_path}/{SimilarityTPM.FILENAME}", "w") as f:
+        if output_path:
+            output_path = f"{output_path}/{SimilarityTPM.FILENAME}"
+            with open(output_path, "w") as f:
                 f.write(html)
 
-        return html
-
+        return html, output_path

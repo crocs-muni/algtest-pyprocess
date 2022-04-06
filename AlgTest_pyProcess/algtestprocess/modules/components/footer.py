@@ -1,46 +1,60 @@
 from functools import partial
+from typing import List
 
 from dominate import tags
 
+from algtestprocess.modules.components.utils import AssetsPaths, inline_assets
 
-def footer(path_prefix="./"):
+
+def footer(additions: List[str], path_prefix="./",  inline:bool = False):
     """
-    Creates required script tags, back-to-top button
+    Either creates required script tags, or inlines the JavaScript
     """
+    if inline:
+        paths = [
+            f"./{AssetsPaths.JQUERY_JS}",
+            f"./{AssetsPaths.BOOTSTRAP_JS}",
+            f"./{AssetsPaths.VIEWPORT_JS}",
+            f"./{AssetsPaths.JQUERY_DATATABLES_JS}",
+            f"./{AssetsPaths.DATATABLES_BS_JS}"
+        ] + [f"./{add}" for add in additions if "js" in add]
+        inline_assets(paths)
+        return
+
     scripts = [
         (
             "text/javascript",
-            "https://code.jquery.com/jquery-3.6.0.min.js",
-            "sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=",
-            "anonymous"
-        ),
-        (
-            "text/javascript",
-            f"{path_prefix}/footer.js",
+            f"{path_prefix}/{AssetsPaths.JQUERY_JS}",
             None,
             None
         ),
         (
             "text/javascript",
-            "https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js",
-            "sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p",
-            "anonymous"
-        ),
-        (
-            "text/javascript",
-            f"{path_prefix}/assets/js/ie10-viewport-bug-workaround.js",
+            f"{path_prefix}/{AssetsPaths.LICENSE_JS}",
             None,
             None
         ),
         (
             "text/javascript",
-            "https://cdn.datatables.net/1.11.4/js/jquery.dataTables.min.js",
+            f"{path_prefix}/{AssetsPaths.BOOTSTRAP_JS}",
             None,
             None
         ),
         (
             "text/javascript",
-            "https://cdn.datatables.net/1.11.4/js/dataTables.bootstrap5.min.js",
+            f"{path_prefix}/{AssetsPaths.VIEWPORT_JS}",
+            None,
+            None
+        ),
+        (
+            "text/javascript",
+            f"{path_prefix}/{AssetsPaths.JQUERY_DATATABLES_JS}",
+            None,
+            None
+        ),
+        (
+            "text/javascript",
+            f"{path_prefix}/{AssetsPaths.DATATABLES_BS_JS}",
             None,
             None
         )

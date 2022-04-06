@@ -198,24 +198,6 @@ def main(
         if "javacard" in devices:
             to_run.append(Compare(fixed))
 
-    if "heatmap" in operations:
-        if "tpm" in devices:
-            out = Detail(results_dir).parse()
-            rsa_1024 = out["rsa_1024"]
-            n = list(map(lambda x: int(x, 16), rsa_1024["n"].tolist()))
-            p = list(map(lambda x: int(x, 16), rsa_1024["p"].tolist()))
-            q = [a // b for a, b in zip(n, p)]
-
-            p_byte = [x >> (x.bit_length() - 8) for x in p]
-            q_byte = [x >> (x.bit_length() - 8) for x in q]
-            print(p_byte)
-            print(q_byte)
-            heatmap(
-                x=p_byte,
-                y=q_byte,
-                output_path=output_dir,
-                name="my_tpm_better"
-            )
 
     if not os.path.isdir(output_dir):
         os.mkdir(output_dir)

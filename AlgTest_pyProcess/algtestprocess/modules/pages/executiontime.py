@@ -86,7 +86,9 @@ class ExecutionTime(ABC):
             profile: Profile,
             categories: List[str],
             title: Callable,
-            intro: Callable):
+            intro: Callable,
+            notebook: bool = False
+    ):
         doc_title = title(profile)
 
         def children():
@@ -97,7 +99,8 @@ class ExecutionTime(ABC):
             doc_title=doc_title,
             children=children,
             back_to_top=True,
-            path_prefix="../"
+            path_prefix="../",
+            notebook=notebook
         )
 
 
@@ -383,23 +386,29 @@ class ExecutionTimeTPM(Page, ExecutionTime):
                     ExecutionTime.intro,
                     categories=categories,
                     heading=heading,
-                )
+                ),
+                notebook=notebook
             )
         )
         data = list(map(
             lambda item: (item[0], f"./{item[0]}.html"),
             data
         ))
+
+        html = cardlist(
+            data,
+            "tpm-algtest - Algorithm execution time",
+            ExecutionTimeTPM.cardlist_text,
+            None,
+            None,
+        )
+
         with open(f"{output_path}/{ExecutionTimeJC.FILENAME}", "w") as f:
-            f.write(
-                cardlist(
-                    data,
-                    "tpm-algtest - Algorithm execution time",
-                    ExecutionTimeTPM.cardlist_text,
-                    None,
-                    None,
-                )
-            )
+            f.write(html)
+
+        data = list(map(
+            lambda item: (item[0], f"{output_path}/{item[1]}"), data))
+        return html, data
 
     @staticmethod
     def cardlist_text():

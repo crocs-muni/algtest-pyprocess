@@ -7,6 +7,7 @@ from overrides import overrides
 
 from algtestprocess.modules.components.cardlist import cardlist
 from algtestprocess.modules.components.layout import layout
+from algtestprocess.modules.components.utils import AssetsPaths
 from algtestprocess.modules.config import TopFunctionsJC
 from algtestprocess.modules.jcalgtest import ProfilePerformanceFixedJC, \
     PerformanceResultJC
@@ -94,34 +95,39 @@ class Radar:
             "};"
         )
         script.add("RadarChart.draw('#chart', data, config);")
+        return script
 
     def run_single(
             self,
             profiles: List[Profile],
             intro: Callable,
             get_graph: Callable,
-            title: Callable
+            title: Callable,
+            notebook: bool = False
     ):
         doc_title = title(profiles)
 
-        def head_additions():
-            tags.script(src="../assets/js/d3.v3.min.js")
-            tags.script(src="RadarChart.js")
+        additions = [
+            AssetsPaths.D3_JS,
+            AssetsPaths.RADAR_JS
+        ]
 
         def children():
             intro(profiles)
             tags.div(id="chart", className="col")
 
-        def children_outside():
-            get_graph(profiles)
+        other_scripts = [
+            partial(get_graph, profiles)
+        ]
 
         return layout(
             doc_title=doc_title,
-            head_additions=head_additions,
+            asset_additions=additions,
             children=children,
-            children_outside=children_outside,
+            other_scripts=other_scripts,
             back_to_top=True,
-            path_prefix="../"
+            path_prefix="../",
+            notebook=notebook
         )
 
 
@@ -302,21 +308,29 @@ class RadarTPM(Radar, Page):
                     top_functions=RadarTPM.TOP_FUNCTIONS(self.profiles),
                     normalized=self.normalized,
                     operation_avg=operation_avg
-                )
+                ),
+                notebook=notebook
             )
         )
         data = list(map(
             lambda name: (name, f"./{name}.html"),
             data.values()
         ))
-        with open(f"{output_path}/{RadarTPM.FILENAME}", "w") as f:
-            f.write(
-                cardlist(
-                    data,
-                    "tpm-algtest - Performance radar graphs",
-                    RadarTPM.cardlist_text,
-                )
-            )
+
+        html = cardlist(
+            data,
+            "tpm-algtest - Performance radar graphs",
+            RadarTPM.cardlist_text,
+        )
+
+        if output_path:
+            with open(f"{output_path}/{RadarTPM.FILENAME}", "w") as f:
+                f.write(html)
+
+        data = list(map(
+            lambda item: (item[0], f"{output_path}/{item[1]}"), data))
+        return html, data
+
 
     @staticmethod
     def cardlist_text():
