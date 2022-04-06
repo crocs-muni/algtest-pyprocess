@@ -1,6 +1,6 @@
 from functools import partial
 from math import sqrt
-from typing import List, Dict, Tuple, Callable, Union
+from typing import List, Dict, Tuple, Callable, Union, Optional
 
 from dominate import tags
 from overrides import overrides
@@ -247,7 +247,7 @@ class SimilarityJC(Page, Similarity):
         )
 
     @overrides
-    def run(self, output_path: str):
+    def run(self, output_path: Optional[str] = None, notebook: bool = False):
 
         def operation_avg(result: PerformanceResultJC):
             return result.operation_avg() if result.operation else 0
@@ -266,8 +266,7 @@ class SimilarityJC(Page, Similarity):
             for group in SimilarityFunctionsJC.GROUPS
         ]
 
-        with open(f"{output_path}/{SimilarityJC.FILENAME}", "w") as f:
-            f.write(self.run_single(
+        html = self.run_single(
                 doc_title="JCAlgTest - Similarity table",
                 intro=self.intro,
                 similarity_table=partial(
@@ -279,7 +278,13 @@ class SimilarityJC(Page, Similarity):
                     ),
                     group_abbreviations=SimilarityFunctionsJC.ABBREVIATIONS,
                 )
-            ))
+        )
+
+        if not notebook and output_path:
+            with open(f"{output_path}/{SimilarityJC.FILENAME}", "w") as f:
+                f.write(html)
+
+        return html
 
 class SimilarityTPM(Similarity, Page):
     FILENAME = "similarity-table-tpm.html"
@@ -291,7 +296,7 @@ class SimilarityTPM(Similarity, Page):
         tags.h1("Similarity of TPMs based on their performance")
 
     @overrides
-    def run(self, output_path: str):
+    def run(self, output_path: Optional[str] = None, notebook: bool = False):
         def operation_avg(result: PerformanceResultTPM):
             return result.operation_avg if result.operation_avg else 0
 
@@ -309,8 +314,7 @@ class SimilarityTPM(Similarity, Page):
             for group in SimilarityFunctionsTPM.GROUPS
         ]
 
-        with open(f"{output_path}/{SimilarityTPM.FILENAME}", "w") as f:
-            f.write(self.run_single(
+        html = self.run_single(
                 doc_title="tpm2-algtest - Similarity table",
                 intro=self.intro,
                 similarity_table=partial(
@@ -322,5 +326,11 @@ class SimilarityTPM(Similarity, Page):
                     ),
                     group_abbreviations=SimilarityFunctionsTPM.ABBREVIATIONS
                 )
-            ))
+        )
+
+        if not notebook and output_path:
+            with open(f"{output_path}/{SimilarityTPM.FILENAME}", "w") as f:
+                f.write(html)
+
+        return html
 

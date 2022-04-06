@@ -1,12 +1,12 @@
+import os
 import sys
 from typing import List, Optional
 
 import click
 from click import Path
 
-from algtestprocess.modules.jcalgtest import (
-    ProfilePerformanceFixedJC, ProfilePerformanceVariableJC
-)
+from algtestprocess.modules.jcalgtest import ProfilePerformanceFixedJC, ProfilePerformanceVariableJC
+
 from algtestprocess.modules.pages.comparativetable import ComparativeTable
 from algtestprocess.modules.pages.compare import Compare
 from algtestprocess.modules.pages.executiontime import ExecutionTimeJC, \
@@ -21,8 +21,10 @@ from algtestprocess.modules.parser.javacard.performance import \
     fix_missing_underscores, fix_missing_variable_data_lengths, convert_to_json, \
     prepare_missing_measurements, compute_stats, get_files_to_process
 from algtestprocess.modules.parser.javacard.support import SupportParserJC
+from algtestprocess.modules.parser.tpm.detail import Detail
 from algtestprocess.modules.parser.tpm.performance import PerformanceParserTPM
 from algtestprocess.modules.parser.tpm.support import SupportParserTPM
+from algtestprocess.modules.visualisation.heatmap import heatmap
 
 
 def fix_results(directory):
@@ -60,17 +62,20 @@ def get_javacard_profiles(directory):
 
 
 def get_tpm_profiles(directory):
-    performance_dir = f"{directory}/tpm/profiles/performance/"
-    support_dir = f"{directory}/tpm/profiles/results/"
-    files_performance = get_files_to_process(performance_dir, ".csv")
-    files_support = get_files_to_process(support_dir, ".csv")
-    profiles_performance = list(map(
-        lambda x: PerformanceParserTPM(x).parse(), files_performance
-    ))
-    profiles_support = list(map(
-        lambda x: SupportParserTPM(x).parse(), files_support
-    ))
-    return profiles_performance, profiles_support
+    files = [
+        os.path.join(root, file)
+        for root, dirs, files in os.walk(directory) for file in files]
+    performance = list(filter(
+        lambda name: "/performance/" in name and ".csv" in name, files))
+    performance = list(filter(
+        lambda profile: profile.results,
+        map(lambda path: PerformanceParserTPM(path).parse(), performance)))
+    support = list(filter(
+        lambda name: "/results/" in name and ".csv" in name, files))
+    support = list(filter(
+        lambda profile: profile.results,
+        map(lambda path: SupportParserTPM(path).parse(), support)))
+    return performance, support
 
 
 def run(to_run: List[Page], output_dir: str):
@@ -101,7 +106,8 @@ def run(to_run: List[Page], output_dir: str):
         "scalability",
         "similarity",
         "support",
-        "compare"
+        "compare",
+        "heatmap"
     ], case_sensitive=False
     )
 )
@@ -145,6 +151,7 @@ def main(
         "similarity",
         "support",
         "compare"
+        "heatmap"
     } if "all" in operations else set(operations)
 
     if "javacard" in devices:
@@ -191,8 +198,30 @@ def main(
         if "javacard" in devices:
             to_run.append(Compare(fixed))
 
-    if output_dir:
-        run(to_run, output_dir)
+    if "heatmap" in operations:
+        if "tpm" in devices:
+            out = Detail(results_dir).parse()
+            rsa_1024 = out["rsa_1024"]
+            n = list(map(lambda x: int(x, 16), rsa_1024["n"].tolist()))
+            p = list(map(lambda x: int(x, 16), rsa_1024["p"].tolist()))
+            q = [a // b for a, b in zip(n, p)]
+
+            p_byte = [x >> (x.bit_length() - 8) for x in p]
+            q_byte = [x >> (x.bit_length() - 8) for x in q]
+            print(p_byte)
+            print(q_byte)
+            heatmap(
+                x=p_byte,
+                y=q_byte,
+                output_path=output_dir,
+                name="my_tpm_better"
+            )
+
+    if not os.path.isdir(output_dir):
+        os.mkdir(output_dir)
+
+
+    run(to_run, output_dir)
 
 
 if __name__ == "__main__":

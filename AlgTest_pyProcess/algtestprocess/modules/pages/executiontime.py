@@ -153,7 +153,7 @@ class ExecutionTimeJC(Page, ExecutionTime):
         )
 
     @overrides
-    def run(self, output_path: str):
+    def run(self, output_path: Optional[str] = None, notebook: bool = False):
         def title(profile: ProfilePerformanceFixedJC):
             return f"JCAlgTest - {profile.device_name()} run time"
 
@@ -362,7 +362,7 @@ class ExecutionTimeTPM(Page, ExecutionTime):
             )
 
     @overrides
-    def run(self, output_path: str):
+    def run(self, output_path: Optional[str] = None, notebook: bool = False):
         def title(profile: ProfilePerformanceTPM):
             return f"tpm-algtest - {profile.device_name()} run time"
 

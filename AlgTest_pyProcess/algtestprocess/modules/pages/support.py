@@ -69,7 +69,7 @@ class Support:
             profiles: List[Profile]):
         filtered: Dict[str, List[str]] = \
             self.filter_by_support(device, support_groups, profiles) \
-            if support_groups else {}
+                if support_groups else {}
         tags.input_(
             type="button",
             className="btn btn-outline-dark",
@@ -202,7 +202,8 @@ class Support:
             abbreviations: Callable,
             notes: Optional[Callable],
             checkboxes: Callable,
-            table: Callable):
+            table: Callable,
+            notebook: bool = False):
         doc_title = title
 
         def head_additions():
@@ -225,6 +226,7 @@ class Support:
             head_additions=head_additions,
             children_outside=children_outside,
             back_to_top=True,
+            notebook=notebook
         )
 
 
@@ -413,21 +415,27 @@ class SupportJC(Support, Page):
                 self.javacard_main()
 
     @overrides
-    def run(self, output_path: str):
-        with open(f"{output_path}/{SupportJC.FILENAME}", "w") as f:
-            f.write(self.run_single(
-                title="JCAlgTest - Support table",
-                intro=self.intro,
-                abbreviations=self.abbreviations,
-                notes=self.notes,
-                checkboxes=partial(
-                    self.checkboxes,
-                    device="card",
-                    support_groups=SupportGroups.GROUPS,
-                    profiles=self.profiles,
-                ),
-                table=self.table
-            ))
+    def run(self, output_path: Optional[str] = None, notebook: bool = False):
+        html = self.run_single(
+            title="JCAlgTest - Support table",
+            intro=self.intro,
+            abbreviations=self.abbreviations,
+            notes=self.notes,
+            checkboxes=partial(
+                self.checkboxes,
+                device="card",
+                support_groups=SupportGroups.GROUPS,
+                profiles=self.profiles,
+            ),
+            table=self.table
+        )
+
+        if output_path:
+            output_path = f"{output_path}/{SupportJC.FILENAME}"
+            with open(output_path, "w") as f:
+                f.write(html)
+
+        return html, output_path
 
 
 class SupportTPM(Support, Page):
@@ -503,18 +511,25 @@ class SupportTPM(Support, Page):
                 self.tpm_main()
 
     @overrides
-    def run(self, output_path: str):
-        with open(f"{output_path}/{SupportTPM.FILENAME}", "w") as f:
-            f.write(self.run_single(
-                title="tpm-algtest - Support table",
-                intro=self.intro,
-                abbreviations=self.abbreviations,
-                notes=None,
-                checkboxes=partial(
-                    self.checkboxes,
-                    device="tpm",
-                    support_groups={},
-                    profiles=self.profiles,
-                ),
-                table=self.table
-            ))
+    def run(self, output_path: Optional[str] = None, notebook: bool = False):
+        html = self.run_single(
+            title="tpm-algtest - Support table",
+            intro=self.intro,
+            abbreviations=self.abbreviations,
+            notes=None,
+            checkboxes=partial(
+                self.checkboxes,
+                device="tpm",
+                support_groups={},
+                profiles=self.profiles,
+            ),
+            table=self.table,
+            notebook=notebook
+        )
+
+        if output_path:
+            output_path = f"{output_path}/{SupportTPM.FILENAME}"
+            with open(output_path, "w") as f:
+                f.write(html)
+
+        return html, output_path

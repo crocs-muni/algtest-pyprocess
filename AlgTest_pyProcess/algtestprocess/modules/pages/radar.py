@@ -1,6 +1,6 @@
 import os.path
 from functools import partial
-from typing import Dict, List, Tuple, Union, Callable, Set
+from typing import Dict, List, Tuple, Union, Callable, Set, Optional
 
 from dominate import tags
 from overrides import overrides
@@ -161,7 +161,7 @@ class RadarJC(Radar, Page):
         )
 
     @overrides
-    def run(self, output_path: str):
+    def run(self, output_path: Optional[str] = None, notebook: bool = False):
         def intro(profiles: List[ProfilePerformanceFixedJC]):
             return self.intro(profiles[0])
 
@@ -279,7 +279,7 @@ class RadarTPM(Radar, Page):
         tags.h1(profile.test_info['TPM name'], className="pt-5")
         tags.h3("Radar graph provides visual overview of TPM performance")
 
-    def run(self, output_path: str):
+    def run(self, output_path: Optional[str] = None, notebook: bool = False):
         def intro(profiles: List[ProfilePerformanceTPM]):
             return self.intro(profiles[0])
 

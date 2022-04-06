@@ -1,7 +1,7 @@
 import os
 from functools import partial
 
-from typing import Tuple, List, Callable, Dict, Union
+from typing import Tuple, List, Callable, Dict, Union, Optional
 
 from dominate import tags
 from overrides import overrides
@@ -48,7 +48,7 @@ class Compare(RadarJC, Page):
         )
 
     @overrides
-    def run(self, output_path: str):
+    def run(self, output_path: Optional[str] = None, notebook: bool = False):
         def title(profiles: List[ProfilePerformanceFixedJC]):
             return f"JCAlgtest - {profiles[0].device_name()} " \
                    f"vs {profiles[1].device_name()} radar graph"

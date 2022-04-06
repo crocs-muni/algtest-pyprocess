@@ -13,7 +13,8 @@ def layout(
         children_outside: Optional[Callable] = None,
         head_additions: Optional[Callable] = None,
         back_to_top: bool = False,
-        path_prefix: str = './'
+        path_prefix: str = './',
+        notebook: bool = False
 ):
     doc = document(title=doc_title)
     with doc.head:
@@ -21,13 +22,16 @@ def layout(
         if head_additions:
             head_additions()
     with doc:
-        header(path_prefix=path_prefix)
+        if not notebook:
+            header(path_prefix=path_prefix)
         if children:
             with tags.div(className="container pt-5"):
                 children()
         if children_outside:
             children_outside()
-        if back_to_top:
-            tags.a(href="#", className="back-to-top")
+        if not notebook:
+            if back_to_top:
+                tags.a(href="#", className="back-to-top")
+
         footer(path_prefix=path_prefix)
     return str(doc)

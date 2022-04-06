@@ -84,4 +84,5 @@ class ProfileSupportTPM(ProfileTPM):
 
     @overrides
     def add_result(self, result):
-        self.results[result.name] = result
+        if result.name:
+            self.results[result.name] = result

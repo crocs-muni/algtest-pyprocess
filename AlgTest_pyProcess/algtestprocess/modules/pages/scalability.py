@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 from dominate import tags
 from overrides import overrides
@@ -166,7 +166,7 @@ class Scalability(Page):
         )
 
     @overrides
-    def run(self, output_path: str):
+    def run(self, output_path: Optional[str] = None, notebook: bool = False):
         output_path = f"{output_path}/{Scalability.SUBFOLDER_NAME}"
         data = run_helper(output_path, self.profiles, self.run_single)
         with open(f"{output_path}/{Scalability.FILENAME}", "w") as f:

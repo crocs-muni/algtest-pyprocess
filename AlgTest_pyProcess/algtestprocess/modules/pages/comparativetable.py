@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from dominate import tags
 from overrides import overrides
@@ -123,6 +123,11 @@ class ComparativeTable(Page):
         )
 
     @overrides
-    def run(self, output_path: str):
-        with open(f"{output_path}/{ComparativeTable.FILENAME}", "w") as f:
-            f.write(self.run_single())
+    def run(self, output_path: Optional[str] = None, notebook: bool = False):
+        html = self.run_single()
+
+        if not notebook and output_path:
+            with open(f"{output_path}/{ComparativeTable.FILENAME}", "w") as f:
+                f.write(html)
+
+        return html
