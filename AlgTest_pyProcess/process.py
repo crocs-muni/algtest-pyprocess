@@ -46,35 +46,77 @@ def process_results(directory: str):
 
 
 def get_javacard_profiles(directory):
-    performance_dir = f"{directory}/javacard/Profiles/performance/"
-    support_dir = f"{directory}/javacard/Profiles/results/"
-    files_performance = get_files_to_process(performance_dir, ".json")
-    files_support = get_files_to_process(support_dir, ".csv")
+    """
+        When parsing profiles for JavaCards, it is assumed that fixed and variable
+        results were processed before and *.json outputs were created. That means 
+        script was called with `process` argument.
+
+        Following path illustrate valid result directories
+
+        Performance results folder with *.json files
+        {directory}/.*/[Pp]erformance/(fixed|variable)/ 
+
+        Support results folder with *.csv files
+        {directory}/.*/[rR]esults/
+
+    """
+
+    files_performance = get_files_to_process(directory, ".json")
+
+    if not files_performance:
+        print("get_javacard_profiles: script needs to be called with process argument first")
+        sys.exit(1)
+
+    files_support = get_files_to_process(directory, ".csv")
+
     profiles_fixed = list(map(
         lambda x: PerformanceParserJC(x).parse(ProfilePerformanceFixedJC()),
-        filter(lambda x: "fixed" in x, files_performance)))
+        filter(
+            lambda y: "/performance/" in y.lower() and "/fixed/" in y,
+            files_performance
+    )))
     profiles_variable = list(map(
         lambda x: PerformanceParserJC(x).parse(ProfilePerformanceVariableJC()),
-        filter(lambda x: "variable" in x, files_performance)))
+        filter(
+            lambda y: "/performance/" in y.lower() and "/variable/" in y, 
+            files_performance
+    )))
     profiles_support = list(map(
-        lambda x: SupportParserJC(x).parse(), files_support))
+        lambda x: SupportParserJC(x).parse(), 
+        filter(
+            lambda y: "/results/" in y.lower(), 
+            files_support
+    )))
+
     return profiles_fixed, profiles_variable, profiles_support
 
 
 def get_tpm_profiles(directory):
+    """
+       When parsing tpm profiles
+
+       For performance profiles folder with *.csv results
+       {directory}/.*/[Pp]erformance/
+
+       For support profiles folder with *.csv files
+       {directory}/.*/[Rr]esults/
+    """
     files = [
         os.path.join(root, file)
-        for root, dirs, files in os.walk(directory) for file in files]
+        for root, _, files in os.walk(directory) for file in files
+    ]
     performance = list(filter(
-        lambda name: "/performance/" in name and ".csv" in name, files))
+        lambda name: "/performance/" in name.lower() and ".csv" in name, files))
     performance = list(filter(
         lambda profile: profile.results,
         map(lambda path: PerformanceParserTPM(path).parse(), performance)))
+
     support = list(filter(
-        lambda name: "/results/" in name and ".csv" in name, files))
+        lambda name: "/results/" in name.lower() and ".csv" in name, files))
     support = list(filter(
         lambda profile: profile.results,
         map(lambda path: SupportParserTPM(path).parse(), support)))
+
     return performance, support
 
 
@@ -153,6 +195,8 @@ def main(
         "compare"
         "heatmap"
     } if "all" in operations else set(operations)
+    
+    fixed = variable = support = performance = support_tpm = []
 
     if "javacard" in devices:
         fixed, variable, support = get_javacard_profiles(results_dir)

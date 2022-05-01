@@ -19,6 +19,7 @@ def get_algorithm(algorithm: str):
 
 
 def get_key_params(key_params: str):
+    """Helper for correctly parsing key params section of result"""
     if key_params and re.match(r"ECC 0x[0-9a-f]+", key_params):
         key_params = to_int(key_params.split()[1], 16)
         return TPM2Identifier.ECC_CURVE_STR[key_params]

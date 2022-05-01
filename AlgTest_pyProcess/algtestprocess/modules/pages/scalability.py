@@ -169,6 +169,10 @@ class Scalability(Page):
     def run(self, output_path: Optional[str] = None, notebook: bool = False):
         output_path = f"{output_path}/{Scalability.SUBFOLDER_NAME}"
         data = run_helper(output_path, self.profiles, self.run_single)
+        data = list(map(
+            lambda pair: (pair[0], f"./{pair[0]}.html"),
+            data
+        ))
         with open(f"{output_path}/{Scalability.FILENAME}", "w") as f:
             f.write(
                 cardlist(

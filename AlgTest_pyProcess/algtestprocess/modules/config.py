@@ -1,4 +1,5 @@
 class TopFunctionsJC:
+    """JavaCard Top Functions with abbreviations"""
     SYM = [
         ("SECURE RANDOM (256B)", "ALG_SECURE_RANDOM RandomData_generateData()"),
         ("SHA-1 hash (256B)", "ALG_SHA MessageDigest_doFinal()"),
@@ -56,6 +57,7 @@ class TopFunctionsJC:
 
 
 class SimilarityFunctionsJC:
+    """Groups for algorithm identifiers used in similarity table for JavaCards"""
     RSA = [
         "TYPE_RSA_PRIVATE LENGTH_RSA_1024 ALG_RSA_NOPAD Cipher_doFinal()",
         "TYPE_RSA_PRIVATE LENGTH_RSA_2048 ALG_RSA_NOPAD Cipher_doFinal()",
@@ -114,6 +116,7 @@ class SimilarityFunctionsJC:
 
 
 class SimilarityFunctionsTPM:
+    """Groups for algorithm identifiers used in similarity table for TPMs"""
     RSA_ENC_DEC = [
         'TPM2_RSA_Decrypt RSA 1024 TPM2_ALG_NULL',
         'TPM2_RSA_Decrypt RSA 1024 TPM2_ALG_OAEP',
@@ -280,6 +283,7 @@ class SupportGroups:
 
 
 class TPM2Identifier:
+    """Class for parsing hex identifiers of TPM algs and commands"""
     ALG_ID_STR = {
         0x0001: "TPM2_ALG_RSA",
         0x0004: "TPM2_ALG_SHA",
