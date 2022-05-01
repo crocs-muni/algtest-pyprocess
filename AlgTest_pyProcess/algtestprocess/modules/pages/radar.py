@@ -190,7 +190,8 @@ class RadarJC(Radar, Page):
                     top_functions=RadarJC.TOP_FUNCTIONS,
                     normalized=self.normalized,
                     operation_avg=operation_avg
-                )
+                ),
+                notebook=notebook
             ),
         )
         data = list(map(

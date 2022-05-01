@@ -429,7 +429,8 @@ class SupportJC(Support, Page):
                 support_groups=SupportGroups.GROUPS,
                 profiles=self.profiles,
             ),
-            table=self.table
+            table=self.table,
+            notebook=notebook
         )
 
         if output_path:

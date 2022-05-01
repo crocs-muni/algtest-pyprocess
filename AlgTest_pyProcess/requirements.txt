@@ -1,3 +1,6 @@
 dominate
 click
 overrides
+pandas
+seaborn
+matplotlib
