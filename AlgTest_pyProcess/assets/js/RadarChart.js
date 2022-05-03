@@ -23,7 +23,7 @@ var RadarChart = {
 	 ToRight: 5,
 	 TranslateX: 80,
 	 TranslateY: 30,
-	 ExtraWidthX: 100,
+	 ExtraWidthX: 400,
 	 ExtraWidthY: 100,
 	 color: d3.scale.category10()
 	};
