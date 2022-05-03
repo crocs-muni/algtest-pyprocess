@@ -16,6 +16,7 @@ def layout(
         back_to_top: bool = False,
         path_prefix: str = './',
         notebook: bool = False,
+        device: str = 'javacard'
 ):
     doc = document(title=doc_title)
     with doc.head:
@@ -26,7 +27,7 @@ def layout(
         )
     with doc:
         if not notebook:
-            header(path_prefix=path_prefix)
+            header(path_prefix=path_prefix, device=device)
         if children:
             with tags.div(className="container pt-5"):
                 children()

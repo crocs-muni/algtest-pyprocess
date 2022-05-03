@@ -103,7 +103,8 @@ class Radar:
             intro: Callable,
             get_graph: Callable,
             title: Callable,
-            notebook: bool = False
+            notebook: bool = False,
+            device: str = 'javacard'
     ):
         doc_title = title(profiles)
 
@@ -127,7 +128,8 @@ class Radar:
             other_scripts=other_scripts,
             back_to_top=True,
             path_prefix="../",
-            notebook=notebook
+            notebook=notebook,
+            device=device
         )
 
 
@@ -310,7 +312,8 @@ class RadarTPM(Radar, Page):
                     normalized=self.normalized,
                     operation_avg=operation_avg
                 ),
-                notebook=notebook
+                notebook=notebook,
+                device='tpm'
             )
         )
         data = list(map(
@@ -322,6 +325,7 @@ class RadarTPM(Radar, Page):
             data,
             "tpm-algtest - Performance radar graphs",
             RadarTPM.cardlist_text,
+            device='tpm'
         )
 
         if output_path:

@@ -87,7 +87,8 @@ class ExecutionTime(ABC):
             categories: List[str],
             title: Callable,
             intro: Callable,
-            notebook: bool = False
+            notebook: bool = False,
+            device: str = 'javacard'
     ):
         doc_title = title(profile)
 
@@ -100,7 +101,8 @@ class ExecutionTime(ABC):
             children=children,
             back_to_top=True,
             path_prefix="../",
-            notebook=notebook
+            notebook=notebook,
+            device=device
         )
 
 
@@ -387,7 +389,8 @@ class ExecutionTimeTPM(Page, ExecutionTime):
                     categories=categories,
                     heading=heading,
                 ),
-                notebook=notebook
+                notebook=notebook,
+                device='tpm'
             )
         )
         data = list(map(
@@ -399,8 +402,7 @@ class ExecutionTimeTPM(Page, ExecutionTime):
             data,
             "tpm-algtest - Algorithm execution time",
             ExecutionTimeTPM.cardlist_text,
-            None,
-            None,
+            device='tpm'
         )
 
         with open(f"{output_path}/{ExecutionTimeJC.FILENAME}", "w") as f:

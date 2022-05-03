@@ -12,6 +12,7 @@ def cardlist(
         text: Optional[Callable] = None,
         img: Optional[Callable] = None,
         alert: Optional[Callable] = None,
+        device: str = 'javacard'
 ):
     """
     Page for referencing each card created
@@ -27,7 +28,7 @@ def cardlist(
                     img()
             if alert:
                 alert()
-        tags.h4("List of tested Java Cards")
+        tags.h4("List of tested devices")
         with tags.ul(className="list-group"):
             for name, href in data:
                 with tags.li(className="list-group-item"):
@@ -39,5 +40,6 @@ def cardlist(
         doc_title=title,
         children=children,
         path_prefix="../",
-        back_to_top=True
+        back_to_top=True,
+        device=device
     )

@@ -2,12 +2,12 @@ from typing import List, Tuple
 
 from dominate import tags
 
-HEADER_ITEMS_BASIC = [
+JC_HI_BASIC = [
     ("index.html#about", "About"),
     ("table.html", "Support table"),
     ("contact.html", "Contact"),
 ]
-HEADER_ITEMS_DROPDOWN = [
+JC_HI_DROPDOWN = [
     (
         "Performance testing",
         [
@@ -37,6 +37,19 @@ HEADER_ITEMS_DROPDOWN = [
             ),
         ],
     ),
+]
+
+TPM_HI_BASIC = [
+    ("tpmtable.html", "Support table"),
+]
+
+TPM_HI_DROPDOWN = [
+    ('Performance testing', [
+        ('run-time-tpm/execution-time.html', 'Algorithm execution time'),
+        ('radar-graphs-tpm/radar-graphs.html', 'Radar graphs'),
+        ('similarity-table-tpm.html', 'Similarity table'),
+        ('crypto-properties/crypto-properties.html', 'Crypto properties')
+    ])
 ]
 
 DropdownLabel = str
@@ -83,15 +96,16 @@ def header_items_basic(items: List[Tuple[str, str]], path_prefix: str = "./"):
             )
 
 
-def header(path_prefix: str = "./"):
+def header(path_prefix: str = "./", device: str = 'javacard'):
     with tags.nav(
             className="navbar navbar-inverse navbar-expand-lg fixed-top "
                       "navbar-light bg-dark px-4 vw-100"
     ):
-        with tags.a(
-                className="navbar-brand", href=path_prefix + "/index.html"
-        ):
-            tags.img(src=path_prefix + "pics/logo_wide.png")
+        if device == 'javacard':
+            with tags.a(
+                    className="navbar-brand", href=path_prefix + "/index.html"
+            ):
+                tags.img(src=path_prefix + "pics/logo_wide.png")
 
         with tags.button(
                 className="navbar-toggler",
@@ -109,6 +123,11 @@ def header(path_prefix: str = "./"):
                 id="navbarContents",
         ):
             with tags.ul(className="nav navbar-nav"):
-                header_items_basic(HEADER_ITEMS_BASIC[:2], path_prefix)
-                header_items_dropdown(HEADER_ITEMS_DROPDOWN, path_prefix)
-                header_items_basic(HEADER_ITEMS_BASIC[2:], path_prefix)
+                if device == 'javacard':
+                    header_items_basic(JC_HI_BASIC[:2], path_prefix)
+                    header_items_dropdown(JC_HI_DROPDOWN, path_prefix)
+                    header_items_basic(JC_HI_BASIC[2:], path_prefix)
+                elif device == 'tpm':
+                    header_items_basic(TPM_HI_BASIC, path_prefix)
+                    header_items_dropdown(TPM_HI_DROPDOWN, path_prefix)
+

@@ -105,11 +105,14 @@ class ComparativeTable(Page):
             self.content()
 
         def children_outside():
-            tags.script(
-                "$(document).ready(function() {"
-                "$('#sortable_sym').DataTable();"
-                "} );"
-            )
+            for table_id in ["#sortable_sym", "#sortable_asym"]:
+                tags.script(
+                    "$(document).ready(function() {"
+                    f"$('{table_id}').DataTable("
+                    "{'paging':false,'info':false"
+                    "});"
+                    "});"
+                )
             tags.script(
                 "$(document).ready(function() {"
                 "$('#sortable_asym').DataTable();"

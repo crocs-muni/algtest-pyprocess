@@ -174,7 +174,8 @@ class Similarity:
             doc_title: str,
             intro: Callable,
             similarity_table: Callable,
-            notebook: bool = False
+            notebook: bool = False,
+            device: str = 'javacard'
     ):
 
         def children_outside():
@@ -187,7 +188,8 @@ class Similarity:
         return layout(
             doc_title=doc_title,
             children_outside=children_outside,
-            notebook=notebook
+            notebook=notebook,
+            device=device
         )
 
 
@@ -327,7 +329,8 @@ class SimilarityTPM(Similarity, Page):
                 ),
                 group_abbreviations=SimilarityFunctionsTPM.ABBREVIATIONS
             ),
-            notebook=notebook
+            notebook=notebook,
+            device='tpm'
         )
 
         if output_path:

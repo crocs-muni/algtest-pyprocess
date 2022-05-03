@@ -187,13 +187,14 @@ class Support:
                 tags.td(key, className="light")
                 for profile in profiles:
                     content = get_content(profile, key)
-                    content = content.split(";")[0] if content else "-"
+                    support = content.split(";")[0] if content else "-"
+                    status = content.split(';')[1] if support == 'error' else support
                     colored_cell(
                         partial(
                             tags.td,
-                            title=f"{profile.device_name()} : {key} : {content}"
+                            title=f"{profile.device_name()} : {key} : {status}"
                         ),
-                        content
+                        support
                     )
 
     def run_single(
@@ -204,7 +205,9 @@ class Support:
             notes: Optional[Callable],
             checkboxes: Callable,
             table: Callable,
-            notebook: bool = False):
+            notebook: bool = False,
+            device: str = 'javacard'
+    ):
         doc_title = title
 
         additions = [
@@ -228,7 +231,8 @@ class Support:
             asset_additions=additions,
             children_outside=children_outside,
             back_to_top=True,
-            notebook=notebook
+            notebook=notebook,
+            device=device
         )
 
 
@@ -373,7 +377,7 @@ class SupportJC(Support, Page):
             result = profile.results.get(key)
             if result:
                 return ("yes" if result.support else "no") \
-                    if result.status == "OK" else "error"
+                    if result.status == "OK" else f"error;{result.status}"
             return "-"
 
         for cat in SupportJC.CATEGORIES:
@@ -527,7 +531,8 @@ class SupportTPM(Support, Page):
                 profiles=self.profiles,
             ),
             table=self.table,
-            notebook=notebook
+            notebook=notebook,
+            device='tpm'
         )
 
         if output_path:
