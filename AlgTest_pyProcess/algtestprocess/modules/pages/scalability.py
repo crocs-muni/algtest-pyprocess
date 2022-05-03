@@ -53,6 +53,10 @@ class Scalability(Page):
 
     @staticmethod
     def chart_scripts_begin():
+        """
+        Only script which cannot be inlined, allows for scalability
+        chart creation.
+        """
         tags.script(
             type="text/javascript",
             src="https://www.gstatic.com/charts/loader.js",
@@ -70,6 +74,11 @@ class Scalability(Page):
 
     @staticmethod
     def get_chart(result: Tuple[str, List[PerformanceResultJC]]):
+        """
+        Creates scalability chart
+        :param result: (function name, measurement results with diff datalength)
+        :return: script html object
+        """
         name, methods = result
         s = tags.script(type="text/javascript")
         s.add(
@@ -113,6 +122,9 @@ class Scalability(Page):
         )
     @staticmethod
     def get_chart_placeholder(name: str):
+        """
+        Each chart needs div with id where chart can be rendered
+        """
         div = tags.div(className="graph")
         div.add(tags.h4(name))
         div.add(tags.div(
@@ -123,6 +135,7 @@ class Scalability(Page):
 
     @staticmethod
     def get_charts(profile: ProfilePerformanceVariableJC):
+        """Creates charts for functions in two columns"""
         cols = [tags.div(className="col-md-6"),
                 tags.div(className="col-md-6")]
         count = 0

@@ -27,6 +27,14 @@ class Similarity:
             functions: List[str],
             operation_avg: Callable
     ) -> Normalized:
+        """
+        Normalizes the function op averages so they can be used in similarity
+        computation
+        :param profiles: profiles for which results will be normalized
+        :param functions: which will be normalized
+        :param operation_avg: lambda to get the op avg from result
+        :return: Dict[function][profile]
+        """
         normalized = {}
         for f in functions:
             max_avg = max(
@@ -53,6 +61,7 @@ class Similarity:
             normalized: Normalized,
             functions: List[str]
     ) -> ProfilePairSimilarity:
+        """Computing profile pair similarity"""
         similarity = {}
         for p1 in profiles:
             for p2 in profiles:
@@ -74,6 +83,7 @@ class Similarity:
             profiles: List[Profile],
             similarities: List[ProfilePairSimilarity],
     ) -> List[Profile]:
+        """Sorting according to the pair similarity"""
         pairs = []
         for p1 in profiles:
             total = 0
@@ -141,6 +151,13 @@ class Similarity:
             similarities: List[ProfilePairSimilarity],
             group_abbreviations: List[str]
     ):
+        """
+        Creates the similarity table
+        :param profiles:
+        :param similarities: computed using compute method
+        :param group_abbreviations: for groups of algorithms for
+               which similarity is computed
+        """
         with tags.table(className="compare", cellspacing=0):
             with tags.tbody():
                 self.compare_table_header(
@@ -177,7 +194,6 @@ class Similarity:
             notebook: bool = False,
             device: str = 'javacard'
     ):
-
         def children_outside():
             with tags.div(className="container-fluid pt-5"):
                 with tags.div(className="flex row pt-5"):

@@ -27,6 +27,13 @@ class Radar:
             profiles: List[Profile],
             operation_avg: Callable
     ) -> Dict[str, Dict[Profile, float]]:
+        """
+        Normalize the operation times for comparison across all profiles
+        :param top_functions: functions which are normalized
+        :param profiles: profiles
+        :param operation_avg: function which gets the avg_op time from result
+        :return: dict[function][profile] returns normalized values
+        """
         normalized = {}
         for _, f in top_functions:
             max_avg = max(
@@ -50,8 +57,18 @@ class Radar:
             profiles: List[Profile],
             top_functions: List[Tuple[str, str]],
             normalized: Dict[str, Dict[Profile, float]],
-            operation_avg: Callable
+            operation_avg: Callable,
+            hide_axes: bool = False
     ):
+        """
+        Creates graph script data for n > 1 profiles in the same chart
+        :param profiles: chosen to be compared
+        :param top_functions: which will create axes of the radar chart
+        :param normalized: values
+        :param operation_avg: lambda for getting op_avg from result
+        :param hide_axes: optionally can hide axes to prevent clutter
+        :return: script html object
+        """
         script = tags.script()
         script.add(
             "var w = document.getElementById('chart').offsetWidth;"
@@ -64,7 +81,7 @@ class Radar:
             for info, name in top_functions:
                 script.add(
                     "{"
-                    f"axis:'{info}',"
+                    f"axis:'{info if not hide_axes else ''}',"
                     "value:"
                     + format(
                         1 - normalized[name][profile]
@@ -77,8 +94,8 @@ class Radar:
                     + ","
                       "title:'"
                     + (
-                        format(operation_avg(profile.results[name]),
-                               ".2f") + "ms"
+                        (f"{info} ") +
+                        f"{format(operation_avg(profile.results[name]),'.2f')} ms"
                         if name in profile.results
                         else "NS"
                     )
@@ -106,6 +123,16 @@ class Radar:
             notebook: bool = False,
             device: str = 'javacard'
     ):
+        """
+        Creates a radar graph page for given list of profiles which are compared
+        :param profiles: chosen to be compared
+        :param intro: function which may create introductory part
+        :param get_graph: partial function which is when called creates a script
+        :param title: function which creates title
+        :param notebook: optional script inline, usable in jupyter notebooks
+        :param device: tpm or device, header depends on it
+        :return: html visualisation
+        """
         doc_title = title(profiles)
 
         additions = [
@@ -267,12 +294,15 @@ class RadarJC(Radar, Page):
 class RadarTPM(Radar, Page):
     FILENAME = "radar-graphs.html"
     SUBFOLDER_NAME = "radar-graphs-tpm"
-    # TODO top functions need to be selected for TPM2s
-    TOP_FUNCTIONS = lambda profiles: list(set([
-        (key, key)
-        for profiles in profiles
-        for key in profiles.results.keys()]
-    ))
+    # There are no TOP FUNCTIONS for TPMs, so all found fuctions
+    # create the axis
+    TOP_FUNCTIONS = lambda profiles: sorted(list(set([
+        (key.replace('TPM2_', '').replace('ALG_', '')
+         .replace('ECC_', '').replace('EncryptDecrypt ',''),
+         key)
+        for profile in profiles
+        for key in profile.results.keys()]
+    )))
 
     def __init__(self, profiles):
         self.profiles: List[ProfilePerformanceTPM] = profiles
@@ -310,7 +340,8 @@ class RadarTPM(Radar, Page):
                     self.get_graph,
                     top_functions=RadarTPM.TOP_FUNCTIONS(self.profiles),
                     normalized=self.normalized,
-                    operation_avg=operation_avg
+                    operation_avg=operation_avg,
+                    hide_axes=False
                 ),
                 notebook=notebook,
                 device='tpm'
