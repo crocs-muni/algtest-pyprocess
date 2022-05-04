@@ -131,7 +131,7 @@ class Radar:
         :param title: function which creates title
         :param notebook: optional script inline, usable in jupyter notebooks
         :param device: tpm or device, header depends on it
-        :return: html visualisation
+        :return: html visualization
         """
         doc_title = title(profiles)
 

@@ -1,6 +1,6 @@
-dominate
-click
-overrides
-pandas
-seaborn
-matplotlib
+dominate~=2.6.0
+click~=8.1.2
+overrides~=6.1.0
+pandas~=1.4.2
+matplotlib~=3.5.1
+numpy~=1.22.3
