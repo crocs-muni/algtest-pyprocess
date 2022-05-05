@@ -1,7 +1,9 @@
+import io
+
+import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 import numpy as np
-import io
-import matplotlib.gridspec as gridspec
+from matplotlib.colors import LinearSegmentedColormap
 
 
 class Heatmap:
@@ -28,7 +30,7 @@ class Heatmap:
         device_name = self.device_name
         p_byte = self.p_byte
         q_byte = self.q_byte
-        n_byte = self.q_byte
+        n_byte = self.n_byte
         record_count = len(p_byte)
         p_min = min(p_byte)
         p_max = max(p_byte)
@@ -78,8 +80,11 @@ class Heatmap:
         q_dens_ax = fig.add_subplot(bottom_gs[3:, 0:2])
         n_dens_ax = fig.add_subplot(bottom_gs[:, 2:8])
 
+        cmap = LinearSegmentedColormap.from_list(
+            '', Heatmap.COLORS, N=len(Heatmap.COLORS))
+
         # Draw heatmap/scatterplot
-        hm_ax.hist2d(p_byte, q_byte, bins=(128, 128), cmap=plt.cm.Oranges)
+        hm_ax.hist2d(p_byte, q_byte, bins=range(128, 256), cmap=cmap)
         hm_ax.set_xlabel("P", loc="left")
         hm_ax.set_ylabel("Q", loc="bottom")
 
@@ -119,18 +124,22 @@ class Heatmap:
 
         # Add histograms for P and Q
         bins = np.arange(128, 256, 1)
-        hm_histx_ax.hist(p_byte, bins=bins, color="black", ec="white")
+        hm_histx_ax.hist(p_byte, bins=bins, color="black", ec="white",
+                         density=True)
         hm_histy_ax.hist(q_byte, bins=bins, orientation='horizontal',
-                         color="black", ec="white")
+                         color="black", ec="white", density=True)
 
         # Turn off their axes
         hm_histx_ax.set_axis_off()
         hm_histy_ax.set_axis_off()
 
         # Draw p,q,n histograms
-        p_dens_ax.hist(p_byte, bins=bins, color="black", histtype='stepfilled')
-        q_dens_ax.hist(q_byte, bins=bins, color="black", histtype='stepfilled')
-        n_dens_ax.hist(q_byte, bins=bins, color="black", histtype='stepfilled')
+        p_dens_ax.hist(p_byte, bins=bins, color="black", histtype='stepfilled',
+                       density=True)
+        q_dens_ax.hist(q_byte, bins=bins, color="black", histtype='stepfilled',
+                       density=True)
+        n_dens_ax.hist(n_byte, bins=bins, color="black", histtype='stepfilled',
+                       density=True)
 
         p_dens_ax.spines['top'].set_visible(False)
         p_dens_ax.spines['left'].set_visible(False)
@@ -169,4 +178,22 @@ class Heatmap:
     def save(self, filename: str, format: str = 'png'):
         plt.savefig(filename, format=format)
 
+    COLORS = [
+        '#00000000', '#FFFFF0', '#FFFFE6', '#FFFFDB', '#FFFFD1', '#FFFFC7',
+        '#FFFFBD', '#FFFFB3', '#FFFFA8', '#FFFF9E', '#FFFF94', '#FFFF8A',
+        '#FFFF80', '#FFFF75', '#FFFF6B', '#FFFF61', '#FFFF57', '#FFFF4D',
+        '#FFFF42', '#FFFF38', '#FFFF2E', '#FFFF24', '#FFFF19', '#FFFF0F',
+        '#FFFF05', '#FFFF00', '#FFFC00', '#FFF800', '#FFF500', '#FFF100',
+        '#FFEE00', '#FFEA00', '#FFE700', '#FFE300', '#FFE000', '#FFDD00',
+        '#FFD900', '#FFD600', '#FFD200', '#FFCF00', '#FFCB00', '#FFC800',
+        '#FFC400', '#FFC100', '#FFBE00', '#FFBA00', '#FFB700', '#FFB300',
+        '#FFB000', '#FFAC00', '#FFA900', '#FFA500', '#FFA200', '#FF9F00',
+        '#FF9B00', '#FF9800', '#FF9400', '#FF9100', '#FF8D00', '#FF8A00',
+        '#FF8600', '#FF8300', '#FF8000', '#FF7C00', '#FF7900', '#FF7500',
+        '#FF7200', '#FF6E00', '#FF6B00', '#FF6700', '#FF6400', '#FF6000',
+        '#FF5D00', '#FF5A00', '#FF5600', '#FF5300', '#FF4F00', '#FF4C00',
+        '#FF4800', '#FF4500', '#FF4100', '#FF3E00', '#FF3B00', '#FF3700',
+        '#FF3400', '#FF3000', '#FF2D00', '#FF2900', '#FF2600', '#FF2200',
+        '#FF1F00', '#FF1C00', '#FF1800', '#FF1500', '#FF1100', '#FF0E00',
+        '#FF0A00', '#FF0700', '#FF0300', '#FF0000']
 
