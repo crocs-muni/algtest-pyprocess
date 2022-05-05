@@ -37,7 +37,9 @@ class CryptoProps:
     def parse(self):
         items = [
             ('rsa_1024', 'Keygen:RSA_1024.csv'),
-            ('rsa_2048', 'Keygen:RSA_2048.csv')
+            ('rsa_1024', 'Keygen_RSA_1024.csv'),
+            ('rsa_2048', 'Keygen:RSA_2048.csv'),
+            ('rsa_2048', 'Keygen_RSA_2048.csv')
         ]
         output = {}
         for key, filename in items:
