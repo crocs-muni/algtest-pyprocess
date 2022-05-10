@@ -6,7 +6,7 @@ import click
 from click import Path
 
 from algtestprocess.modules.pages.comparativetable import ComparativeTable
-from algtestprocess.modules.pages.compare import Compare
+from algtestprocess.modules.pages.compare import CompareJC, CompareTPM
 from algtestprocess.modules.pages.executiontime import ExecutionTimeJC, \
     ExecutionTimeTPM
 from algtestprocess.modules.pages.page import Page
@@ -95,7 +95,7 @@ def main(
         "scalability",
         "similarity",
         "support",
-        "compare"
+        "compare",
         "heatmap"
     } if "all" in operations else set(operations)
 
@@ -135,7 +135,9 @@ def main(
 
     if "compare" in operations:
         if "javacard" in devices:
-            to_run.append(Compare(fixed))
+            to_run.append(CompareJC(fixed))
+        if "tpm" in devices:
+            to_run.append(CompareTPM(performance))
 
     if not os.path.isdir(output_dir):
         os.mkdir(output_dir)

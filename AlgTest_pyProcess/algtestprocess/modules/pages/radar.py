@@ -144,8 +144,9 @@ class Radar:
             intro(profiles)
             tags.div(id="chart", className="col")
 
+        get_graph.keywords['profiles'] = profiles
         other_scripts = [
-            partial(get_graph, profiles)
+            get_graph
         ]
 
         return layout(
