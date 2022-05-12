@@ -15,10 +15,15 @@ def get_data(path: str):
 
 
 class SupportParserTPM:
+    """
+    TPM support profile parser
+    Note: reads CSV support profiles for TPMs
+    """
     def __init__(self, path: str):
         self.lines, self.filename = get_data(path)
 
     def parse_props_fixed(self, lines: List[str], result: SupportResultTPM):
+        """Parse fixed properties section"""
         joined = '\n'.join(lines)
 
         if "raw" not in joined and lines:

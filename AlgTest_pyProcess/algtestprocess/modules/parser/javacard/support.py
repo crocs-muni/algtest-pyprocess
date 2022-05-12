@@ -18,6 +18,11 @@ def satinize_category(category: str):
 
 
 def parse_name_provider_atr(profile: ProfileSupportJC, filename: str):
+    """
+    Function to parse JavaCard name, card provider and ATR from filename
+    :param profile: to store the data into
+    :param filename
+    """
     filename = filename.replace("_ALGSUPPORT_", "")
 
     for sub in ["_3B ", "_3b ", "_3B_", "_3b_"]:
@@ -48,7 +53,11 @@ def add_additional_test_info(profile: ProfileSupportJC, filename):
 
 
 class SupportParserJC:
-    """Data parsing from csv support results for javacards"""
+    """
+    JavaCard support profile parser
+    Note: reads CSV support profiles for JavaCards
+    """
+
     ADDITIONAL_TEST_INFO = [
         "Available RAM memory",
         "Available EEPROM memory",

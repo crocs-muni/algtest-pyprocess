@@ -3,9 +3,12 @@ import re
 import os
 
 
-
-
 class CryptoProps:
+    """
+    Cryptographic properties parser
+    Note: reads several CSV files
+    """
+
     # Counter for devices of which device name was not available
     # Needs to be unique so class variable is useful
     unknown_devname_counter = 0
@@ -44,11 +47,12 @@ class CryptoProps:
         output = {}
         for key, filename in items:
             try:
-                output[key] = pd.read_csv(
-                    f"{self.path}/{filename}",
-                    header=0,
-                    delimiter=";"
-                )
+                if output.get(key) is None:
+                    output[key] = pd.read_csv(
+                        f"{self.path}/{filename}",
+                        header=0,
+                        delimiter=";"
+                    )
             except FileNotFoundError:
                 continue
         if not output:
@@ -56,4 +60,3 @@ class CryptoProps:
 
         output['device_name'] = self.device_name
         return output
-

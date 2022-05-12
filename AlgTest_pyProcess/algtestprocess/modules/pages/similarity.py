@@ -61,7 +61,13 @@ class Similarity:
             normalized: Normalized,
             functions: List[str]
     ) -> ProfilePairSimilarity:
-        """Computing profile pair similarity"""
+        """
+        Computes the profile pair similarity
+        :param profiles: list of device profiles
+        :param normalized: normalized values of functions
+        :param functions: the keys for which will be the similarity computed
+        :return: dictionary ((tuple of profiles), similarity value)
+        """
         similarity = {}
         for p1 in profiles:
             for p2 in profiles:
@@ -83,7 +89,12 @@ class Similarity:
             profiles: List[Profile],
             similarities: List[ProfilePairSimilarity],
     ) -> List[Profile]:
-        """Sorting according to the pair similarity"""
+        """
+        Sorts the list of profiles according to profile pair similarity
+        :param profiles: list of device profiles
+        :param similarities: dictionary ((tuple of profiles), similarity value)
+        :return: sorted list of profiles
+        """
         pairs = []
         for p1 in profiles:
             total = 0
@@ -96,11 +107,16 @@ class Similarity:
         pairs.sort(key=lambda x: x[1], reverse=True)
         return list(map(lambda x: x[0], pairs))
 
-    def compare_table_header(
+    def similarity_table_header(
             self,
             profiles: List[Profile],
             group_abbreviations: List[str]
     ):
+        """
+        Creates similarity table header
+        :param profiles:
+        :param group_abbreviations: such as SimilarityFunctionsTPM.ABBREVIATIONS
+        """
         with tags.tr():
             for i in range(3):
                 tags.th(group_abbreviations[i])
@@ -160,7 +176,7 @@ class Similarity:
         """
         with tags.table(className="compare", cellspacing=0):
             with tags.tbody():
-                self.compare_table_header(
+                self.similarity_table_header(
                     profiles=profiles,
                     group_abbreviations=group_abbreviations
                 )
@@ -194,6 +210,15 @@ class Similarity:
             notebook: bool = False,
             device: str = 'javacard'
     ):
+        """
+        Creates a similarity table
+        :param doc_title:
+        :param intro: intro section
+        :param similarity_table: creates the table itself
+        :param notebook: inlines all JC and CSS and hides navigation
+        :param device: either 'javacard' or 'tpm'
+        :return: str of created HTML page
+        """
         def children_outside():
             with tags.div(className="container-fluid pt-5"):
                 with tags.div(className="flex row pt-5"):

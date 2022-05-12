@@ -65,6 +65,7 @@ class ProfilePerformanceTPM(ProfileTPM):
 
     @overrides
     def add_result(self, result):
+        # Result name representation required to be unique
         name = f"{result.category}"
         name += f" {result.key_params}" if result.key_params else ""
         name += f" {result.algorithm}" if result.algorithm else ""

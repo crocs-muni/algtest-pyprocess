@@ -23,6 +23,10 @@ class ExecutionTime(ABC):
 
     @staticmethod
     def quick_links(categories: List[str]):
+        """
+        Creates anchors to given categories
+        :param categories: list of categories
+        """
         tags.h3("Quick links")
         with tags.div(className="list-group"):
             for category in categories:
@@ -37,6 +41,11 @@ class ExecutionTime(ABC):
             name: str,
             dictionary: Dict[str, str]
     ):
+        """
+        Creates a simple table with two columns from dictionary
+        :param name: of the table
+        :param dictionary: containing the items
+        """
         tags.h3(name)
         data = [
             [key, val]
@@ -50,6 +59,14 @@ class ExecutionTime(ABC):
             heading: Callable,
             middle_additions: Optional[Callable] = None,
             right_additions: Optional[Callable] = None):
+        """
+        Creates the introductory section of the page
+        :param profile: current processed profile
+        :param categories: list of algorithm categories
+        :param heading: heading of the page
+        :param middle_additions: sections in the middle
+        :param right_additions: sections in the right
+        """
         with tags.div(className="row pt-5"):
             heading(profile)
 
@@ -71,12 +88,18 @@ class ExecutionTime(ABC):
 
     @abstractmethod
     def table(self, profile: Profile, category: str):
+        """Exact design of the table is up to the children to implement"""
         pass
 
     def tables(
             self,
             profile: Profile,
             categories: List[str]):
+        """
+        Creates tables for profile and categories
+        :param profile: list of devices
+        :param categories: list of algorithm categories
+        """
         with tags.div(className="row"):
             for category in categories:
                 self.table(profile, category)
@@ -85,11 +108,21 @@ class ExecutionTime(ABC):
             self,
             profile: Profile,
             categories: List[str],
-            title: Callable,
+            title: Callable[[Profile], str],
             intro: Callable,
             notebook: bool = False,
             device: str = 'javacard'
     ):
+        """
+        Creates a execution time page
+        :param profile: for which is the execution time page created for
+        :param categories: list of algorithm categories
+        :param title: page title created depending current profile
+        :param intro: introductory page
+        :param notebook: inlines JS and CSS and hides navigation
+        :param device: either 'javacard' or 'tpm'
+        :return: str of created page
+        """
         doc_title = title(profile)
 
         def children():

@@ -209,9 +209,12 @@ class SimilarityFunctionsTPM:
 
     GROUPS = [RSA_ENC_DEC, RSA_SIGN, ECC, ENC, CREATE, HASH]
 
-    ABBREVIATIONS = ["RSA Enc/Dec", "RSA Sign/Verify", "ECC", "ENC", "CREATE", "HASH"]
+    ABBREVIATIONS = ["RSA Enc/Dec", "RSA Sign/Verify", "ECC", "ENC", "CREATE",
+                     "HASH"]
 
-class SupportGroups:
+
+class SupportGroupsJC:
+    """Support page filtering groups for JavaCards"""
     ECC_ALGS = [
         "TYPE_EC_FP_PRIVATE LENGTH_EC_FP_112",
         "TYPE_EC_FP_PRIVATE LENGTH_EC_FP_128",

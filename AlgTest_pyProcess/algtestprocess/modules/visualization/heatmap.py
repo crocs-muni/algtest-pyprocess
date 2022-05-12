@@ -7,8 +7,14 @@ from matplotlib.colors import LinearSegmentedColormap
 
 
 class Heatmap:
+    """Class for plotting RSA most significant bytes into a heatmap"""
 
     def __init__(self, rsa_df, device_name):
+        """
+        Init function  the p,q,n bytes and builds the plot
+        :param rsa_df: pandas dataframe containing the private prime an moduli
+        :param device_name: to draw into the plot
+        """
         self.p_byte, self.q_byte, self.n_byte = \
             Heatmap.compute_pqn_bytes(rsa_df)
         self.device_name = device_name

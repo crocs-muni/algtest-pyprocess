@@ -1,10 +1,11 @@
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Dict
 
 from dominate import tags
 from overrides import overrides
 
 from algtestprocess.modules.components.cardlist import cardlist
 from algtestprocess.modules.components.layout import layout
+from algtestprocess.modules.components.simpletable import simple_table
 from algtestprocess.modules.jcalgtest import (
     ProfilePerformanceVariableJC,
     PerformanceResultJC,
@@ -49,7 +50,10 @@ class Scalability(Page):
     @staticmethod
     def test_details(profile: ProfilePerformanceVariableJC):
         tags.h3("Test details")
-        # TODO In a pretty way
+        data = [
+            [key, val]
+            for key, val in profile.test_info.items()]
+        simple_table(data)
 
     @staticmethod
     def chart_scripts_begin():

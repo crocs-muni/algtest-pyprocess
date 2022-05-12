@@ -34,6 +34,10 @@ def run_helper_multi(
         items: List[List[Profile]],
         run_single: Callable,
 ) -> Dict[Tuple[Profile, ...], str]:
+    """
+    Similar to run_helper method except for the fact it is called for
+    list of the profiles. Used in comparison radar graphs.
+    """
     if not os.path.exists(output_path):
         os.mkdir(output_path)
     data: Dict[Tuple[Profile, ...], str] = {}

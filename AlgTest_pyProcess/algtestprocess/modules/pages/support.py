@@ -7,7 +7,7 @@ from overrides import overrides
 
 from algtestprocess.modules.components.layout import layout
 from algtestprocess.modules.components.utils import AssetsPaths
-from algtestprocess.modules.config import SupportGroups, TPM2Identifier
+from algtestprocess.modules.config import SupportGroupsJC, TPM2Identifier
 from algtestprocess.modules.jcalgtest import ProfileSupportJC, ProfileJC
 from algtestprocess.modules.pages.page import Page
 from algtestprocess.modules.tpmalgtest import ProfileSupportTPM, ProfileTPM
@@ -51,6 +51,13 @@ class Support:
             device: str,
             support_groups: List[SupportGroup],
             profiles: List[Profile]):
+        """
+        Filters the profiles according to support groups
+        :param device: acronym for 'tpm' or 'card'
+        :param support_groups: example of one is SupportGroupsJC.all
+        :param profiles: list of device profiles to be filtered
+        :return: dictionary of (group_key, list of acronyms)
+        """
         devices = {}
         for key, algs in support_groups:
             devices[key] = [
@@ -68,6 +75,12 @@ class Support:
             device: str,
             support_groups: List[SupportGroup],
             profiles: List[Profile]):
+        """
+        Creates Select all, Deselect all and Support Group buttons
+        :param device: acronym for 'tpm' or 'card'
+        :param support_groups: example of one is SupportGroupsJC.all
+        :param profiles: list of device profiles
+        """
         filtered: Dict[str, List[str]] = \
             self.filter_by_support(device, support_groups, profiles) \
                 if support_groups else {}
@@ -95,7 +108,11 @@ class Support:
             )
 
     def checkbox_items(self, device: str, profiles: List[Profile]):
-        """Put checkboxes into three columns"""
+        """
+        Puts checkboxes into three columns
+        :param device: acronym for 'tpm' or 'card'
+        :param profiles: list of device profiles
+        """
         cols = 3
         curr = 0
         split = len(profiles) // cols
@@ -116,8 +133,11 @@ class Support:
             support_groups: List[SupportGroup],
             profiles: List[Profile]):
         """
-        Create checkboxes for given device profiles, optionally can
+        Creatse checkboxes for given device profiles, optionally can
         specify support groups for additional buttons
+        :param device: acronym for 'tpm' or 'card'
+        :param support_groups: example of one is SupportGroupsJC.all
+        :param profiles: list of device profiles
         """
         with tags.div(className="row", id="grpChkBox"):
             with tags.div(className="btn-group", role="group"):
@@ -128,7 +148,13 @@ class Support:
             )
 
     def category(self, name: str, device: str, profiles, rows: Callable):
-        """Function to create category section in table"""
+        """
+        Creates category section in table
+        :param name: category name
+        :param device: acronym for 'tpm' or 'card'
+        :param profiles: list of device profiles
+        :param rows: function which creates a row
+        """
         with tags.tr():
             tags.td(name, className="dark")
             # TODO Introduced in JC ver. xxx column
@@ -141,6 +167,12 @@ class Support:
         rows()
 
     def basic_info_rows(self, basic_info_items, profiles, get_info):
+        """
+        Creates basic info section
+        :param basic_info_items: items to be shown
+        :param profiles: list of device profiles
+        :param get_info: getter for the info item
+        """
         for item in basic_info_items:
             with tags.tr():
                 tags.td(
@@ -164,6 +196,13 @@ class Support:
             basic_info_items: List[str],
             profiles: List[Profile],
             get_info: Callable):
+        """
+        Creates support table header
+        :param device: acronym for 'tpm' or 'card'
+        :param basic_info_items: items to be shown
+        :param profiles: list of device profiles
+        :param get_info: getter for the info item
+        """
         with tags.thead():
             self.category(
                 name="Basic info",
@@ -182,6 +221,13 @@ class Support:
             all_keys: Set[str],
             profiles: List[Profile],
             get_content: Callable):
+        """
+        Creates rows for given set of keys
+        :param all_keys: table side header key
+        :param profiles: list of device profiles
+        :param get_content: getter for cell content according to profile and key
+        :return:
+        """
         for key in sorted(all_keys):
             with tags.tr():
                 tags.td(key, className="light")
@@ -208,6 +254,19 @@ class Support:
             notebook: bool = False,
             device: str = 'javacard'
     ):
+        """
+        Creates a single page with support table visualization provided, that
+        the parameters are already parametrized partial functions
+        :param title: document title
+        :param intro: intro section
+        :param abbreviations: abbreviations section
+        :param notes: optional notes section
+        :param checkboxes: checkboxes for filtering
+        :param table: creates the table itself
+        :param notebook: inlines the JC and CSS, also hides navigation
+        :param device: either 'javacard' or 'tpm'
+        :return: str of created HTML page
+        """
         doc_title = title
 
         additions = [
@@ -330,7 +389,7 @@ class SupportJC(Support, Page):
     def abbreviations(self):
         tags.h3("Tested card abbreviations")
         for i, profile in enumerate(self.profiles):
-            tags.b(f"c{i}")
+            tags.b(f"card{i}")
             tags.a(
                 profile.test_info["Card name"],
                 href=profile.test_info["Github link"]
@@ -430,7 +489,7 @@ class SupportJC(Support, Page):
             checkboxes=partial(
                 self.checkboxes,
                 device="card",
-                support_groups=SupportGroups.GROUPS,
+                support_groups=SupportGroupsJC.GROUPS,
                 profiles=self.profiles,
             ),
             table=self.table,

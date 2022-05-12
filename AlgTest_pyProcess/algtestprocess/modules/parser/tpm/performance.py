@@ -31,6 +31,7 @@ def get_key_params(key_params: str):
 
 
 class PerformanceParserTPM:
+    """TPM performance profile parser"""
     def __init__(self, path: str):
         self.lines, self.filename = list(filter(None, get_data(path)))
 
