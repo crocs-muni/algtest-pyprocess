@@ -43,7 +43,11 @@ class SupportParserTPM:
             result.name = params.get("name")
             result.value = params.get("value") \
                 if params.get("value") else params.get("raw")
-            return 3
+            shift = 0
+            # Each result can have up to 1 to 3 rows
+            for key, _ in items:
+                shift += 1 if params.get(key) else 0
+            return shift
         return 1
 
     def parse(self):
@@ -67,7 +71,7 @@ class SupportParserTPM:
                 name = None
                 current = current.replace(" ", "")
 
-                if category == "Quicktest_properties-fixed":
+                if "properties-fixed" in category:
                     result.category = category
                     i += self.parse_props_fixed(lines[i:i+3], result)
                     result.name = result.name.replace("TPM_", "TPM2_") \
@@ -75,13 +79,13 @@ class SupportParserTPM:
                     profile.add_result(result)
                     continue
 
-                elif category == "Quicktest_algorithms":
+                elif "algorithms" in category:
                     name = TPM2Identifier.ALG_ID_STR.get(int(current, 16))
 
-                elif category == "Quicktest_commands":
+                elif "commands" in category:
                     name = TPM2Identifier.CC_STR.get(int(current, 16))
 
-                elif category == "Quicktest_ecc-curves":
+                elif "ecc-curves" in category:
                     try:
                         if not re.match("0x[0-9a-f]+", current):
                             current = current.split(":")[1]
