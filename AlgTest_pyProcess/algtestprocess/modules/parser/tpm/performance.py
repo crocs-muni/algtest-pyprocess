@@ -89,7 +89,11 @@ class PerformanceParserTPM:
     def parse(self):
         category = None
         profile = ProfilePerformanceTPM()
-        profile.test_info['TPM name'] = self.filename.replace(".csv", "")
+        profile.test_info['TPM name'] = re.sub(
+            r"_+",
+            " ",
+            self.filename.replace(".csv", "")
+        )
         lines = list(filter(None, self.lines))
         i = 0
         while i < len(lines):

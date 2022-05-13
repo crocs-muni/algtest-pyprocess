@@ -52,7 +52,11 @@ class SupportParserTPM:
 
     def parse(self):
         profile = ProfileSupportTPM()
-        profile.test_info['TPM name'] = self.filename.replace(".csv", "")
+        profile.test_info['TPM name'] = re.sub(
+            r"_+",
+            " ",
+            self.filename.replace(".csv", "")
+        )
         lines = self.lines
         category = None
         i = 0
