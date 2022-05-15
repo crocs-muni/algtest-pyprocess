@@ -90,7 +90,10 @@ class Heatmaps(Page):
         ))
 
         def children():
-            tags.h1("Cryptographic properties of TPM generated RSA keys")
+            tags.h1(
+                "Cryptographic properties of TPM generated RSA keys",
+                className="pt-5"
+            )
             tags.h2("RSA 1024", className="pt-5")
             with tags.div(className="row"):
                 self.columns(n, heatmaps_1024)
