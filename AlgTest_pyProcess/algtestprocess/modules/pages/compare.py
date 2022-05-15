@@ -1,15 +1,13 @@
-import os
 from functools import partial
-
-from typing import Tuple, List, Callable, Dict, Union, Optional
+from typing import List, Dict, Union, Optional
 
 from dominate import tags
 from overrides import overrides
 
 from algtestprocess.modules.jcalgtest import ProfilePerformanceFixedJC, \
     PerformanceResultJC
-from algtestprocess.modules.pages.radar import Radar, RadarJC, RadarTPM
 from algtestprocess.modules.pages.page import Page
+from algtestprocess.modules.pages.radar import Radar, RadarJC, RadarTPM
 from algtestprocess.modules.pages.utils import run_helper_multi
 from algtestprocess.modules.tpmalgtest import ProfilePerformanceTPM, \
     PerformanceResultTPM

@@ -8,9 +8,9 @@ from overrides import overrides
 from algtestprocess.modules.components.layout import layout
 from algtestprocess.modules.components.utils import AssetsPaths
 from algtestprocess.modules.config import SupportGroupsJC, TPM2Identifier
-from algtestprocess.modules.jcalgtest import ProfileSupportJC, ProfileJC
+from algtestprocess.modules.jcalgtest import ProfileSupportJC
 from algtestprocess.modules.pages.page import Page
-from algtestprocess.modules.tpmalgtest import ProfileSupportTPM, ProfileTPM
+from algtestprocess.modules.tpmalgtest import ProfileSupportTPM
 
 
 def colored_cell(tag: Callable, content: str):

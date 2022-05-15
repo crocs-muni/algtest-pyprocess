@@ -1,10 +1,9 @@
 import io
 
 import matplotlib.gridspec as gridspec
-from matplotlib.pyplot import close
 import matplotlib.pyplot as plt
-import numpy as np
 from matplotlib.colors import LinearSegmentedColormap
+from matplotlib.pyplot import close
 
 
 class Heatmap:
@@ -118,7 +117,7 @@ class Heatmap:
         hm_ax.hlines(y=q_max, xmin=128, xmax=256, colors='purple', ls=":", lw=2,
                      label="$Q_{max}$ =" + format(q_max, 'b'))
 
-        hm_ax.plot(np.arange(128, 256), np.arange(128, 256), 'skyblue',
+        hm_ax.plot(list(range(128, 256)), list(range(128, 256)), 'skyblue',
                    linestyle=':', marker='', lw=2, label="P=Q")
 
         # Show legend
@@ -133,7 +132,7 @@ class Heatmap:
         hm_ax.set_yticklabels(list(map(lambda num: format(num, "b"), ticks)))
 
         # Add histograms for P and Q
-        bins = np.arange(128, 256, 1)
+        bins = list(range(128, 256, 1))
         hm_histx_ax.hist(p_byte, bins=bins, color="black", ec="white",
                          density=True)
         hm_histy_ax.hist(q_byte, bins=bins, orientation='horizontal',

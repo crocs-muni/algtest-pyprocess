@@ -1,6 +1,5 @@
-import os.path
 from functools import partial
-from typing import Dict, List, Tuple, Union, Callable, Set, Optional
+from typing import Dict, List, Tuple, Union, Callable, Optional
 
 from dominate import tags
 from overrides import overrides
