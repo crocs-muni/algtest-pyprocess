@@ -1,6 +1,7 @@
 import io
 
 import matplotlib.gridspec as gridspec
+from matplotlib.pyplot import close
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.colors import LinearSegmentedColormap
@@ -18,10 +19,12 @@ class Heatmap:
         self.p_byte, self.q_byte, self.n_byte = \
             Heatmap.compute_pqn_bytes(rsa_df)
         self.device_name = device_name
+        self.fig = None
         self.build()
 
     @staticmethod
     def compute_pqn_bytes(df):
+        # As the data doesn't contain q prime it needs to be computed
         n = list(map(lambda x: int(x, 16), list(df.n)))
         p = list(map(lambda x: int(x, 16), list(df.p)))
         q = [a // b for a, b in zip(n, p)]
@@ -46,6 +49,7 @@ class Heatmap:
         n_max = max(n_byte)
 
         fig = plt.figure(figsize=(7.5, 12))
+        self.fig = fig
 
         # Outer means two main plots
         outer = gridspec.GridSpec(3, 1, height_ratios=(3, 0.5, 1))
@@ -179,10 +183,16 @@ class Heatmap:
         plt.savefig(f, format="svg")
         value = f.getvalue()
         f.close()
+        self.finalize()
         return value.decode('ascii')
 
     def save(self, filename: str, format: str = 'png'):
         plt.savefig(filename, format=format)
+        self.finalize()
+
+    def finalize(self):
+        close(self.fig)
+        self.fig = None
 
     COLORS = [
         '#00000000', '#FFFFF0', '#FFFFE6', '#FFFFDB', '#FFFFD1', '#FFFFC7',

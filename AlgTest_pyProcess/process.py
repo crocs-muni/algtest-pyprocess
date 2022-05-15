@@ -9,6 +9,7 @@ from algtestprocess.modules.pages.comparativetable import ComparativeTable
 from algtestprocess.modules.pages.compare import CompareJC, CompareTPM
 from algtestprocess.modules.pages.executiontime import ExecutionTimeJC, \
     ExecutionTimeTPM
+from algtestprocess.modules.pages.heatmaps import Heatmaps
 from algtestprocess.modules.pages.page import Page
 from algtestprocess.modules.pages.radar import RadarJC, RadarTPM
 from algtestprocess.modules.pages.scalability import Scalability
@@ -77,7 +78,7 @@ def main(
         print("results-dir nor output_dir was specified")
         sys.exit(1)
 
-    fixed = variable = support = performance = support_tpm = []
+    fixed = variable = support = performance = support_tpm = cryptoprops = []
 
     if "javacard" in devices:
         fixed, variable, support = get_javacard_profiles(
@@ -138,6 +139,10 @@ def main(
             to_run.append(CompareJC(fixed))
         if "tpm" in devices:
             to_run.append(CompareTPM(performance))
+
+    if "heatmap" in operations:
+        if "tpm" in devices:
+            to_run.append(Heatmaps(cryptoprops))
 
     if not os.path.isdir(output_dir):
         os.mkdir(output_dir)
