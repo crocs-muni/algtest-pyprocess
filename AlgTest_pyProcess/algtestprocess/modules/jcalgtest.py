@@ -103,6 +103,10 @@ class ProfileJC(ABC, EnforceOverrides):
     def device_name(self):
         return self.test_info.get('Card name')
 
+    def rename(self, name: str):
+        self.test_info['Card name'] = name
+
+
     @abstractmethod
     def add_result(self, key: MethodName, result: MeasurementResultJC):
         pass

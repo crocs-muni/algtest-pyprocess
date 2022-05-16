@@ -15,7 +15,7 @@ from algtestprocess.modules.parser.tpm.performance import PerformanceParserTPM
 from algtestprocess.modules.parser.tpm.support import SupportParserTPM
 
 
-def get_javacard_profiles(directory, preprocess:bool):
+def get_javacard_profiles(directory, preprocess: bool):
     """
         When parsing profiles for JavaCards, it is assumed that fixed and variable
         results were processed before and *.json outputs were created. That means
@@ -37,7 +37,6 @@ def get_javacard_profiles(directory, preprocess:bool):
         for dirname in dirnames if dirname.lower() == 'performance'
     ]
 
-
     if preprocess:
         # Need performance dir to process the perf profiles
         assert perf_dir
@@ -58,18 +57,24 @@ def get_javacard_profiles(directory, preprocess:bool):
             lambda y: "/performance/" in y.lower() and "/fixed/" in y,
             files_performance
         )))
+    rename_duplicates(profiles_fixed)
     profiles_variable = list(map(
         lambda x: PerformanceParserJC(x).parse(ProfilePerformanceVariableJC()),
         filter(
             lambda y: "/performance/" in y.lower() and "/variable/" in y,
             files_performance
         )))
+    rename_duplicates(profiles_variable)
+    profiles_variable = sorted(profiles_variable, key=lambda x: x.device_name().lower())
+
     profiles_support = list(map(
         lambda x: SupportParserJC(x).parse(),
         filter(
             lambda y: "/results/" in y.lower(),
             files_support
         )))
+    rename_duplicates(profiles_support)
+    profiles_support = sorted(profiles_support, key=lambda x: x.device_name().lower())
 
     return profiles_fixed, profiles_variable, profiles_support
 
@@ -96,12 +101,16 @@ def get_tpm_profiles(directory):
     performance = list(filter(
         lambda profile: profile.results,
         map(lambda path: PerformanceParserTPM(path).parse(), performance)))
+    rename_duplicates(performance)
+    performance = sorted(performance, key=lambda x: x.device_name().lower())
 
     support = list(filter(
         lambda name: "/results/" in name.lower() and ".csv" in name, files))
     support = list(filter(
         lambda profile: profile.results,
         map(lambda path: SupportParserTPM(path).parse(), support)))
+    rename_duplicates(support)
+    support = sorted(support, key=lambda x: x.device_name().lower())
 
     cryptoprops_paths = list(set(
         map(lambda match: match.group(1),
@@ -112,6 +121,18 @@ def get_tpm_profiles(directory):
                                         cryptoprops_paths)))
 
     return performance, support, cryptoprops
+
+
+def rename_duplicates(profiles):
+    """Renames the profiles with same name"""
+    for profile in profiles:
+        duplicates = list(filter(
+            lambda x: x.device_name() == profile.device_name(),
+            profiles
+        ))
+        if len(duplicates) > 1:
+            for i, dupe in enumerate(duplicates):
+                dupe.rename(f"{dupe.device_name()} [{i + 1}]")
 
 
 def fix_results(directory):

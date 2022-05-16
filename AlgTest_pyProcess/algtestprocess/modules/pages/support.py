@@ -315,8 +315,7 @@ class SupportJC(Support, Page):
     ]
 
     def __init__(self, profiles):
-        self.profiles: List[ProfileSupportJC] = \
-            sorted(profiles, key=lambda x: x.test_info["Card name"].upper())
+        self.profiles: List[ProfileSupportJC] = profiles
 
     def intro(self):
         with tags.div(className="col-xl-9"):

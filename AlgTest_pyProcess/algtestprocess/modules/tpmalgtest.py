@@ -51,6 +51,9 @@ class ProfileTPM(ABC):
     def device_name(self) -> Optional[str]:
         return self.test_info.get('TPM name')
 
+    def rename(self, name: str):
+        self.test_info['TPM name'] = name
+
     @abstractmethod
     def add_result(self, result):
         pass
