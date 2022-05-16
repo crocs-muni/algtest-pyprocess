@@ -41,7 +41,8 @@ class Heatmaps(Page):
             os.mkdir(path)
 
         # Then we create svg heatmaps from those results where datasets are ok
-        heatmaps_1024 = heatmaps_2048 = []
+        heatmaps_1024 = []
+        heatmaps_2048 = []
         items = [
             (heatmaps_1024, filtered_1024, "1024"),
             (heatmaps_2048, filtered_2048, "2048")
