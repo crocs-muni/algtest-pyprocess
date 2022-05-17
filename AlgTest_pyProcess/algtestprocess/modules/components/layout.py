@@ -12,12 +12,13 @@ def layout(
         children: Optional[Callable] = None,
         children_outside: Optional[Callable] = None,
         asset_additions: Optional[List[str]] = None,
-        other_scripts: Optional[List[callable]] = None,
+        other_scripts: Optional[List[Callable]] = None,
         back_to_top: bool = False,
         path_prefix: str = './',
         notebook: bool = False,
         device: str = 'javacard'
 ):
+    """Creates generic document layout"""
     doc = document(title=doc_title)
     with doc.head:
         head(

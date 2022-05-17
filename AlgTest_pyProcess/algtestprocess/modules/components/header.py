@@ -97,6 +97,7 @@ def header_items_basic(items: List[Tuple[str, str]], path_prefix: str = "./"):
 
 
 def header(path_prefix: str = "./", device: str = 'javacard'):
+    """Creates header with dropdown and basic items"""
     with tags.nav(
             className="navbar navbar-inverse navbar-expand-lg fixed-top "
                       "navbar-light bg-dark px-4 vw-100"
