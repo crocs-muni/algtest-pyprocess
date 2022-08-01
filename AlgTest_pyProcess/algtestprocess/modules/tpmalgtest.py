@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Optional, Dict
 
-from overrides import overrides
+from overrides import overrides, EnforceOverrides
+
 
 def null_if_none(x: any):
     return 'null' if x is None else x
@@ -9,7 +10,7 @@ def null_if_none(x: any):
 def bool_to_tf(x: bool) -> str:
     return 'true'if x else 'false'
 
-class MeasurementResultTPM:
+class MeasurementResultTPM(EnforceOverrides):
     def __init__(self):
         self.category: Optional[str] = None
 
@@ -40,6 +41,7 @@ class PerformanceResultTPM(MeasurementResultTPM):
         self.failed: Optional[int] = None
         self.error: Optional[str] = None
 
+    @overrides
     def export(self):
         data = super(PerformanceResultTPM, self).export()
         data.update({
@@ -69,6 +71,7 @@ class SupportResultTPM(MeasurementResultTPM):
         self.name: Optional[str] = None
         self.value: Optional[str] = None
 
+    @overrides
     def export(self):
         data = super(SupportResultTPM, self).export()
         data.update({
@@ -78,7 +81,7 @@ class SupportResultTPM(MeasurementResultTPM):
         return data
 
 
-class ProfileTPM(ABC):
+class ProfileTPM(ABC, EnforceOverrides):
     """TPM base profile class"""
 
     def __init__(self):
@@ -117,6 +120,7 @@ class ProfilePerformanceTPM(ProfileTPM):
         self.results[name] = result
         return name
 
+    @overrides
     def export(self):
         data = super(ProfilePerformanceTPM, self).export()
         data.update({
@@ -139,6 +143,7 @@ class ProfileSupportTPM(ProfileTPM):
         if result.name:
             self.results[result.name] = result
 
+    @overrides
     def export(self):
         data = super(ProfileSupportTPM, self).export()
         data.update({

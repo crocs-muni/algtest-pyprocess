@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Optional, Dict, List, Union
+from typing import Optional, Dict, List, Union, Callable
 
 from overrides import EnforceOverrides, overrides
 
@@ -9,6 +9,12 @@ def null_if_none(x: any):
 
 def bool_to_tf(x: bool) -> str:
     return 'true'if x else 'false'
+
+def null_if_exc(f: Callable):
+    try:
+        return f()
+    except Exception:
+        return 'null'
 
 class MeasurementResultJC(ABC, EnforceOverrides):
     """
@@ -89,15 +95,16 @@ class PerformanceResultJC(MeasurementResultJC):
         """Maximal single algorithm execution time"""
         return max(self.operation) / self.ipm()
 
+    @overrides
     def export(self):
         data = super(PerformanceResultJC, self).export()
         data.update({
-            "baseline_avg": self.baseline_avg(),
-            "baseline_min": self.baseline_min(),
-            "baseline_max": self.baseline_max(),
-            "operation_avg": self.operation_avg(),
-            "operation_min": self.operation_min(),
-            "operation_max": self.operation_max(),
+            "baseline_avg": null_if_exc(self.baseline_avg),
+            "baseline_min": null_if_exc(self.baseline_min),
+            "baseline_max": null_if_exc(self.baseline_max),
+            "operation_avg": null_if_exc(self.operation_avg),
+            "operation_min": null_if_exc(self.operation_min),
+            "operation_max": null_if_exc(self.operation_max),
         })
         return data
 
@@ -117,13 +124,14 @@ class SupportResultJC(MeasurementResultJC):
         self.ram_deselect: Optional[int] = None
         self.ram_reset: Optional[int] = None
 
+    @overrides
     def export(self):
         data = super(SupportResultJC, self).export()
         data.update({
             "support": bool_to_tf(self.support),
             "time_elapsed": null_if_none(self.time_elapsed),
-            "persistent_memory": null_if_none(self.persistent_memory)
-            "ram_deselect": null_if_none(self.ram_deselect)
+            "persistent_memory": null_if_none(self.persistent_memory),
+            "ram_deselect": null_if_none(self.ram_deselect),
             "ram_reset": null_if_none(self.ram_reset)
         })
         return data
@@ -169,6 +177,7 @@ class ProfilePerformanceFixedJC(ProfileJC):
     def add_result(self, key: MethodName, result: MeasurementResultJC):
         self.results[key] = result
 
+    @overrides
     def export(self):
         data = super(ProfilePerformanceFixedJC, self).export()
         data.update({
@@ -191,6 +200,7 @@ class ProfilePerformanceVariableJC(ProfileJC):
             self.results[key] = []
         self.results[key].append(result)
 
+    @overrides
     def export(self):
         data = super(ProfilePerformanceVariableJC, self).export()
         data.update({
@@ -212,6 +222,7 @@ class ProfileSupportJC(ProfileJC):
     def add_result(self, key: MethodName, result: MeasurementResultJC):
         self.results[key] = result
 
+    @overrides
     def export(self):
         data = super(ProfileSupportJC, self).export()
         data.update({

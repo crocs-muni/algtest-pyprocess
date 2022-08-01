@@ -49,7 +49,8 @@ def run(to_run: List[Page], output_dir: str):
         "similarity",
         "support",
         "compare",
-        "heatmap"
+        "heatmap",
+        "export"
     ], case_sensitive=False
     )
 )
@@ -65,7 +66,7 @@ def run(to_run: List[Page], output_dir: str):
     "-o",
     "--output-dir",
     "output_dir",
-    default=None,
+    default=".",
     type=click.Path(file_okay=False, dir_okay=True, writable=True),
     help="Path to folder where you want output to be stored."
 )
@@ -75,8 +76,8 @@ def main(
         results_dir: Optional[Path],
         output_dir: Optional[Path]
 ):
-    if not results_dir and not output_dir:
-        print("results-dir nor output_dir was specified")
+    if not results_dir:
+        print("results-dir was NOT specified")
         sys.exit(1)
 
     fixed = variable = support = performance = support_tpm = cryptoprops = []
@@ -99,7 +100,6 @@ def main(
         "support",
         "compare",
         "heatmap",
-        "export"
     } if "all" in operations else set(operations)
 
     to_run = []
@@ -156,7 +156,7 @@ def main(
             ]
         if "tpm" in devices:
             to_export += [
-                ("tpm_performance.json", performance) if performance else None
+                ("tpm_performance.json", performance) if performance else None,
                 ("tpm_support.json", support_tpm) if support_tpm else None
             ]
         for item in to_export:
