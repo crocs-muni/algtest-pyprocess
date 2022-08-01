@@ -177,8 +177,8 @@ class ExecutionTimeJC(Page, ExecutionTime):
                 r.baseline_max(),
                 f"{r.iterations}/{r.invocations}"
             ]
-            if r.status == "OK"
-            else [r.name, r.status]
+            if r.error == "OK"
+            else [r.name, r.error]
             for r in category_results
         ]
 

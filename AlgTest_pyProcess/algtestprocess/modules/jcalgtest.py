@@ -4,6 +4,11 @@ from typing import Optional, Dict, List, Union
 
 from overrides import EnforceOverrides, overrides
 
+def null_if_none(x: any):
+    return 'null' if x is None else x
+
+def bool_to_tf(x: bool) -> str:
+    return 'true'if x else 'false'
 
 class MeasurementResultJC(ABC, EnforceOverrides):
     """
@@ -13,7 +18,19 @@ class MeasurementResultJC(ABC, EnforceOverrides):
     def __init__(self):
         self.name: Optional[str] = None
         self.category: Optional[Union[MeasurementCategory, str]] = None
-        self.status: Optional[str] = None
+        self.error: Optional[str] = None
+
+    def export(self):
+        category = str(self.category.value) \
+            if isinstance(self.category, Enum) \
+            else null_if_none(self.category)
+
+        return {
+            "name": null_if_none(self.name),
+            "category": category,
+            "error": null_if_none(self.error)
+        }
+
 
 
 class PerformanceResultJC(MeasurementResultJC):
@@ -72,6 +89,18 @@ class PerformanceResultJC(MeasurementResultJC):
         """Maximal single algorithm execution time"""
         return max(self.operation) / self.ipm()
 
+    def export(self):
+        data = super(PerformanceResultJC, self).export()
+        data.update({
+            "baseline_avg": self.baseline_avg(),
+            "baseline_min": self.baseline_min(),
+            "baseline_max": self.baseline_max(),
+            "operation_avg": self.operation_avg(),
+            "operation_min": self.operation_min(),
+            "operation_max": self.operation_max(),
+        })
+        return data
+
 
 class SupportResultJC(MeasurementResultJC):
     """
@@ -87,6 +116,17 @@ class SupportResultJC(MeasurementResultJC):
         self.persistent_memory: Optional[int] = None
         self.ram_deselect: Optional[int] = None
         self.ram_reset: Optional[int] = None
+
+    def export(self):
+        data = super(SupportResultJC, self).export()
+        data.update({
+            "support": bool_to_tf(self.support),
+            "time_elapsed": null_if_none(self.time_elapsed),
+            "persistent_memory": null_if_none(self.persistent_memory)
+            "ram_deselect": null_if_none(self.ram_deselect)
+            "ram_reset": null_if_none(self.ram_reset)
+        })
+        return data
 
 
 MethodName = str
@@ -106,10 +146,16 @@ class ProfileJC(ABC, EnforceOverrides):
     def rename(self, name: str):
         self.test_info['Card name'] = name
 
-
     @abstractmethod
     def add_result(self, key: MethodName, result: MeasurementResultJC):
         pass
+
+    def export(self):
+        return {
+            "test_info": self.test_info,
+            "jcsystem": self.jcsystem,
+            "cplc": self.cplc
+        }
 
 
 class ProfilePerformanceFixedJC(ProfileJC):
@@ -122,6 +168,14 @@ class ProfilePerformanceFixedJC(ProfileJC):
     @overrides
     def add_result(self, key: MethodName, result: MeasurementResultJC):
         self.results[key] = result
+
+    def export(self):
+        data = super(ProfilePerformanceFixedJC, self).export()
+        data.update({
+            "results_type": "performance fixed",
+            "results": [result.export() for result in self.results.values()]
+        })
+        return data
 
 
 class ProfilePerformanceVariableJC(ProfileJC):
@@ -137,6 +191,16 @@ class ProfilePerformanceVariableJC(ProfileJC):
             self.results[key] = []
         self.results[key].append(result)
 
+    def export(self):
+        data = super(ProfilePerformanceVariableJC, self).export()
+        data.update({
+            "results_type": "performance variable",
+            "results": [
+                [result.export() for result in results]
+                for results in self.results.values()
+            ]
+        })
+        return data
 
 class ProfileSupportJC(ProfileJC):
     """Java card profile with support results"""
@@ -147,6 +211,13 @@ class ProfileSupportJC(ProfileJC):
     @overrides
     def add_result(self, key: MethodName, result: MeasurementResultJC):
         self.results[key] = result
+
+    def export(self):
+        data = super(ProfileSupportJC, self).export()
+        data.update({
+            "results_type": "support",
+            "results": [result.export() for result in self.results.values()]
+        })
 
 
 class MeasurementCategory(Enum):

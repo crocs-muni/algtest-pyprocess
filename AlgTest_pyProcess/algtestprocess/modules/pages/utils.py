@@ -57,7 +57,7 @@ def results_map(r: List[PerformanceResultJC]):
     return list(
         filter(None,
                map(lambda x:
-                   x if x.status == "OK" and x.data_length > 0 else None, r)))
+                   x if x.error == "OK" and x.data_length > 0 else None, r)))
 
 
 def filtered_results(items: List[Tuple[str, List[PerformanceResultJC]]]):

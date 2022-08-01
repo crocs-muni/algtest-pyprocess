@@ -435,7 +435,7 @@ class SupportJC(Support, Page):
             result = profile.results.get(key)
             if result:
                 return ("yes" if result.support else "no") \
-                    if result.status == "OK" else f"error;{result.status}"
+                    if result.error == "OK" else f"error;{result.error}"
             return "-"
 
         for cat in SupportJC.CATEGORIES:

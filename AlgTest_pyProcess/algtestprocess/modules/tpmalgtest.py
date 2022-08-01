@@ -3,10 +3,18 @@ from typing import Optional, Dict
 
 from overrides import overrides
 
+def null_if_none(x: any):
+    return 'null' if x is None else x
+
+def bool_to_tf(x: bool) -> str:
+    return 'true'if x else 'false'
 
 class MeasurementResultTPM:
     def __init__(self):
         self.category: Optional[str] = None
+
+    def export(self):
+        return {"category": null_if_none(self.category)}
 
 
 class PerformanceResultTPM(MeasurementResultTPM):
@@ -32,6 +40,26 @@ class PerformanceResultTPM(MeasurementResultTPM):
         self.failed: Optional[int] = None
         self.error: Optional[str] = None
 
+    def export(self):
+        data = super(PerformanceResultTPM, self).export()
+        data.update({
+            "key_params": null_if_none(self.key_params),
+            "algorithm": null_if_none(self.algorithm),
+            "key_length": null_if_none(self.key_length),
+            "mode": null_if_none(self.mode),
+            "encrypt_decrypt": null_if_none(self.encrypt_decrypt),
+            "data_length": null_if_none(self.data_length),
+            "scheme": null_if_none(self.scheme),
+            "operation_avg": null_if_none(self.operation_avg),
+            "operation_min": null_if_none(self.operation_min),
+            "operation_max": null_if_none(self.operation_max),
+            "iterations": null_if_none(self.iterations),
+            "successful": null_if_none(self.successful),
+            "failed": null_if_none(self.failed),
+            "error": null_if_none(self.error)
+        })
+        return data
+
 
 class SupportResultTPM(MeasurementResultTPM):
     """Class to store support results for TPMs"""
@@ -40,6 +68,14 @@ class SupportResultTPM(MeasurementResultTPM):
         super().__init__()
         self.name: Optional[str] = None
         self.value: Optional[str] = None
+
+    def export(self):
+        data = super(SupportResultTPM, self).export()
+        data.update({
+            "name": null_if_none(self.name),
+            "value": null_if_none(self.value)
+        })
+        return data
 
 
 class ProfileTPM(ABC):
@@ -57,6 +93,9 @@ class ProfileTPM(ABC):
     @abstractmethod
     def add_result(self, result):
         pass
+
+    def export(self):
+        return {"test_info":self.test_info}
 
 
 class ProfilePerformanceTPM(ProfileTPM):
@@ -78,6 +117,15 @@ class ProfilePerformanceTPM(ProfileTPM):
         self.results[name] = result
         return name
 
+    def export(self):
+        data = super(ProfilePerformanceTPM, self).export()
+        data.update({
+            "results_type": "performance",
+            "results": [result.export() for result in self.results.values()]
+        })
+        return data
+
+
 
 class ProfileSupportTPM(ProfileTPM):
     """TPM profile with support results"""
@@ -90,3 +138,11 @@ class ProfileSupportTPM(ProfileTPM):
     def add_result(self, result):
         if result.name:
             self.results[result.name] = result
+
+    def export(self):
+        data = super(ProfileSupportTPM, self).export()
+        data.update({
+            "results_type": "support",
+            "results": [result.export() for result in self.results.values()]
+        })
+        return data

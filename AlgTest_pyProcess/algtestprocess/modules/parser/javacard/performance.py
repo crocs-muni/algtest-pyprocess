@@ -79,7 +79,7 @@ class PerformanceParserJC:
                     result.iterations = int(info[1])
                     result.invocations = int(info[2])
 
-                result.status = measurements["status"]
+                result.error = measurements["status"]
                 profile.add_result(name, result)
         return profile
 

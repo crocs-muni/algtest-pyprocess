@@ -126,9 +126,9 @@ class SupportParserJC:
 
                 if current[SUPPORT] in ["yes", "no"]:
                     result.support = current[SUPPORT] == "yes"
-                    result.status = "OK"
+                    result.error = "OK"
                 else:
-                    result.status = current[SUPPORT]
+                    result.error = current[SUPPORT]
 
                 if len(current) > TIME_ELAPSED and \
                         re.match(r"\d+\.\d+", current[TIME_ELAPSED]):

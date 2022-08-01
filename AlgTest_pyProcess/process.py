@@ -1,3 +1,4 @@
+import json
 import os
 import sys
 from typing import List, Optional
@@ -97,7 +98,8 @@ def main(
         "similarity",
         "support",
         "compare",
-        "heatmap"
+        "heatmap",
+        "export"
     } if "all" in operations else set(operations)
 
     to_run = []
@@ -143,6 +145,28 @@ def main(
     if "heatmap" in operations:
         if "tpm" in devices:
             to_run.append(Heatmaps(cryptoprops))
+
+    if "export" in operations:
+        to_export = []
+        if "javacard" in devices:
+            to_export += [
+                ("javacard_performance_fixed.json", fixed) if fixed else None,
+                ("javacard_performance_variable.json", variable) if variable else None,
+                ("javacard_support.json", support) if support else None
+            ]
+        if "tpm" in devices:
+            to_export += [
+                ("tpm_performance.json", performance) if performance else None
+                ("tpm_support.json", support_tpm) if support_tpm else None
+            ]
+        for item in to_export:
+            if not item:
+                continue
+
+            filename, profiles = item
+            with open(f"{output_dir}/{filename}", "w", encoding='utf-8') as f:
+                data = [profile.export() for profile in profiles]
+                json.dump(data, f, ensure_ascii=False, indent=4)
 
     if not os.path.isdir(output_dir):
         os.mkdir(output_dir)
