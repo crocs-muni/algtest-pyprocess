@@ -21,7 +21,10 @@ def get_algorithm(algorithm: str):
 def get_key_params(key_params: str):
     """Helper for correctly parsing key params section of result"""
     if key_params and re.match(r"ECC 0x[0-9a-f]+", key_params):
-        key_params = to_int(key_params.split()[1], 16)
+        key_params = to_int(
+            re.search(r"(0x[a-fA-F0-9]+)",key_params.split()[1]).group(0),
+            16
+        )
         return TPM2Identifier.ECC_CURVE_STR[key_params]
     if key_params and re.match(r"SYMCIPHER 0x[0-9a-f]+", key_params):
         key_params = key_params.split()
@@ -30,8 +33,19 @@ def get_key_params(key_params: str):
     return key_params
 
 
+def get_offset(lines, i):
+    """Measure offset to next entry or EOF"""
+    j = 1
+    while i + j < len(lines):
+        if "TPM2_" in lines[i + j]:
+            return j
+        j += 1
+    return -1
+
+
 class PerformanceParserTPM:
     """TPM performance profile parser"""
+
     def __init__(self, path: str):
         self.lines, self.filename = list(filter(None, get_data(path)))
 
@@ -40,16 +54,19 @@ class PerformanceParserTPM:
         """Parsing section with parameters using regular expressions"""
 
         items = [
-            ("algorithm",
-             r"(Algorithm|Hash algorithm):;(?P<algorithm>(0x[0-9a-fA-F]+))"),
+            ("category", r"(?P<category>TPM2_.+):"),
+            (
+                "algorithm",
+                r"(Algorithm|[Hh]ash algorithm):[; ](?P<algorithm>(0x[0-9a-fA-F]+))"),
             ("key_length", r"Key length:;(?P<key_length>[0-9]+)"),
             ("mode", r"Mode:;(?P<mode>0x[0-9a-fA-F]+)"),
             ("encrypt_decrypt", r"Encrypt/decrypt\?:;(?P<encrypt_decrypt>\w+)"),
-            ("data_length", r"Data length \(bytes\):;(?P<data_length>[0-9]+)"),
-            ("key_params", r"Key parameters:;(?P<key_params>[^;$]+)"),
-            ("scheme", r"\Scheme:;(?P<scheme>0x[0-9a-fA-F]+)")
+            ("data_length", r"[Dd]ata length \(bytes\):[; ](?P<data_length>[0-9]+)"),
+            ("key_params", r"[Kk]ey parameters:[; ](?P<key_params>[^;$\n]+)"),
+            ("scheme", r"[\Ss]cheme:[; ](?P<scheme>0x[0-9a-fA-F]+)")
         ]
         params = get_params(line, items)
+        result.category = params.get("category")
         result.algorithm = get_algorithm(params.get("algorithm"))
         result.key_length = to_int(params.get("key_length"), 10)
         result.mode = get_algorithm(params.get("mode"))
@@ -62,9 +79,9 @@ class PerformanceParserTPM:
     def parse_operation(line: str, result: PerformanceResultTPM):
         """Parsing section with operation times using regular expressions"""
         items = [
-            ("op_avg", r"avg op:;(?P<op_avg>[0-9]+\.[0-9]+)"),
-            ("op_min", r"min op:;(?P<op_min>[0-9]+\.[0-9]+)"),
-            ("op_max", r"max op:;(?P<op_max>[0-9]+\.[0-9]+)")
+            ("op_avg", r"avg op:[; ](?P<op_avg>[0-9]+\.[0-9]+)"),
+            ("op_min", r"min op:[; ](?P<op_min>[0-9]+\.[0-9]+)"),
+            ("op_max", r"max op:[; ](?P<op_max>[0-9]+\.[0-9]+)")
         ]
         params = get_params(line, items)
         result.operation_min = float(params["op_min"])
@@ -75,10 +92,10 @@ class PerformanceParserTPM:
     def parse_info(line: str, result: PerformanceResultTPM):
         """Parsing section with test information using regular expressions"""
         items = [
-            ("iterations", r"total iterations:;(?P<iterations>[0-9]+)"),
-            ("successful", r"successful:;(?P<successful>[0-9]+\.[0-9]+)"),
-            ("failed", r"failed:;(?P<failed>[0-9]+)"),
-            ("error", r"error:;(?P<error>(None|[0-9a-fA-F]+))")
+            ("iterations", r"total iterations:[; ](?P<iterations>[0-9]+)"),
+            ("successful", r"successful:[; ](?P<successful>[0-9]+)"),
+            ("failed", r"failed:[; ](?P<failed>[0-9]+)"),
+            ("error", r"error:[; ](?P<error>(None|[0-9a-fA-F]+))")
         ]
         params = get_params(line, items)
         result.iterations = to_int(params.get("iterations"), 10)
@@ -87,13 +104,39 @@ class PerformanceParserTPM:
         result.error = params.get("error")
 
     def parse(self):
+        parsed_testinfo = False
+        lines = list(filter(None, self.lines))
+        profile = ProfilePerformanceTPM()
+        i = 0
+        while i < len(lines):
+            offset = 1
+            if "TPM2_" in lines[i]:
+                parsed_testinfo = True
+                result = PerformanceResultTPM()
+                offset = get_offset(lines, i)
+                entry = "\n".join(
+                    lines[i:] if offset == -1 else lines[i:i + offset]
+                )
+                PerformanceParserTPM.parse_info(entry, result)
+                PerformanceParserTPM.parse_parameters(entry, result)
+                PerformanceParserTPM.parse_operation(entry, result)
+                profile.add_result(result)
+
+            if not parsed_testinfo and len(lines) > 0:
+                key, val = list(map(
+                    lambda x: x.strip(), lines[i].split(':', maxsplit=1)
+                ))
+                profile.test_info[key] = val
+
+            if offset == -1:
+                break
+
+            i += offset
+        return profile
+
+    def parse_legacy(self):
         category = None
         profile = ProfilePerformanceTPM()
-        profile.test_info['TPM name'] = re.sub(
-            r"_+",
-            " ",
-            self.filename.replace(".csv", "")
-        )
         lines = list(filter(None, self.lines))
         i = 0
         while i < len(lines):

@@ -538,7 +538,13 @@ class SupportTPM(Support, Page):
                 return "yes"
             return "-" if properties else "no"
 
-        for cat in SupportTPM.CATEGORIES:
+        categories = set(sorted([
+            result.category
+            for profile in self.profiles
+            for _, result in profile.results.items()
+        ]))
+
+        for cat in categories:
             self.category(
                 name=cat,
                 device="tpm",

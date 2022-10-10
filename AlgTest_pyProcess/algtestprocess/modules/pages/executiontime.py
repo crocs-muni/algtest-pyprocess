@@ -205,7 +205,7 @@ class ExecutionTimeJC(Page, ExecutionTime):
                 tags.a(
                     "More information parsed from ATR",
                     href="https://smartcard-atr.apdu.fr"
-                         f"/parse?ATR={profile.test_info['Card ATR']} "
+                         f"/parse_legacy?ATR={profile.test_info['Card ATR']} "
                 )
 
         def right_additions(profile: ProfilePerformanceFixedJC):

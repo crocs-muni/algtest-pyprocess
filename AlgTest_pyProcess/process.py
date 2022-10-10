@@ -50,9 +50,15 @@ def run(to_run: List[Page], output_dir: str):
         "support",
         "compare",
         "heatmap",
-        "export"
-    ], case_sensitive=False
-    )
+    ], case_sensitive=False)
+)
+@click.option(
+    "-L",
+    "--legacy",
+    "legacy",
+    is_flag=True,
+    default=False,
+    help="Enables parsing legacy TPM profiles stored in csv format."
 )
 @click.option(
     "-i",
@@ -73,6 +79,7 @@ def run(to_run: List[Page], output_dir: str):
 def main(
         devices: List[str],
         operations: List[str],
+        legacy: bool,
         results_dir: Optional[Path],
         output_dir: Optional[Path]
 ):
@@ -89,7 +96,9 @@ def main(
         )
 
     if "tpm" in devices:
-        performance, support_tpm, cryptoprops = get_tpm_profiles(results_dir)
+        performance, support_tpm, cryptoprops = get_tpm_profiles(
+            results_dir, legacy
+        )
 
     operations = {
         "execution-time",

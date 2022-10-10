@@ -37,7 +37,10 @@ class CryptoProps:
             filename = filenames[0].replace('.csv', '').replace('_', ' ')
         return filename
 
-    def parse(self):
+    def parse_legacy(self):
+        return self.parse(legacy=True)
+
+    def parse(self, legacy=False):
         items = [
             ('rsa_1024', 'Keygen:RSA_1024.csv'),
             ('rsa_1024', 'Keygen_RSA_1024.csv'),
@@ -51,7 +54,8 @@ class CryptoProps:
                     output[key] = pd.read_csv(
                         f"{self.path}/{filename}",
                         header=0,
-                        delimiter=";"
+                        # Legacy csv files had ; as delimiter
+                        delimiter=";" if legacy else ","
                     )
             except FileNotFoundError:
                 continue

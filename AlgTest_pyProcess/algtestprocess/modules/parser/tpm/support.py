@@ -35,9 +35,9 @@ class SupportParserTPM:
 
         else:
             items = [
-                ("name", "(?P<name>TPM[2]?_PT.+);"),
-                ("raw", "raw;[ ]*(?P<raw>0[x]?[0-9a-fA-F]*)"),
-                ("value", "value;[ ]*(?P<value>\".*\")")
+                ("name", "(?P<name>TPM[2]?_PT.+)[;:]"),
+                ("raw", "raw[:;][ ]*(?P<raw>0[x]?[0-9a-fA-F]*)"),
+                ("value", "value[:;][ ]*(?P<value>\".*\")")
             ]
             params = get_params(joined, items)
             result.name = params.get("name")
@@ -50,23 +50,24 @@ class SupportParserTPM:
             return shift
         return 1
 
-    def parse(self):
+    def parse_legacy(self):
+        return self.parse(legacy=True)
+
+    def parse(self, legacy: bool = False):
         profile = ProfileSupportTPM()
-        profile.test_info['TPM name'] = re.sub(
-            r"_+",
-            " ",
-            self.filename.replace(".csv", "")
-        )
         lines = self.lines
         category = None
         i = 0
         while i < len(self.lines):
             current = lines[i]
-            if "Quicktest" in current:
+            if "Quicktest" in current or "Capability" in current:
                 category = current
 
             elif not category:
-                key, val = current.split(";", 1)
+                split = current.split(':', maxsplit=1)
+                if legacy:
+                    split = current.split(";", maxsplit=1)
+                key, val = split
                 profile.test_info[key] = val
 
             else:

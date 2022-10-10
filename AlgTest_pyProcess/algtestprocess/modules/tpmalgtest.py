@@ -7,8 +7,10 @@ from overrides import overrides, EnforceOverrides
 def null_if_none(x: any):
     return 'null' if x is None else x
 
+
 def bool_to_tf(x: bool) -> str:
-    return 'true'if x else 'false'
+    return 'true' if x else 'false'
+
 
 class MeasurementResultTPM(EnforceOverrides):
     def __init__(self):
@@ -88,6 +90,10 @@ class ProfileTPM(ABC, EnforceOverrides):
         self.test_info = {}
 
     def device_name(self) -> Optional[str]:
+        if not self.test_info.get('TPM name'):
+            manufacturer = self.test_info.get('Manufacturer')
+            version = self.test_info.get('Firmware version')
+            self.test_info['TPM name'] = f"{manufacturer} {version}"
         return self.test_info.get('TPM name')
 
     def rename(self, name: str):
@@ -98,7 +104,7 @@ class ProfileTPM(ABC, EnforceOverrides):
         pass
 
     def export(self):
-        return {"test_info":self.test_info}
+        return {"test_info": self.test_info}
 
 
 class ProfilePerformanceTPM(ProfileTPM):
@@ -128,7 +134,6 @@ class ProfilePerformanceTPM(ProfileTPM):
             "results": [result.export() for result in self.results.values()]
         })
         return data
-
 
 
 class ProfileSupportTPM(ProfileTPM):

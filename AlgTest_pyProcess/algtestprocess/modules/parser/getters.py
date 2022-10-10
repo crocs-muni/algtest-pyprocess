@@ -79,10 +79,11 @@ def get_javacard_profiles(directory, preprocess: bool):
     return profiles_fixed, profiles_variable, profiles_support
 
 
-def get_tpm_profiles(directory):
+def get_tpm_profiles(directory, legacy):
     """
        When parsing tpm profiles
 
+       IMPORTANT: Legacy profiles <= 10/2022
        For performance profiles folder with *.csv results
        {directory}/.*/[Pp]erformance/
 
@@ -96,21 +97,34 @@ def get_tpm_profiles(directory):
         os.path.join(root, file)
         for root, _, files in os.walk(directory) for file in files
     ]
+
+    perf_parser = lambda path: PerformanceParserTPM(path).parse()
+    perf_name = lambda name: "performance.txt" in name.lower()
+    if legacy:
+        perf_parser = lambda path: PerformanceParserTPM(path).parse_legacy()
+        perf_name = lambda name: "/performance/" in name.lower() and ".csv" in name
+
+    performance = list(filter(perf_name, files))
     performance = list(filter(
-        lambda name: "/performance/" in name.lower() and ".csv" in name, files))
-    performance = list(filter(
-        lambda profile: profile.results,
-        map(lambda path: PerformanceParserTPM(path).parse(), performance)))
+        lambda profile: profile.results, map(perf_parser, performance)
+    ))
     rename_duplicates(performance)
     performance = sorted(performance, key=lambda x: x.device_name().lower())
 
+    support_parser = lambda path: SupportParserTPM(path).parse()
+    support_name = lambda name: "results.txt" in name
+    if legacy:
+        support_parser = lambda path: SupportParserTPM(path).parse_legacy()
+        support_name = lambda name: "/results/" in name.lower() and ".csv" in name
+
+    support = list(filter(support_name, files))
     support = list(filter(
-        lambda name: "/results/" in name.lower() and ".csv" in name, files))
-    support = list(filter(
-        lambda profile: profile.results,
-        map(lambda path: SupportParserTPM(path).parse(), support)))
+        lambda profile: profile.results, map(support_parser, support)
+    ))
     rename_duplicates(support)
-    support = sorted(support, key=lambda x: x.device_name().lower())
+    support = sorted(
+        support, key=lambda x: (x.device_name().lower())
+    )
 
     cryptoprops_paths = list(set(
         map(lambda match: match.group(1),
