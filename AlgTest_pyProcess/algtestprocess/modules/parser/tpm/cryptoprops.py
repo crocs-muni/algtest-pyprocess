@@ -45,7 +45,16 @@ class CryptoProps:
             ('rsa_1024', 'Keygen:RSA_1024.csv'),
             ('rsa_1024', 'Keygen_RSA_1024.csv'),
             ('rsa_2048', 'Keygen:RSA_2048.csv'),
-            ('rsa_2048', 'Keygen_RSA_2048.csv')
+            ('rsa_2048', 'Keygen_RSA_2048.csv'),
+            ('rsa_2048', 'Keygen:RSA_2048.csv'),
+            ('ecc_p192', 'Keygen_ECC_0x0001.csv'),
+            ('ecc_p224', 'Keygen_ECC_0x0002.csv'),
+            ('ecc_p256', 'Keygen_ECC_0x0003.csv'),
+            ('ecc_p384', 'Keygen_ECC_0x0004.csv'),
+            ('ecc_p521', 'Keygen_ECC_0x0005.csv'),
+            ('ecc_bn256', 'Keygen_ECC_0x0010.csv'),
+            ('ecc_bn638', 'Keygen_ECC_0x0011.csv'),
+            ('ecc_sm256', 'Keygen_ECC_0x0020.csv')
         ]
         output = {}
         for key, filename in items:

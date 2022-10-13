@@ -26,7 +26,7 @@ class SupportParserTPM:
         """Parse fixed properties section"""
         joined = '\n'.join(lines)
 
-        if "raw" not in joined and lines:
+        if "raw" not in joined and lines and "value" not in joined and lines:
             match = re.search("(?P<name>TPM[2]?_PT.+);[ ]*(?P<value>[^\n]+)", lines[0])
             if not match:
                 return 1
@@ -37,7 +37,7 @@ class SupportParserTPM:
             items = [
                 ("name", "(?P<name>TPM[2]?_PT.+)[;:]"),
                 ("raw", "raw[:;][ ]*(?P<raw>0[x]?[0-9a-fA-F]*)"),
-                ("value", "value[:;][ ]*(?P<value>\".*\")")
+                ("value", "value[:;][ ]*(?P<value>\"?.*\"?)")
             ]
             params = get_params(joined, items)
             result.name = params.get("name")
@@ -47,6 +47,7 @@ class SupportParserTPM:
             # Each result can have up to 1 to 3 rows
             for key, _ in items:
                 shift += 1 if params.get(key) else 0
+
             return shift
         return 1
 
@@ -79,8 +80,7 @@ class SupportParserTPM:
                 if "properties-fixed" in category:
                     result.category = category
                     i += self.parse_props_fixed(lines[i:i+3], result)
-                    result.name = result.name.replace("TPM_", "TPM2_") \
-                        if result.name else None
+                    result.name = result.name.replace("TPM_", "TPM2_") if result.name else None
                     profile.add_result(result)
                     continue
 

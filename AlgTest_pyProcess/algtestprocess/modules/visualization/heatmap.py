@@ -9,14 +9,14 @@ from matplotlib.pyplot import close
 class Heatmap:
     """Class for plotting RSA most significant bytes into a heatmap"""
 
-    def __init__(self, rsa_df, device_name):
+    def __init__(self, rsa_df, device_name, pqnf=None):
         """
         Init function  the p,q,n bytes and builds the plot
         :param rsa_df: pandas dataframe containing the private prime an moduli
         :param device_name: to draw into the plot
         """
-        self.p_byte, self.q_byte, self.n_byte = \
-            Heatmap.compute_pqn_bytes(rsa_df)
+        pqnf = pqnf or Heatmap.compute_pqn_bytes
+        self.p_byte, self.q_byte, self.n_byte = pqnf(rsa_df)
         self.device_name = device_name
         self.fig = None
         self.build()
@@ -39,6 +39,7 @@ class Heatmap:
         p_byte = self.p_byte
         q_byte = self.q_byte
         n_byte = self.n_byte
+
         record_count = len(p_byte)
         p_min = min(p_byte)
         p_max = max(p_byte)
