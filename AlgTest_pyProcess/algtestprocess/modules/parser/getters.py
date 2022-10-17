@@ -79,6 +79,34 @@ def get_javacard_profiles(directory, preprocess: bool):
     return profiles_fixed, profiles_variable, profiles_support
 
 
+def tpm_sorted(profiles, device_name):
+    """
+    Sorts the profiles according to manufacturer id alphabetically, then
+    firmware version numerically
+
+    Assumes device name is in the form of rgx
+    """
+    RGX = r'\s*\w+\s\s*\d+(\.\d+)+(\s[\[]\d+[\]])?'
+    try:
+        assert all(
+            [re.match(RGX, device_name(p)) is not None for p in profiles]
+        )
+    except AssertionError:
+        print(
+            [name
+             for p in profiles
+             if not re.match(RGX, (name := device_name(p)))]
+        )
+
+    def key_f(profile):
+        manufacturer, firmware, idx = device_name(profile).split(maxsplit=2)
+        numbers = [int(x) for x in filter(None, firmware.split('.'))]
+        idx = int(idx.replace('[', '').replace(']', ''))
+        return [manufacturer] + numbers + [idx]
+
+    return sorted(profiles, key=key_f)
+
+
 def get_tpm_profiles(directory, legacy):
     """
        When parsing tpm profiles
@@ -109,7 +137,7 @@ def get_tpm_profiles(directory, legacy):
         lambda profile: profile.results, map(perf_parser, performance)
     ))
     rename_duplicates(performance)
-    performance = sorted(performance, key=lambda x: x.device_name().lower())
+    performance = tpm_sorted(performance, lambda x: x.device_name())
 
     support_parser = lambda path: SupportParserTPM(path).parse()
     support_name = lambda name: "results.txt" in name
@@ -122,9 +150,7 @@ def get_tpm_profiles(directory, legacy):
         lambda profile: profile.results, map(support_parser, support)
     ))
     rename_duplicates(support)
-    support = sorted(
-        support, key=lambda x: (x.device_name().lower())
-    )
+    support = tpm_sorted(support, lambda x: x.device_name())
 
     cryptoprops_paths = list(set(
         map(lambda match: match.group(1),
