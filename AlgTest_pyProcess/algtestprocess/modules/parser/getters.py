@@ -2,6 +2,8 @@ import os
 import re
 import sys
 
+from math import inf
+
 from algtestprocess.modules.jcalgtest import ProfilePerformanceFixedJC, \
     ProfilePerformanceVariableJC
 from algtestprocess.modules.parser.javacard.performance import \
@@ -86,12 +88,13 @@ def tpm_sorted(profiles, device_name):
 
     Assumes device name is in the form of rgx
     """
-    RGX = r'\s*\w+\s\s*\d+(\.\d+)+(\s[\[]\d+[\]])?'
+    RGX = r'(\s*.+)+\s\s*\d+(\.\d+)*(\s[\[]\d+[\]])?'
     try:
         assert all(
             [re.match(RGX, device_name(p)) is not None for p in profiles]
         )
     except AssertionError:
+        print("These device name does not match format")
         print(
             [name
              for p in profiles
@@ -99,9 +102,18 @@ def tpm_sorted(profiles, device_name):
         )
 
     def key_f(profile):
-        manufacturer, firmware, idx = device_name(profile).split(maxsplit=2)
+        manufacturer = version = idx = inf
+        numbers = [inf] * 4
+        l, r = device_name(profile).rsplit(maxsplit=1)
+
+        if re.match(r'[\[]\d+[\]]', r):
+            idx = int(r.replace('[', '').replace(']', ''))
+            manufacturer, firmware = l.rsplit(maxsplit=1)
+        else:
+            manufacturer, firmware = l, r
+
         numbers = [int(x) for x in filter(None, firmware.split('.'))]
-        idx = int(idx.replace('[', '').replace(']', ''))
+
         return [manufacturer] + numbers + [idx]
 
     return sorted(profiles, key=key_f)
@@ -159,6 +171,7 @@ def get_tpm_profiles(directory, legacy):
     ))
     cryptoprops = list(filter(None, map(lambda path: CryptoProps(path).parse(),
                                         cryptoprops_paths)))
+    tpm_sorted(cryptoprops, lambda x: x['device_name'])
 
     return performance, support, cryptoprops
 

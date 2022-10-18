@@ -17,7 +17,6 @@ def cardlist(
     """
     Page for referencing each card created
     """
-    data.sort(key=lambda item: item[0])
 
     def children():
         with tags.div(className="row pt-5"):
