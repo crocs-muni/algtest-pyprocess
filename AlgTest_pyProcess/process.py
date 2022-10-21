@@ -11,6 +11,7 @@ from algtestprocess.modules.pages.compare import CompareJC, CompareTPM
 from algtestprocess.modules.pages.executiontime import ExecutionTimeJC, \
     ExecutionTimeTPM
 from algtestprocess.modules.pages.heatmaps import Heatmaps
+from algtestprocess.modules.pages.spectrograms import Spectrograms
 from algtestprocess.modules.pages.page import Page
 from algtestprocess.modules.pages.radar import RadarJC, RadarTPM
 from algtestprocess.modules.pages.scalability import Scalability
@@ -50,6 +51,7 @@ def run(to_run: List[Page], output_dir: str):
         "support",
         "compare",
         "heatmap",
+        "spectrogram"
     ], case_sensitive=False)
 )
 @click.option(
@@ -109,6 +111,7 @@ def main(
         "support",
         "compare",
         "heatmap",
+        "spectrogram"
     } if "all" in operations else set(operations)
 
     to_run = []
@@ -154,6 +157,10 @@ def main(
     if "heatmap" in operations:
         if "tpm" in devices:
             to_run.append(Heatmaps(cryptoprops))
+
+    if "spectrogram" in operations:
+        if "tpm" in devices:
+            to_run.append(Spectrograms(cryptoprops))
 
     if "export" in operations:
         to_export = []

@@ -48,7 +48,8 @@ TPM_HI_DROPDOWN = [
         ('run-time-tpm/execution-time.html', 'Algorithm execution time'),
         ('radar-graphs-tpm/radar-graphs.html', 'Radar graphs'),
         ('similarity-table-tpm.html', 'Similarity table'),
-        ('cryptoprops-rsa.html', 'RSA Crypto properties')
+        ('cryptoprops-rsa.html', 'RSA Crypto properties'),
+        ('cryptoprops-ecc-nonce.html', 'ECC nonce Crypto properties')
     ])
 ]
 

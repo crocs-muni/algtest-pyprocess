@@ -54,7 +54,16 @@ class CryptoProps:
             ('ecc_p521', 'Keygen_ECC_0x0005.csv'),
             ('ecc_bn256', 'Keygen_ECC_0x0010.csv'),
             ('ecc_bn638', 'Keygen_ECC_0x0011.csv'),
-            ('ecc_sm256', 'Keygen_ECC_0x0020.csv')
+            ('ecc_sm256', 'Keygen_ECC_0x0020.csv'),
+            ('ecc_p256_ecdsa', 'Cryptoops_Sign:ECC_0x0003_0x0018.csv'),
+            ('ecc_p256_ecdaa', 'Cryptoops_Sign:ECC_0x0003_0x001a.csv'),
+            ('ecc_p256_ecschnorr', 'Cryptoops_Sign:ECC_0x0003_0x001c.csv'),
+            ('ecc_p384_ecdsa', 'Cryptoops_Sign:ECC_0x0004_0x0018.csv'),
+            ('ecc_p384_ecdaa', 'Cryptoops_Sign:ECC_0x0004_0x001a.csv'),
+            ('ecc_p384_ecschnorr', 'Cryptoops_Sign:ECC_0x0004_0x001c.csv'),
+            ('ecc_bn256_ecdsa', 'Cryptoops_Sign:ECC_0x0010_0x0018.csv'),
+            ('ecc_bn256_ecdaa', 'Cryptoops_Sign:ECC_0x0010_0x001a.csv'),
+            ('ecc_bn256_ecschnorr', 'Cryptoops_Sign:ECC_0x0010_0x001c.csv'),
         ]
         output = {}
         for key, filename in items:
