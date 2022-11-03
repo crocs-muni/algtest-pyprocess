@@ -1,12 +1,13 @@
-import io
+from overrides import overrides
 
 import matplotlib.pyplot as plt
-from matplotlib.pyplot import close
 import numpy as np
 from pandas import Series
 
+from algtestprocess.modules.visualization.plot import Plot
 
-class Spectrogram:
+
+class Spectrogram(Plot):
     def __init__(
         self,
         df,
@@ -17,7 +18,7 @@ class Spectrogram:
         time_unit=1000,
         precision=1,
     ):
-
+        super().__init__()
         xsys = self.compute_xsys if not xsys else xsys
         self.xs, self.ys = xsys(df)
         self.device_name = device_name
@@ -96,28 +97,6 @@ class Spectrogram:
 
         ax.set_ylabel("signature duration in milliseconds", fontsize=24)
 
-    def build(self):
-        """Builds the spectrogram so it can be saved or shown"""
+    @overrides
+    def plot(self):
         self.spectrogram()
-        return self
-
-    def show(self):
-        """Shows the heatmap"""
-        plt.show()
-
-    def svg(self):
-        """Saves svg as string"""
-        f = io.BytesIO()
-        plt.savefig(f, format="svg")
-        value = f.getvalue()
-        f.close()
-        self.finalize()
-        return value.decode("ascii")
-
-    def save(self, filename: str, format: str = "png"):
-        plt.savefig(filename, format=format)
-        self.finalize()
-
-    def finalize(self):
-        close(self.fig)
-        self.fig = None
