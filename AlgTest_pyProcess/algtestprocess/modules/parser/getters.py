@@ -109,7 +109,7 @@ def tpm_sorted(profiles, device_name):
     try:
         assert all([re.match(RGX, device_name(p)) is not None for p in profiles])
     except AssertionError:
-        print("These device name does not match format")
+        print("These device names do not match format")
         print([name for p in profiles if not re.match(RGX, (name := device_name(p)))])
 
     def key_f(profile):
