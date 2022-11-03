@@ -3,16 +3,42 @@ import io
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import close
 import numpy as np
+from pandas import Series
 
 
 class Spectrogram:
+    def __init__(
+        self,
+        df,
+        device_name,
+        xsys=None,
+        title="",
+        yrange=(None, None),
+        time_unit=1000,
+        precision=1,
+    ):
 
-    def __init__(self, df, device_name, xsys=None, title=None):
         xsys = self.compute_xsys if not xsys else xsys
         self.xs, self.ys = xsys(df)
         self.device_name = device_name
         self.fig = None
-        self.title = None
+        self.title = title
+        self.precision = precision
+        self.time_unit = time_unit
+        # Set ymin ymax manually
+        self.ymin, self.ymax = yrange
+        # Round and set ymin, ymax if it wasnt done so before
+        self.ymin, self.ymax = self.round_yminymax(df)
+
+    def round_yminymax(self, df):
+        if self.ymin is None or self.ymax is None:
+            self.ymin = Series(df["duration"]).nsmallest(5).max()
+            self.ymax = Series(df["duration"]).nlargest(5).min()
+
+        return (
+            round(self.ymin * self.time_unit, self.precision),
+            round(self.ymax * self.time_unit, self.precision),
+        )
 
     def compute_xsys(self, df):
         nonce_bytes = list(map(lambda x: int(x[:2], 16), list(df.nonce)))
@@ -21,20 +47,23 @@ class Spectrogram:
 
     def mapper(self):
         counts = {}
-        total  = {x : 0 for x in range(256)}
+        total = {x: 0 for x in range(256)}
         # First ve count durations which hit particular byte
         for x, y in zip(self.xs, self.ys):
-            # 1000 is milliseconds
-            key = (x, round(y * 1000, 1))
+            key = (x, round(y * self.time_unit, self.precision))
             counts.setdefault(key, 0)
             counts[key] += 1
             total[x] += 1
+
         # Secondly we create colormesh
         X = list(range(256))
-        # If u make Y as a range(min, max) we wont
-        # have problems with big rectangles in output
-        y = list(map(lambda x: x[1], counts.keys()))
-        Y = list(map(lambda x: round(x * 10) / 10, np.arange(min(y), max(y), 0.1)))
+        Y = list(
+            map(
+                lambda x: round(x * self.time_unit) / self.time_unit,
+                np.arange(self.ymin, self.ymax, 10 ** (-self.precision)),
+            )
+        )
+
         Z = []
         for d in Y:
             ZZ = []
@@ -57,13 +86,15 @@ class Spectrogram:
         ax = fig.add_subplot()
 
         plt.title(
-            f"Nonce MSB vs signature time - {self.device_name}"
+            f"Nonce MSB vs signature time\n{self.device_name}\n{self.title}",
+            fontsize=40,
         )
-        ax.pcolormesh(X, Y, Z)
+        ax.pcolormesh(X, Y, Z, cmap="gnuplot", rasterized=True)
 
-        ax.set_xticks([16, 32, 128, 256])
-        ax.set_xlabel("nonce MSB value")
-        ax.set_ylabel("signature duration in milliseconds")
+        ax.set_xticks([16, 32, 128, 256], fontsize=12)
+        ax.set_xlabel("nonce MSB value", fontsize=24)
+
+        ax.set_ylabel("signature duration in milliseconds", fontsize=24)
 
     def build(self):
         """Builds the spectrogram so it can be saved or shown"""
@@ -81,9 +112,9 @@ class Spectrogram:
         value = f.getvalue()
         f.close()
         self.finalize()
-        return value.decode('ascii')
+        return value.decode("ascii")
 
-    def save(self, filename: str, format: str = 'png'):
+    def save(self, filename: str, format: str = "png"):
         plt.savefig(filename, format=format)
         self.finalize()
 
