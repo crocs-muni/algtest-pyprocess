@@ -2,6 +2,7 @@ import os
 
 from dominate import tags
 from typing import Dict, Tuple, List
+from tqdm import tqdm
 
 
 from algtestprocess.modules.components.layout import layout
@@ -30,12 +31,6 @@ class Spectrograms(Page):
         self.profiles = profiles
         # Custom y axis scaling depending on algorithm
         self.yminymax: Dict[str, Tuple[int, int]] = {}
-        # Custom precision depending on algoritm
-        self.precision: Dict[str, float] = {
-            "ecc_p256_ecdsa": 3,
-            "ecc_bn256_ecdaa": 3,
-            "default": 2,
-        }
 
     def columns(self, n: int, items):
         cols = [tags.div(className="col-sm") for _ in range(n)]
@@ -45,24 +40,16 @@ class Spectrograms(Page):
     def _get_sections(self, output_path, algs, items):
         sections = {alg: [] for alg in algs}
         # Then we create svg spectrograms from those results where datasets are ok
-        for i, (df, device_name, alg) in enumerate(items):
+        for i in tqdm(range(len(items)), desc="Spectrogram Plots"):
+            (df, device_name, alg) = items[i]
             # If errorneous dataset, skip
             if device_name is None:
                 continue
 
             try:
-                precision = (
-                    self.precision[alg]
-                    if alg in self.precision
-                    else self.precision["default"]
-                )
                 filename = f"{i}_{device_name.replace(' ', '_')}_{alg}.png"
 
-                print(self.yminymax[alg])
-
-                Spectrogram(
-                    df, device_name, precision=precision, yrange=self.yminymax[alg]
-                ).build().save(
+                Spectrogram(df, device_name, yrange=self.yminymax[alg]).build().save(
                     filename=f"{output_path}/{Spectrograms.SUBFOLDER_NAME}/{filename}"
                 )
             except (TypeError, AttributeError) as ex:
@@ -92,6 +79,9 @@ class Spectrograms(Page):
             )
             for alg in algs
         }
+        self.yminymax["ecc_p256_ecdsa"] = (None, None)
+        self.yminymax["ecc_p256_ecdaa"] = (None, None)
+        self.yminymax["ecc_bn256_ecdaa"] = (None, None)
 
     def run(self, output_path: str, notebook=False):
         algs = Spectrograms.ALGS
@@ -103,10 +93,9 @@ class Spectrograms(Page):
         if not os.path.exists(path):
             os.mkdir(path)
 
-        # self.set_uniform_yminymax(algs, items_base)
         # sections_base = self._get_sections(output_path, algs, items_base)
 
-        self.set_uniform_yminymax(algs, items_merged)
+        self.set_uniform_yminymax(algs, items_base)
         sections_merged = self._get_sections(output_path, algs, items_merged)
 
         n = 4
@@ -143,7 +132,7 @@ class Spectrograms(Page):
             )
             for sections, name in [
                 (sections_merged, "Merged"),
-                #        (sections_base, "Base"),
+                # (sections_base, "Base"),
             ]:
                 tags.h2(name, className="pt-2")
                 for alg, img_tags in sections:

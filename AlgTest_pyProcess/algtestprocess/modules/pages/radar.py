@@ -8,23 +8,26 @@ from algtestprocess.modules.components.cardlist import cardlist
 from algtestprocess.modules.components.layout import layout
 from algtestprocess.modules.components.utils import AssetsPaths
 from algtestprocess.modules.config import TopFunctionsJC
-from algtestprocess.modules.jcalgtest import ProfilePerformanceFixedJC, \
-    PerformanceResultJC
+from algtestprocess.modules.jcalgtest import (
+    ProfilePerformanceFixedJC,
+    PerformanceResultJC,
+)
 from algtestprocess.modules.pages.page import Page
 from algtestprocess.modules.pages.utils import run_helper_multi
-from algtestprocess.modules.tpmalgtest import ProfilePerformanceTPM, \
-    PerformanceResultTPM
+from algtestprocess.modules.tpmalgtest import (
+    ProfilePerformanceTPM,
+    PerformanceResultTPM,
+)
 
 Profile = Union[ProfilePerformanceFixedJC, ProfilePerformanceTPM]
 
 
 class Radar:
-
     def normalize(
-            self,
-            top_functions: List[Tuple[str, str]],
-            profiles: List[Profile],
-            operation_avg: Callable
+        self,
+        top_functions: List[Tuple[str, str]],
+        profiles: List[Profile],
+        operation_avg: Callable,
     ) -> Dict[str, Dict[Profile, float]]:
         """
         Normalize the operation times for comparison across all profiles
@@ -36,28 +39,26 @@ class Radar:
         normalized = {}
         for _, f in top_functions:
             max_avg = max(
-                [
-                    operation_avg(profile.results.get(f))
-                    for profile in profiles
-                ]
+                [operation_avg(profile.results.get(f)) for profile in profiles]
             )
             normalized[f] = {}
             for profile in profiles:
                 if f in profile.results and max_avg > 0:
-                    normalized[f][profile] = \
-                        operation_avg(profile.results[f]) / (1.11 * max_avg)
+                    normalized[f][profile] = operation_avg(profile.results[f]) / (
+                        1.11 * max_avg
+                    )
                 else:
                     normalized[f][profile] = 0
 
         return normalized
 
     def get_graph(
-            self,
-            profiles: List[Profile],
-            top_functions: List[Tuple[str, str]],
-            normalized: Dict[str, Dict[Profile, float]],
-            operation_avg: Callable,
-            hide_axes: bool = False
+        self,
+        profiles: List[Profile],
+        top_functions: List[Tuple[str, str]],
+        normalized: Dict[str, Dict[Profile, float]],
+        operation_avg: Callable,
+        hide_axes: bool = False,
     ):
         """
         Creates graph script data for n > 1 profiles in the same chart
@@ -85,16 +86,16 @@ class Radar:
                     + format(
                         1 - normalized[name][profile]
                         if normalized.get(name)
-                           and normalized.get(name).get(profile)
-                           and normalized[name][profile] != 0
+                        and normalized.get(name).get(profile)
+                        and normalized[name][profile] != 0
                         else 0,
                         ".3f",
                     )
                     + ","
-                      "title:'"
+                    "title:'"
                     + (
-                        (f"{info} ") +
-                        f"{format(operation_avg(profile.results[name]),'.2f')} ms"
+                        (f"{info} ")
+                        + f"{format(operation_avg(profile.results[name]),'.2f')} ms"
                         if name in profile.results
                         else "NS"
                     )
@@ -114,13 +115,13 @@ class Radar:
         return script
 
     def run_single(
-            self,
-            profiles: List[Profile],
-            intro: Callable,
-            get_graph: Callable,
-            title: Callable,
-            notebook: bool = False,
-            device: str = 'javacard'
+        self,
+        profiles: List[Profile],
+        intro: Callable,
+        get_graph: Callable,
+        title: Callable,
+        notebook: bool = False,
+        device: str = "javacard",
     ):
         """
         Creates a radar graph page for given list of profiles which are compared
@@ -134,19 +135,14 @@ class Radar:
         """
         doc_title = title(profiles)
 
-        additions = [
-            AssetsPaths.D3_JS,
-            AssetsPaths.RADAR_JS
-        ]
+        additions = [AssetsPaths.D3_JS, AssetsPaths.RADAR_JS]
 
         def children():
             intro(profiles)
             tags.div(id="chart", className="col")
 
-        get_graph.keywords['profiles'] = profiles
-        other_scripts = [
-            get_graph
-        ]
+        get_graph.keywords["profiles"] = profiles
+        other_scripts = [get_graph]
 
         return layout(
             doc_title=doc_title,
@@ -156,7 +152,7 @@ class Radar:
             back_to_top=True,
             path_prefix="../",
             notebook=notebook,
-            device=device
+            device=device,
         )
 
 
@@ -173,8 +169,9 @@ class RadarJC(Radar, Page):
         ] = self.normalize(
             top_functions=RadarJC.TOP_FUNCTIONS,
             profiles=profiles,
-            operation_avg=lambda result:
-            result.operation_avg() if result and result.operation else 0
+            operation_avg=lambda result: result.operation_avg()
+            if result and result.operation
+            else 0,
         )
 
     @staticmethod
@@ -218,15 +215,13 @@ class RadarJC(Radar, Page):
                     self.get_graph,
                     top_functions=RadarJC.TOP_FUNCTIONS,
                     normalized=self.normalized,
-                    operation_avg=operation_avg
+                    operation_avg=operation_avg,
                 ),
-                notebook=notebook
+                notebook=notebook,
             ),
+            desc="Radar graphs pages",
         )
-        data = list(map(
-            lambda name: (name, f"./{name}.html"),
-            data.values()
-        ))
+        data = list(map(lambda name: (name, f"./{name}.html"), data.values()))
         with open(f"{output_path}/{RadarJC.FILENAME}", "w") as f:
             f.write(
                 cardlist(
@@ -241,9 +236,7 @@ class RadarJC(Radar, Page):
     @staticmethod
     def cardlist_text():
         tags.h1("Performance radar graphs")
-        tags.h4(
-            "Radar graph provides visual overview of Java Card performance."
-        )
+        tags.h4("Radar graph provides visual overview of Java Card performance.")
         p = tags.p()
         p.add("It is composed of 25 frequently used functions ")
         p.add("(")
@@ -296,26 +289,36 @@ class RadarTPM(Radar, Page):
     SUBFOLDER_NAME = "radar-graphs-tpm"
     # There are no TOP FUNCTIONS for TPMs, so all found fuctions
     # create the axis
-    TOP_FUNCTIONS = lambda profiles: sorted(list(set([
-        (key.replace('TPM2_', '').replace('ALG_', '')
-         .replace('ECC_', '').replace('EncryptDecrypt ',''),
-         key)
-        for profile in profiles
-        for key in profile.results.keys()]
-    )))
+    TOP_FUNCTIONS = lambda profiles: sorted(
+        list(
+            set(
+                [
+                    (
+                        key.replace("TPM2_", "")
+                        .replace("ALG_", "")
+                        .replace("ECC_", "")
+                        .replace("EncryptDecrypt ", ""),
+                        key,
+                    )
+                    for profile in profiles
+                    for key in profile.results.keys()
+                ]
+            )
+        )
+    )
 
     def __init__(self, profiles):
         self.profiles: List[ProfilePerformanceTPM] = profiles
-        self.normalized: Dict[str, Dict[ProfilePerformanceTPM, float]] \
-            = self.normalize(
+        self.normalized: Dict[str, Dict[ProfilePerformanceTPM, float]] = self.normalize(
             top_functions=RadarTPM.TOP_FUNCTIONS(profiles),
             profiles=profiles,
             operation_avg=lambda result: result.operation_avg
-            if result and result.operation_avg else 0
+            if result and result.operation_avg
+            else 0,
         )
 
     def intro(self, profile: ProfilePerformanceTPM):
-        tags.h1(profile.test_info['TPM name'], className="pt-5")
+        tags.h1(profile.test_info["TPM name"], className="pt-5")
         tags.h3("Radar graph provides visual overview of TPM performance")
 
     def run(self, output_path: Optional[str] = None, notebook: bool = False):
@@ -341,36 +344,30 @@ class RadarTPM(Radar, Page):
                     top_functions=RadarTPM.TOP_FUNCTIONS(self.profiles),
                     normalized=self.normalized,
                     operation_avg=operation_avg,
-                    hide_axes=False
+                    hide_axes=False,
                 ),
                 notebook=notebook,
-                device='tpm'
-            )
+                device="tpm",
+            ),
+            desc="Radar graphs pages",
         )
-        data = list(map(
-            lambda name: (name, f"./{name}.html"),
-            data.values()
-        ))
+        data = list(map(lambda name: (name, f"./{name}.html"), data.values()))
 
         html = cardlist(
             data,
             "tpm-algtest - Performance radar graphs",
             RadarTPM.cardlist_text,
-            device='tpm'
+            device="tpm",
         )
 
         if output_path:
             with open(f"{output_path}/{RadarTPM.FILENAME}", "w") as f:
                 f.write(html)
 
-        data = list(map(
-            lambda item: (item[0], f"{output_path}/{item[1]}"), data))
+        data = list(map(lambda item: (item[0], f"{output_path}/{item[1]}"), data))
         return html, data
-
 
     @staticmethod
     def cardlist_text():
         tags.h1("Performance radar graphs")
-        tags.h4(
-            "Radar graph provides visual overview of TPM performance."
-        )
+        tags.h4("Radar graph provides visual overview of TPM performance.")

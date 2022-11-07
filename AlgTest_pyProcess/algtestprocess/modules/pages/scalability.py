@@ -50,9 +50,7 @@ class Scalability(Page):
     @staticmethod
     def test_details(profile: ProfilePerformanceVariableJC):
         tags.h3("Test details")
-        data = [
-            [key, val]
-            for key, val in profile.test_info.items()]
+        data = [[key, val] for key, val in profile.test_info.items()]
         simple_table(data)
 
     @staticmethod
@@ -65,9 +63,7 @@ class Scalability(Page):
             type="text/javascript",
             src="https://www.gstatic.com/charts/loader.js",
         )
-        tags.script(
-            "google.charts.load('current', {packages: ['corechart']});"
-        )
+        tags.script("google.charts.load('current', {packages: ['corechart']});")
 
     @staticmethod
     def chart_scripts_end():
@@ -115,7 +111,7 @@ class Scalability(Page):
             "var options = {"
             "backgroundColor: 'transparent',"
             "hAxis: {title: 'length of data (bytes)', "
-            "viewWindow: {min: 0, max: "+str(max_len)+"} },"
+            "viewWindow: {min: 0, max: " + str(max_len) + "} },"
             "vAxis: {title: 'duration of operation (ms)' },"
             "legend:'none',};"
         )
@@ -124,6 +120,7 @@ class Scalability(Page):
             f"document.getElementById('{name.replace(' ', '')}'));"
             "chart.draw(data, options);}"
         )
+
     @staticmethod
     def get_chart_placeholder(name: str):
         """
@@ -131,17 +128,18 @@ class Scalability(Page):
         """
         div = tags.div(className="graph")
         div.add(tags.h4(name))
-        div.add(tags.div(
+        div.add(
+            tags.div(
                 id=name.replace(" ", ""),
                 style="min-height:479px; margin-top:-50px;",
-            ))
+            )
+        )
         return div
 
     @staticmethod
     def get_charts(profile: ProfilePerformanceVariableJC):
         """Creates charts for functions in two columns"""
-        cols = [tags.div(className="col-md-6"),
-                tags.div(className="col-md-6")]
+        cols = [tags.div(className="col-md-6"), tags.div(className="col-md-6")]
         count = 0
         for result in filtered_results(profile.results.items()):
             name, _ = result
@@ -150,14 +148,14 @@ class Scalability(Page):
                 row = tags.div(className="row")
                 row.add(cols[0])
                 row.add(cols[1])
-                cols = [tags.div(className="col-md-6"),
-                        tags.div(className="col-md-6")]
+                cols = [tags.div(className="col-md-6"), tags.div(className="col-md-6")]
             cols[count % 2].add(Scalability.get_chart_placeholder(name))
             count += 1
 
     def run_single(self, profile: ProfilePerformanceVariableJC):
-        doc_title = f"JCAlgTest - {profile.test_info['Card name']} " \
-                    f"scalability graph"
+        doc_title = (
+            f"JCAlgTest - {profile.test_info['Card name']} " f"scalability graph"
+        )
 
         def children():
             with tags.div(className="row pt-5"):
@@ -179,17 +177,16 @@ class Scalability(Page):
             children=children,
             children_outside=children_outside,
             back_to_top=True,
-            path_prefix='../'
+            path_prefix="../",
         )
 
     @overrides
     def run(self, output_path: Optional[str] = None, notebook: bool = False):
         output_path = f"{output_path}/{Scalability.SUBFOLDER_NAME}"
-        data = run_helper(output_path, self.profiles, self.run_single)
-        data = list(map(
-            lambda pair: (pair[0], f"./{pair[0]}.html"),
-            data
-        ))
+        data = run_helper(
+            output_path, self.profiles, self.run_single, desc="Scalability pages"
+        )
+        data = list(map(lambda pair: (pair[0], f"./{pair[0]}.html"), data))
         with open(f"{output_path}/{Scalability.FILENAME}", "w") as f:
             f.write(
                 cardlist(

@@ -1,6 +1,8 @@
+from locale import normalize
 from overrides import overrides
 
 import matplotlib.pyplot as plt
+from matplotlib.colors import Normalize
 import numpy as np
 from pandas import Series
 
@@ -15,8 +17,8 @@ class Spectrogram(Plot):
         xsys=None,
         title="",
         yrange=(None, None),
-        time_unit=1000,
-        precision=1,
+        time_unit=1000000,
+        cmap="gnuplot",
     ):
         super().__init__()
         xsys = self.compute_xsys if not xsys else xsys
@@ -24,12 +26,12 @@ class Spectrogram(Plot):
         self.device_name = device_name
         self.fig = None
         self.title = title
-        self.precision = precision
         self.time_unit = time_unit
         # Set ymin ymax manually
         self.ymin, self.ymax = yrange
         # Round and set ymin, ymax if it wasnt done so before
         self.ymin, self.ymax = self.round_yminymax(df)
+        self.cmap = cmap
 
     def round_yminymax(self, df):
         if self.ymin is None or self.ymax is None:
@@ -37,12 +39,21 @@ class Spectrogram(Plot):
             self.ymax = Series(df["duration"]).nlargest(5).min()
 
         return (
-            round(self.ymin * self.time_unit, self.precision),
-            round(self.ymax * self.time_unit, self.precision),
+            round(self.ymin * self.time_unit),
+            round(self.ymax * self.time_unit),
         )
 
     def compute_xsys(self, df):
-        nonce_bytes = list(map(lambda x: int(x[:2], 16), list(df.nonce)))
+        # assert all(map(lambda x: len(x) % 2 == 0, df.nonce))
+        nonce_bytes = list(map(lambda x: int(x, 16), list(df.nonce)))
+        nonce_bytes = list(
+            map(
+                lambda x: x
+                >> x.bit_length()
+                - (8 if x.bit_length() % 8 == 0 else x.bit_length() % 8),
+                nonce_bytes,
+            )
+        )
         duration = list(df.duration)
         return nonce_bytes, duration
 
@@ -51,28 +62,25 @@ class Spectrogram(Plot):
         total = {x: 0 for x in range(256)}
         # First ve count durations which hit particular byte
         for x, y in zip(self.xs, self.ys):
-            key = (x, round(y * self.time_unit, self.precision))
+            key = (x, round(y * self.time_unit))
             counts.setdefault(key, 0)
             counts[key] += 1
             total[x] += 1
 
         # Secondly we create colormesh
         X = list(range(256))
-        Y = list(
-            map(
-                lambda x: round(x * self.time_unit) / self.time_unit,
-                np.arange(self.ymin, self.ymax, 10 ** (-self.precision)),
-            )
-        )
+        Y = list(range(self.ymin, self.ymax))
 
         Z = []
+        added = 0
         for d in Y:
             ZZ = []
             for n in X:
                 k = (n, d)
                 val = counts.get(k)
                 if val:
-                    ZZ.append(val / total[n])
+                    added += 1
+                    ZZ.append(val)
                 else:
                     ZZ.append(0)
             Z.append(ZZ)
@@ -90,12 +98,13 @@ class Spectrogram(Plot):
             f"Nonce MSB vs signature time\n{self.device_name}\n{self.title}",
             fontsize=40,
         )
-        ax.pcolormesh(X, Y, Z, cmap="gnuplot", rasterized=True)
+        pcm = ax.pcolormesh(X, Y, Z, cmap=self.cmap)
+        fig.colorbar(pcm, ax=ax, format="%d")
 
-        ax.set_xticks([16, 32, 128, 256], fontsize=12)
-        ax.set_xlabel("nonce MSB value", fontsize=24)
+        ax.set_xticks([16, 32, 128, 256], fontsize=20)
 
-        ax.set_ylabel("signature duration in milliseconds", fontsize=24)
+        ax.set_xlabel("nonce MSB value", fontsize=32)
+        ax.set_ylabel("signature duration (μs)", fontsize=32)
 
     @overrides
     def plot(self):

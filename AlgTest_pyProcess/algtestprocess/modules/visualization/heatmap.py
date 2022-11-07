@@ -15,10 +15,10 @@ class Heatmap(Plot):
         :param rsa_df: pandas dataframe containing the private prime an moduli
         :param device_name: to draw into the plot
         """
+        super().__init__()
         pqnf = pqnf or Heatmap.compute_pqn_bytes
         self.p_byte, self.q_byte, self.n_byte = pqnf(rsa_df)
         self.device_name = device_name
-        self.fig = None
         self.build()
 
     @staticmethod

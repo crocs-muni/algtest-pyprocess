@@ -20,7 +20,6 @@ Profile = ProfilePerformanceFixedJC | ProfilePerformanceTPM
 
 
 class ExecutionTime(ABC):
-
     @staticmethod
     def quick_links(categories: List[str]):
         """
@@ -33,32 +32,28 @@ class ExecutionTime(ABC):
                 tags.a(
                     category,
                     href=f"#{category}",
-                    className="list-group-item list-group-item-action"
+                    className="list-group-item list-group-item-action",
                 )
 
     @staticmethod
-    def dict_table(
-            name: str,
-            dictionary: Dict[str, str]
-    ):
+    def dict_table(name: str, dictionary: Dict[str, str]):
         """
         Creates a simple table with two columns from dictionary
         :param name: of the table
         :param dictionary: containing the items
         """
         tags.h3(name)
-        data = [
-            [key, val]
-            for key, val in dictionary.items()]
+        data = [[key, val] for key, val in dictionary.items()]
         simple_table(data)
 
     @staticmethod
     def intro(
-            profile: Profile,
-            categories: List[str],
-            heading: Callable,
-            middle_additions: Optional[Callable] = None,
-            right_additions: Optional[Callable] = None):
+        profile: Profile,
+        categories: List[str],
+        heading: Callable,
+        middle_additions: Optional[Callable] = None,
+        right_additions: Optional[Callable] = None,
+    ):
         """
         Creates the introductory section of the page
         :param profile: current processed profile
@@ -74,10 +69,7 @@ class ExecutionTime(ABC):
                 ExecutionTime.quick_links(categories)
 
             with tags.div(className="col-md-5 col-xs-5"):
-                ExecutionTime.dict_table(
-                    name="Test info",
-                    dictionary=profile.test_info
-                )
+                ExecutionTime.dict_table(name="Test info", dictionary=profile.test_info)
 
                 if middle_additions:
                     middle_additions(profile)
@@ -91,10 +83,7 @@ class ExecutionTime(ABC):
         """Exact design of the table is up to the children to implement"""
         pass
 
-    def tables(
-            self,
-            profile: Profile,
-            categories: List[str]):
+    def tables(self, profile: Profile, categories: List[str]):
         """
         Creates tables for profile and categories
         :param profile: list of devices
@@ -105,13 +94,13 @@ class ExecutionTime(ABC):
                 self.table(profile, category)
 
     def run_single(
-            self,
-            profile: Profile,
-            categories: List[str],
-            title: Callable[[Profile], str],
-            intro: Callable,
-            notebook: bool = False,
-            device: str = 'javacard'
+        self,
+        profile: Profile,
+        categories: List[str],
+        title: Callable[[Profile], str],
+        intro: Callable,
+        notebook: bool = False,
+        device: str = "javacard",
     ):
         """
         Creates a execution time page
@@ -135,7 +124,7 @@ class ExecutionTime(ABC):
             back_to_top=True,
             path_prefix="../",
             notebook=notebook,
-            device=device
+            device=device,
         )
 
 
@@ -175,7 +164,7 @@ class ExecutionTimeJC(Page, ExecutionTime):
                 r.baseline_avg(),
                 r.baseline_min(),
                 r.baseline_max(),
-                f"{r.iterations}/{r.invocations}"
+                f"{r.iterations}/{r.invocations}",
             ]
             if r.error == "OK"
             else [r.name, r.error]
@@ -187,7 +176,7 @@ class ExecutionTimeJC(Page, ExecutionTime):
         tags.h3(category, id=category)
         simple_table(
             data=ExecutionTimeJC.get_table_data(profile, category),
-            table_header=ExecutionTimeJC.TABLE_HEADER
+            table_header=ExecutionTimeJC.TABLE_HEADER,
         )
 
     @overrides
@@ -205,7 +194,7 @@ class ExecutionTimeJC(Page, ExecutionTime):
                 tags.a(
                     "More information parsed from ATR",
                     href="https://smartcard-atr.apdu.fr"
-                         f"/parse?ATR={profile.test_info['Card ATR']} "
+                    f"/parse?ATR={profile.test_info['Card ATR']} ",
                 )
 
         def right_additions(profile: ProfilePerformanceFixedJC):
@@ -224,14 +213,12 @@ class ExecutionTimeJC(Page, ExecutionTime):
                     categories=categories,
                     heading=heading,
                     middle_additions=middle_additions,
-                    right_additions=right_additions
-                )
-            )
+                    right_additions=right_additions,
+                ),
+            ),
+            desc="Execution time pages",
         )
-        data = list(map(
-            lambda item: (item[0], f"./{item[0]}.html"),
-            data
-        ))
+        data = list(map(lambda item: (item[0], f"./{item[0]}.html"), data))
         with open(f"{output_path}/{ExecutionTimeJC.FILENAME}", "w") as f:
             f.write(
                 cardlist(
@@ -283,47 +270,23 @@ class ExecutionTimeTPM(Page, ExecutionTime):
     FILENAME = "execution-time.html"
     SUBFOLDER_NAME = "run-time-tpm"
     H_DEPENDANT = {
-        'TPM2_Create': [
-            'Key parameters'
-        ],
-        'TPM2_EncryptDecrypt': [
-            'Algorithm',
-            'Key length',
-            'Mode',
-            'Encrypt/decrypt?'
-        ],
-        'TPM2_GetRandom': [
-            'Data length (bytes)'
-        ],
-        'TPM2_Hash': [
-            'Hash algorithm',
-            'Data length (bytes)'
-        ],
-        'TPM2_RSA_Decrypt': [
-            'Key parameters',
-            'Scheme'
-        ],
-        'TPM2_RSA_Encrypt': [
-            'Key parameters',
-            'Scheme'
-        ],
-        'TPM2_Sign': [
-            'Key parameters',
-            'Scheme'
-        ],
-        'TPM2_VerifySignature': [
-            'Key parameters',
-            'Scheme'
-        ]
+        "TPM2_Create": ["Key parameters"],
+        "TPM2_EncryptDecrypt": ["Algorithm", "Key length", "Mode", "Encrypt/decrypt?"],
+        "TPM2_GetRandom": ["Data length (bytes)"],
+        "TPM2_Hash": ["Hash algorithm", "Data length (bytes)"],
+        "TPM2_RSA_Decrypt": ["Key parameters", "Scheme"],
+        "TPM2_RSA_Encrypt": ["Key parameters", "Scheme"],
+        "TPM2_Sign": ["Key parameters", "Scheme"],
+        "TPM2_VerifySignature": ["Key parameters", "Scheme"],
     }
     H_DEFAULT = [
-        'Operation average (ms/op)',
-        'Operation minimum (ms/op)',
-        'Operation maximum (ms/op)',
-        'Iterations',
-        'Successful',
-        'Failed',
-        'Error code'
+        "Operation average (ms/op)",
+        "Operation minimum (ms/op)",
+        "Operation maximum (ms/op)",
+        "Iterations",
+        "Successful",
+        "Failed",
+        "Error code",
     ]
 
     def __init__(self, profiles):
@@ -340,39 +303,20 @@ class ExecutionTimeTPM(Page, ExecutionTime):
 
         for result in category_results:
             category_dependant: Dict[str, list[any]] = {
-                'TPM2_Create': [
-                    result.key_params
-                ],
-                'TPM2_EncryptDecrypt': [
+                "TPM2_Create": [result.key_params],
+                "TPM2_EncryptDecrypt": [
                     result.algorithm,
                     result.key_length,
                     result.mode,
                     result.encrypt_decrypt,
-                    result.data_length
+                    result.data_length,
                 ],
-                'TPM2_GetRandom': [
-                    result.data_length
-                ],
-                'TPM2_Hash': [
-                    result.algorithm,
-                    result.data_length
-                ],
-                'TPM2_RSA_Decrypt': [
-                    result.key_params,
-                    result.scheme
-                ],
-                'TPM2_RSA_Encrypt': [
-                    result.key_params,
-                    result.scheme
-                ],
-                'TPM2_Sign': [
-                    result.key_params,
-                    result.scheme
-                ],
-                'TPM2_VerifySignature': [
-                    result.key_params,
-                    result.scheme
-                ]
+                "TPM2_GetRandom": [result.data_length],
+                "TPM2_Hash": [result.algorithm, result.data_length],
+                "TPM2_RSA_Decrypt": [result.key_params, result.scheme],
+                "TPM2_RSA_Encrypt": [result.key_params, result.scheme],
+                "TPM2_Sign": [result.key_params, result.scheme],
+                "TPM2_VerifySignature": [result.key_params, result.scheme],
             }
             default = [
                 result.operation_avg,
@@ -381,7 +325,7 @@ class ExecutionTimeTPM(Page, ExecutionTime):
                 result.iterations,
                 result.successful,
                 result.failed,
-                result.error
+                result.error,
             ]
             data.append(category_dependant[category] + default)
 
@@ -394,9 +338,8 @@ class ExecutionTimeTPM(Page, ExecutionTime):
             tags.h3(category, id=category)
             simple_table(
                 data=data,
-                table_header=
-                ExecutionTimeTPM.H_DEPENDANT[category]
-                + ExecutionTimeTPM.H_DEFAULT
+                table_header=ExecutionTimeTPM.H_DEPENDANT[category]
+                + ExecutionTimeTPM.H_DEFAULT,
             )
 
     @overrides
@@ -423,26 +366,23 @@ class ExecutionTimeTPM(Page, ExecutionTime):
                     heading=heading,
                 ),
                 notebook=notebook,
-                device='tpm'
-            )
+                device="tpm",
+            ),
+            desc="Execution time pages",
         )
-        data = list(map(
-            lambda item: (item[0], f"./{item[0]}.html"),
-            data
-        ))
+        data = list(map(lambda item: (item[0], f"./{item[0]}.html"), data))
 
         html = cardlist(
             data,
             "tpm-algtest - Algorithm execution time",
             ExecutionTimeTPM.cardlist_text,
-            device='tpm'
+            device="tpm",
         )
 
         with open(f"{output_path}/{ExecutionTimeJC.FILENAME}", "w") as f:
             f.write(html)
 
-        data = list(map(
-            lambda item: (item[0], f"{output_path}/{item[1]}"), data))
+        data = list(map(lambda item: (item[0], f"{output_path}/{item[1]}"), data))
         return html, data
 
     @staticmethod
