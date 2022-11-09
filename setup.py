@@ -1,7 +1,7 @@
 import subprocess
 import sys
 
-RESULTS_REPOSITORY = "https://github.com/crocs-muni/jcalgtest_results.git"
+JCALGTEST_RESULTS_REPOSITORY = "https://github.com/crocs-muni/jcalgtest_results.git"
 
 
 def pip_install(pkg):
@@ -28,14 +28,14 @@ def download_results(repo_link):
     return True
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     success = True
 
     with open("requirements.txt") as f:
         for package in f:
             success = success and pip_install(package)
 
-    success = success and download_results(RESULTS_REPOSITORY)
+    # success = success and download_results(RESULTS_REPOSITORY)
 
     if not success:
         print("Something went wrong")
