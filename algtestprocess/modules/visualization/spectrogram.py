@@ -35,8 +35,8 @@ class Spectrogram(Plot):
 
     def round_yminymax(self, df):
         if self.ymin is None or self.ymax is None:
-            self.ymin = Series(df["duration"]).nsmallest(5).max()
-            self.ymax = Series(df["duration"]).nlargest(5).min()
+            self.ymin = Series(df["duration"] + df["duration_extra"]).nsmallest(5).max()
+            self.ymax = Series(df["duration"] + df["duration_extra"]).nlargest(5).min()
 
         return (
             round(self.ymin * self.time_unit),
@@ -54,7 +54,7 @@ class Spectrogram(Plot):
                 nonce_bytes,
             )
         )
-        duration = list(df.duration)
+        duration = list(df.duration + df.duration_extra)
         return nonce_bytes, duration
 
     def mapper(self):
@@ -99,9 +99,9 @@ class Spectrogram(Plot):
             fontsize=40,
         )
         pcm = ax.pcolormesh(X, Y, Z, cmap=self.cmap)
-        fig.colorbar(pcm, ax=ax, format="%d")
+        fig.colorbar(pcm, ax=ax, format="%d", spacing="proportional")
 
-        ax.set_xticks([16, 32, 128, 256], fontsize=20)
+        ax.set_xticks([16, 32, 128, 255], fontsize=20)
 
         ax.set_xlabel("nonce MSB value", fontsize=32)
         ax.set_ylabel("signature duration (μs)", fontsize=32)

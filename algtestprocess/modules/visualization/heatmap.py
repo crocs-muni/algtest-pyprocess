@@ -28,9 +28,21 @@ class Heatmap(Plot):
         p = list(map(lambda x: int(x, 16), list(df.p)))
         q = [a // b for a, b in zip(n, p)]
 
-        p_byte = [x >> (x.bit_length() - 8) for x in p]
-        q_byte = [x >> (x.bit_length() - 8) for x in q]
-        n_byte = [x >> (x.bit_length() - 8) for x in n]
+        p_byte = [
+            x
+            >> (x.bit_length() - (8 if x.bit_length() % 8 == 0 else x.bit_length() % 8))
+            for x in p
+        ]
+        q_byte = [
+            x
+            >> (x.bit_length() - (8 if x.bit_length() % 8 == 0 else x.bit_length() % 8))
+            for x in q
+        ]
+        n_byte = [
+            x
+            >> (x.bit_length() - (8 if x.bit_length() % 8 == 0 else x.bit_length() % 8))
+            for x in n
+        ]
 
         return p_byte, q_byte, n_byte
 
