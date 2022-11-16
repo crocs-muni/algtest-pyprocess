@@ -2,6 +2,7 @@ import os
 
 from dominate import tags
 from typing import Dict, Tuple, List
+from pandas import Series
 from tqdm import tqdm
 
 
@@ -64,14 +65,14 @@ class Spectrograms(Page):
             alg: (
                 min(
                     [
-                        df.duration.nsmallest(5).max()
+                        Series(df["duration"] + df["duration_extra"]).nsmallest(5).max()
                         for df, _, algorithm in items
                         if algorithm == alg and df is not None
                     ]
                 ),
                 max(
                     [
-                        df.duration.nlargest(5).min()
+                        Series(df["duration"] + df["duration_extra"]).nlargest(5).min()
                         for df, _, algorithm in items
                         if algorithm == alg and df is not None
                     ]
@@ -79,9 +80,6 @@ class Spectrograms(Page):
             )
             for alg in algs
         }
-        self.yminymax["ecc_p256_ecdsa"] = (None, None)
-        self.yminymax["ecc_p256_ecdaa"] = (None, None)
-        self.yminymax["ecc_bn256_ecdaa"] = (None, None)
 
     def run(self, output_path: str, notebook=False):
         algs = Spectrograms.ALGS

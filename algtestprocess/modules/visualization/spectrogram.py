@@ -101,7 +101,8 @@ class Spectrogram(Plot):
         pcm = ax.pcolormesh(X, Y, Z, cmap=self.cmap)
         fig.colorbar(pcm, ax=ax, format="%d", spacing="proportional")
 
-        ax.set_xticks([16, 32, 128, 255], fontsize=20)
+        ax.set_xticks([8, 16, 32, 64, 128, 255], fontsize=20)
+        ax.vlines([8, 16, 32, 64, 128], ymin=self.ymin, ymax=self.ymax, color="white")
 
         ax.set_xlabel("nonce MSB value", fontsize=32)
         ax.set_ylabel("signature duration (μs)", fontsize=32)
