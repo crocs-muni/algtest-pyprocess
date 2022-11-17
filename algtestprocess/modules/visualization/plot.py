@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 class Plot(ABC):
     def __init__(self):
-        self.fig: Optional[plt.Figure] = None
+        self.fig: Optional[plt.Figure | plt.FigureBase] = None
 
     @abstractmethod
     def plot(self):
@@ -19,7 +19,7 @@ class Plot(ABC):
         return self
 
     def show(self):
-        """Shows the heatmap"""
+        """Shows the plot"""
         plt.show()
 
     def svg(self):
