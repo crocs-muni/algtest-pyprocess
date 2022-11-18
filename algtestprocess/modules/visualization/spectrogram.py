@@ -12,9 +12,9 @@ class Spectrogram(Plot):
     def __init__(
         self,
         df,
-        device_name,
+        device_name=None,
         xsys=None,
-        title="",
+        title="Nonce MSB vs Signature duration",
         yrange=(None, None),
         xlabel="nonce MSB value",
         ylabel="signature duration (μs)",
@@ -131,11 +131,10 @@ class Spectrogram(Plot):
 
         ax = fig.add_subplot()
 
-        if not self.title:
-            plt.title(
-                f"Nonce MSB vs signature time\n{self.device_name}",
-                fontsize=40,
-            )
+        plt.title(
+            f"{self.title}" + (f"\n{self.device_name}" if self.device_name else ""),
+            fontsize=40,
+        )
 
         pcm = ax.pcolormesh(X, Y, Z, cmap=self.cmap)
         fig.colorbar(pcm, ax=ax, format="%d", spacing="proportional")
