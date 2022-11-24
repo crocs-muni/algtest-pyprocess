@@ -14,6 +14,7 @@ class Heatmap(Plot):
         Init function  the p,q,n bytes and builds the plot
         :param rsa_df: pandas dataframe containing the private prime an moduli
         :param device_name: to draw into the plot
+        :param pqnf: possibly a function which takes df as input and returns the PQN MSBs
         """
         super().__init__()
         pqnf = pqnf or Heatmap.compute_pqn_bytes
@@ -196,7 +197,7 @@ class Heatmap(Plot):
         hm_ax.set_yticklabels(list(map(lambda num: format(num, "b"), ticks)))
 
         # Add histograms for P and Q
-        bins = list(range(128, 256, 1))
+        bins = list(range(128, 257, 1))
         hm_histx_ax.hist(p_byte, bins=bins, color="black", ec="white", density=True)
         hm_histy_ax.hist(
             q_byte,
