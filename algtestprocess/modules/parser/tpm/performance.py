@@ -1,9 +1,13 @@
 import re
 
+from functools import partial
+
 from algtestprocess.modules.config import TPM2Identifier
 from algtestprocess.modules.parser.tpm.utils import get_params, to_int
-from algtestprocess.modules.tpmalgtest import ProfilePerformanceTPM, \
-    PerformanceResultTPM
+from algtestprocess.modules.tpmalgtest import (
+    ProfilePerformanceTPM,
+    PerformanceResultTPM,
+)
 
 
 def get_data(path: str):
@@ -22,8 +26,7 @@ def get_key_params(key_params: str):
     """Helper for correctly parsing key params section of result"""
     if key_params and re.match(r"ECC 0x[0-9a-f]+", key_params):
         key_params = to_int(
-            re.search(r"(0x[a-fA-F0-9]+)",key_params.split()[1]).group(0),
-            16
+            re.search(r"(0x[a-fA-F0-9]+)", key_params.split()[1]).group(0), 16
         )
         return TPM2Identifier.ECC_CURVE_STR[key_params]
     if key_params and re.match(r"SYMCIPHER 0x[0-9a-f]+", key_params):
@@ -57,13 +60,14 @@ class PerformanceParserTPM:
             ("category", r"(?P<category>TPM2_.+):"),
             (
                 "algorithm",
-                r"(Algorithm|[Hh]ash algorithm):[; ](?P<algorithm>(0x[0-9a-fA-F]+))"),
+                r"(Algorithm|[Hh]ash algorithm):[; ](?P<algorithm>(0x[0-9a-fA-F]+))",
+            ),
             ("key_length", r"Key length:;(?P<key_length>[0-9]+)"),
             ("mode", r"Mode:;(?P<mode>0x[0-9a-fA-F]+)"),
             ("encrypt_decrypt", r"Encrypt/decrypt\?:;(?P<encrypt_decrypt>\w+)"),
             ("data_length", r"[Dd]ata length \(bytes\):[; ](?P<data_length>[0-9]+)"),
             ("key_params", r"[Kk]ey parameters:[; ](?P<key_params>[^;$\n]+)"),
-            ("scheme", r"[\Ss]cheme:[; ](?P<scheme>0x[0-9a-fA-F]+)")
+            ("scheme", r"[\Ss]cheme:[; ](?P<scheme>0x[0-9a-fA-F]+)"),
         ]
         params = get_params(line, items)
         result.category = params.get("category")
@@ -81,7 +85,7 @@ class PerformanceParserTPM:
         items = [
             ("op_avg", r"avg op:[; ](?P<op_avg>[0-9]+\.[0-9]+)"),
             ("op_min", r"min op:[; ](?P<op_min>[0-9]+\.[0-9]+)"),
-            ("op_max", r"max op:[; ](?P<op_max>[0-9]+\.[0-9]+)")
+            ("op_max", r"max op:[; ](?P<op_max>[0-9]+\.[0-9]+)"),
         ]
         params = get_params(line, items)
         result.operation_min = float(params["op_min"])
@@ -95,7 +99,7 @@ class PerformanceParserTPM:
             ("iterations", r"total iterations:[; ](?P<iterations>[0-9]+)"),
             ("successful", r"successful:[; ](?P<successful>[0-9]+)"),
             ("failed", r"failed:[; ](?P<failed>[0-9]+)"),
-            ("error", r"error:[; ](?P<error>(None|[0-9a-fA-F]+))")
+            ("error", r"error:[; ](?P<error>(None|[0-9a-fA-F]+))"),
         ]
         params = get_params(line, items)
         result.iterations = to_int(params.get("iterations"), 10)
@@ -114,18 +118,16 @@ class PerformanceParserTPM:
                 parsed_testinfo = True
                 result = PerformanceResultTPM()
                 offset = get_offset(lines, i)
-                entry = "\n".join(
-                    lines[i:] if offset == -1 else lines[i:i + offset]
-                )
+                entry = "\n".join(lines[i:] if offset == -1 else lines[i : i + offset])
                 PerformanceParserTPM.parse_info(entry, result)
                 PerformanceParserTPM.parse_parameters(entry, result)
                 PerformanceParserTPM.parse_operation(entry, result)
                 profile.add_result(result)
 
             if not parsed_testinfo and len(lines) > 0:
-                key, val = list(map(
-                    lambda x: x.strip(), lines[i].split(':', maxsplit=1)
-                ))
+                key, val = list(
+                    map(lambda x: x.strip(), lines[i].split(":", maxsplit=1))
+                )
                 profile.test_info[key] = val
 
             if offset == -1:
@@ -156,4 +158,130 @@ class PerformanceParserTPM:
                 profile.add_result(result)
                 i = i + 2
             i = i + 1
+        return profile
+
+
+from yaml import load
+
+try:
+    from yaml import CLoader as Loader
+except ImportError:
+    from yaml import Loader
+
+
+class PerformanceParserTPMYaml:
+    def __init__(self, path: str):
+        self.data = None
+        with open(path) as f:
+            self.data = load(f, Loader)
+        assert self.data
+
+    def process_key_params(self, result: PerformanceResultTPM, contents):
+        result.key_params = contents.get("key parameters")
+
+    def process_data_length(self, result: PerformanceResultTPM, contents):
+        result.data_length = contents.get("data length (bytes)")
+
+    def process_hash_algorithm(self, result: PerformanceResultTPM, contents):
+        ha = contents.get("hash algorithm")
+        assert ha
+        if isinstance(ha, int):
+            result.algorithm = TPM2Identifier.ALG_ID_STR[ha]
+        else:
+            # Some entries, have filled in string like SHA-256 instead of numeric id
+            result.algorithm = "TPM2_ALG_" + ha.replace("-", "")
+
+    def process_scheme(self, result: PerformanceResultTPM, contents):
+        scheme = contents.get("scheme")
+        assert scheme and isinstance(scheme, int)
+        result.scheme = TPM2Identifier.ALG_ID_STR[scheme]
+
+    def process_op_stats(self, result: PerformanceResultTPM, contents):
+        stats = contents.get("operation stats (ms/op)")
+        assert stats
+        result.operation_min = float(stats["min op"])
+        result.operation_avg = float(stats["avg op"])
+        result.operation_max = float(stats["max op"])
+
+    def process_op_info(self, result: PerformanceResultTPM, contents):
+        info = contents.get("operation info")
+        assert info
+        result.iterations = int(info["total iterations"])
+        result.successful = int(info["successful"])
+        result.failed = int(info["failed"])
+        result.error = info["error"]
+
+    def process_entry(
+        self, result: PerformanceResultTPM, category: str, contents: dict
+    ):
+        assert isinstance(contents, dict)
+        # All entries contain Operation Stats, and Operatien Info
+        # Optional entries are command dependant
+        # (kparams, data_length, hash_algorithm, scheme)
+        entry_contents = {
+            "TPM2_Create": (True, False, False, False),
+            "TPM2_GetRandom": (False, True, False, False),
+            "TPM2_HMAC": (False, True, True, False),
+            "TPM2_Hash": (False, True, True, False),
+            "TPM2_RSA_Decrypt": (True, False, False, True),
+            "TPM2_RSA_Encrypt": (True, False, False, True),
+            "TPM2_Sign": (True, False, False, True),
+            "TPM2_VerifySignature": (True, False, False, True),
+            "TPM2_ZGen": (True, False, False, True),
+        }
+
+        self.process_op_stats(result, contents)
+        self.process_op_info(result, contents)
+
+        handlers = [
+            self.process_key_params,
+            self.process_data_length,
+            self.process_hash_algorithm,
+            self.process_scheme,
+        ]
+
+        for i in range(len(handlers)):
+            if entry_contents.get(category)[i]:
+                handlers[i](result, contents)
+
+    def process_tpm_commands(
+        self, profile: ProfilePerformanceTPM, category: str, entries
+    ):
+        for sub in entries:
+            result = PerformanceResultTPM()
+            result.category = category
+
+            if isinstance(entries, dict):
+                self.process_entry(result, category, entries[sub])
+            elif isinstance(entries, list):
+                self.process_entry(result, category, sub)
+
+            profile.add_result(result)
+
+    def parse(self) -> ProfilePerformanceTPM:
+        profile = ProfilePerformanceTPM()
+
+        data = self.data
+        assert data
+
+        categories = [
+            "TPM2_Create",
+            "TPM2_GetRandom",
+            "TPM2_HMAC",
+            "TPM2_Hash",
+            "TPM2_RSA_Decrypt",
+            "TPM2_RSA_Encrypt",
+            "TPM2_Sign",
+            "TPM2_VerifySignature",
+            "TPM2_ZGen",
+        ]
+
+        for category in categories:
+            if category in data:
+                entries = data.pop(category)
+                self.process_tpm_commands(profile, category, entries)
+
+        # Remaining data is put into test info dictionary
+        profile.test_info = data
+
         return profile
