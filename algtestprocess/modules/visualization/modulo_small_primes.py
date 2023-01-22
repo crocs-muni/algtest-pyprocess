@@ -110,7 +110,7 @@ class ModulusSmallPrimes(Plot):
 
     @overrides
     def plot(self):
-        fig, axes = plt.subplots(self.cols, self.rows, figsize=(39, 39))
+        fig, axes = plt.subplots(self.cols, self.rows, figsize=(19, 19))
         self.fig = fig
         if self.ll_primes:
             self.subplots(axes)

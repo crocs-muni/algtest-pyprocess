@@ -1,8 +1,17 @@
-from typing import List, Union, Dict
+from typing import List, Tuple, Union, Dict, Optional
 import pandas as pd
 
+Item = Tuple[pd.DataFrame, Optional[str], str]
 
-def merge_cryptoprops_dfs(profiles: List[Dict[str, Union[str, any]]], algs: List[str]):
+
+def merge_cryptoprops_dfs(
+    profiles: List[Dict[str, str | pd.DataFrame]], algs: List[str]
+) -> Tuple[List[Item], List[Item]]:
+    """
+    Function which merges the Cryptoprops profiles of identical devices by algorithm
+    :param profiles: List of Cryptoprops profiles
+    :returns: Tuple of lists of Items ->  (dataframe, device_name, algorithm)
+    """
     items_base = [
         (profile.get(alg), profile.get("device_name"), alg)
         for alg in algs

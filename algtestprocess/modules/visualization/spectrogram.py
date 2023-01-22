@@ -47,6 +47,8 @@ class Spectrogram(Plot):
         # Round and set ymin, ymax if it wasnt done so before
         self.ymin, self.ymax = self.round_yminymax(df)
         self.cmap = cmap
+        self.xlabel = xlabel
+        self.ylabel = ylabel
 
     def round_yminymax(self, df: DataFrame) -> Tuple[float, float]:
         """
