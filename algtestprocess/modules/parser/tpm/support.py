@@ -2,9 +2,10 @@ import re
 from typing import Dict, List
 
 from algtestprocess.modules.config import TPM2Identifier
+from algtestprocess.modules.data.tpm.profiles.support import ProfileSupportTPM
 from algtestprocess.modules.parser.tpm.utils import get_params
 from algtestprocess.modules.data.tpm.results.support import SupportResultTPM
-from algtestprocess.modules.profiles.tpm.support import ProfileSupportTPM
+
 
 
 def get_data(path: str):

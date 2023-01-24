@@ -1,9 +1,12 @@
-import pandas as pd
-import re
 import os
+import re
+
+from algtestprocess.modules.data.tpm.profiles.cryptoprops import \
+    CryptoPropCategory, CryptoProps
+from algtestprocess.modules.data.tpm.results.cryptoprops import CryptoPropResult
 
 
-class CryptoProps:
+class CryptoPropsParser:
     """
     Cryptographic properties parser
     Note: reads several CSV files
@@ -27,7 +30,8 @@ class CryptoProps:
         files = list(
             filter(
                 lambda name: ".csv" in name
-                and ("/performance/" in name.lower() or "/results/" in name.lower()),
+                             and (
+                                     "/performance/" in name.lower() or "/results/" in name.lower()),
                 files,
             )
         )
@@ -67,21 +71,20 @@ class CryptoProps:
             ("ecc_bn256_ecdaa", "Cryptoops_Sign:ECC_0x0010_0x001a.csv"),
             ("ecc_bn256_ecschnorr", "Cryptoops_Sign:ECC_0x0010_0x001c.csv"),
         ]
-        output = {}
+        profile = CryptoProps()
         for key, filename in items:
-            try:
-                if output.get(key) is None:
-                    path = f"{self.path}/{filename}"
-                    output[key] = pd.read_csv(
-                        path,
-                        header=0,
-                        # Legacy csv files had ; as delimiter
-                        delimiter=";" if legacy else ",",
-                    )
-            except FileNotFoundError:
+            path = f"{self.path}/{filename}"
+            if not os.path.exists(path):
                 continue
-        if not output:
+
+            result = CryptoPropResult()
+            result.category = CryptoPropCategory[key]
+            result.delimiter = ";" if legacy else ","
+            result.path = path
+            profile.add_result(result)
+
+        if not profile.results:
             return None
 
-        output["device_name"] = self.device_name
-        return output
+        profile.rename(self.device_name)
+        return profile

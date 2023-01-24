@@ -20,7 +20,7 @@ from algtestprocess.modules.parser.javacard.performance import (
     compute_stats,
 )
 from algtestprocess.modules.parser.javacard.support import SupportParserJC
-from algtestprocess.modules.parser.tpm.cryptoprops import CryptoProps
+from algtestprocess.modules.parser.tpm.cryptoprops import CryptoPropsParser
 from algtestprocess.modules.parser.tpm.performance import PerformanceParserTPM
 from algtestprocess.modules.parser.tpm.support import SupportParserTPM
 
@@ -199,7 +199,7 @@ def get_tpm_profiles(
             )
         )
         cryptoprops = list(
-            filter(None, map(lambda path: CryptoProps(path).parse(), cryptoprops_paths))
+            filter(None, map(lambda path: CryptoPropsParser(path).parse(), cryptoprops_paths))
         )
         tpm_sorted(cryptoprops, lambda x: x["device_name"])
 
