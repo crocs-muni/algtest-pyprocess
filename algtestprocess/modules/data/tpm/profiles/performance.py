@@ -25,12 +25,3 @@ class ProfilePerformanceTPM(ProfileTPM):
         name += f" {result.scheme}" if result.scheme else ""
         self.results[name] = result
         return name
-
-    @overrides
-    def export(self):
-        data = super(ProfilePerformanceTPM, self).export()
-        data.update({
-            "results_type": "performance",
-            "results": [result.export() for result in self.results.values()]
-        })
-        return data

@@ -4,17 +4,21 @@ from typing import Optional, Dict, List, Union, Callable
 
 from overrides import EnforceOverrides, overrides
 
+
 def null_if_none(x: any):
     return 'null' if x is None else x
 
+
 def bool_to_tf(x: bool) -> str:
-    return 'true'if x else 'false'
+    return 'true' if x else 'false'
+
 
 def null_if_exc(f: Callable):
     try:
         return f()
     except Exception:
         return 'null'
+
 
 class MeasurementResultJC(ABC, EnforceOverrides):
     """
@@ -25,18 +29,6 @@ class MeasurementResultJC(ABC, EnforceOverrides):
         self.name: Optional[str] = None
         self.category: Optional[Union[MeasurementCategory, str]] = None
         self.error: Optional[str] = None
-
-    def export(self):
-        category = str(self.category.value) \
-            if isinstance(self.category, Enum) \
-            else null_if_none(self.category)
-
-        return {
-            "name": null_if_none(self.name),
-            "category": category,
-            "error": null_if_none(self.error)
-        }
-
 
 
 class PerformanceResultJC(MeasurementResultJC):
@@ -95,19 +87,6 @@ class PerformanceResultJC(MeasurementResultJC):
         """Maximal single algorithm execution time"""
         return max(self.operation) / self.ipm()
 
-    @overrides
-    def export(self):
-        data = super(PerformanceResultJC, self).export()
-        data.update({
-            "baseline_avg": null_if_exc(self.baseline_avg),
-            "baseline_min": null_if_exc(self.baseline_min),
-            "baseline_max": null_if_exc(self.baseline_max),
-            "operation_avg": null_if_exc(self.operation_avg),
-            "operation_min": null_if_exc(self.operation_min),
-            "operation_max": null_if_exc(self.operation_max),
-        })
-        return data
-
 
 class SupportResultJC(MeasurementResultJC):
     """
@@ -123,18 +102,6 @@ class SupportResultJC(MeasurementResultJC):
         self.persistent_memory: Optional[int] = None
         self.ram_deselect: Optional[int] = None
         self.ram_reset: Optional[int] = None
-
-    @overrides
-    def export(self):
-        data = super(SupportResultJC, self).export()
-        data.update({
-            "support": bool_to_tf(self.support),
-            "time_elapsed": null_if_none(self.time_elapsed),
-            "persistent_memory": null_if_none(self.persistent_memory),
-            "ram_deselect": null_if_none(self.ram_deselect),
-            "ram_reset": null_if_none(self.ram_reset)
-        })
-        return data
 
 
 MethodName = str
@@ -177,15 +144,6 @@ class ProfilePerformanceFixedJC(ProfileJC):
     def add_result(self, key: MethodName, result: MeasurementResultJC):
         self.results[key] = result
 
-    @overrides
-    def export(self):
-        data = super(ProfilePerformanceFixedJC, self).export()
-        data.update({
-            "results_type": "performance fixed",
-            "results": [result.export() for result in self.results.values()]
-        })
-        return data
-
 
 class ProfilePerformanceVariableJC(ProfileJC):
     """Java card profile with variable data length results"""
@@ -200,20 +158,10 @@ class ProfilePerformanceVariableJC(ProfileJC):
             self.results[key] = []
         self.results[key].append(result)
 
-    @overrides
-    def export(self):
-        data = super(ProfilePerformanceVariableJC, self).export()
-        data.update({
-            "results_type": "performance variable",
-            "results": [
-                [result.export() for result in results]
-                for results in self.results.values()
-            ]
-        })
-        return data
 
 class ProfileSupportJC(ProfileJC):
     """Java card profile with support results"""
+
     def __init__(self):
         super().__init__()
         self.results: Dict[MethodName, SupportResultJC] = {}
@@ -221,14 +169,6 @@ class ProfileSupportJC(ProfileJC):
     @overrides
     def add_result(self, key: MethodName, result: MeasurementResultJC):
         self.results[key] = result
-
-    @overrides
-    def export(self):
-        data = super(ProfileSupportJC, self).export()
-        data.update({
-            "results_type": "support",
-            "results": [result.export() for result in self.results.values()]
-        })
 
 
 class MeasurementCategory(Enum):

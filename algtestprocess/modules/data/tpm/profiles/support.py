@@ -17,12 +17,3 @@ class ProfileSupportTPM(ProfileTPM):
     def add_result(self, result):
         if result.name:
             self.results[result.name] = result
-
-    @overrides
-    def export(self):
-        data = super(ProfileSupportTPM, self).export()
-        data.update({
-            "results_type": "support",
-            "results": [result.export() for result in self.results.values()]
-        })
-        return data

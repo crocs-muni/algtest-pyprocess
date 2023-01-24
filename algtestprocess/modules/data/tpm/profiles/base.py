@@ -10,19 +10,19 @@ class ProfileTPM(ABC, EnforceOverrides):
     def __init__(self):
         self.test_info = {}
 
-    def device_name(self) -> Optional[str]:
+    @property
+    def device_name(self):
         if not self.test_info.get('TPM name'):
+            # Only way to reconstruct TPM name if it was not provided
             manufacturer = self.test_info.get('Manufacturer')
             version = self.test_info.get('Firmware version')
             self.test_info['TPM name'] = f"{manufacturer} {version}"
         return self.test_info.get('TPM name')
 
-    def rename(self, name: str):
-        self.test_info['TPM name'] = name
+    @device_name.setter
+    def device_name(self, value: str):
+        self.test_info['TPM name'] = value
 
     @abstractmethod
     def add_result(self, result):
         pass
-
-    def export(self):
-        return {"test_info": self.test_info}
