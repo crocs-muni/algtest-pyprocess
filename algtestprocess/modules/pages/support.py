@@ -10,7 +10,7 @@ from algtestprocess.modules.components.utils import AssetsPaths
 from algtestprocess.modules.config import SupportGroupsJC, TPM2Identifier
 from algtestprocess.modules.jcalgtest import ProfileSupportJC
 from algtestprocess.modules.pages.page import Page
-from algtestprocess.modules.tpmalgtest import ProfileSupportTPM
+from algtestprocess.modules.profiles.tpm.support import ProfileSupportTPM
 
 
 def colored_cell(tag: Callable, content: str):

@@ -4,10 +4,10 @@ from functools import partial
 
 from algtestprocess.modules.config import TPM2Identifier
 from algtestprocess.modules.parser.tpm.utils import get_params, to_int
-from algtestprocess.modules.tpmalgtest import (
-    ProfilePerformanceTPM,
-    PerformanceResultTPM,
-)
+from algtestprocess.modules.data.tpm.results.performance import \
+    PerformanceResultTPM
+from algtestprocess.modules.profiles.tpm.performance import \
+    ProfilePerformanceTPM
 
 
 def get_data(path: str):

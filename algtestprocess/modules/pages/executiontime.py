@@ -14,7 +14,8 @@ from algtestprocess.modules.jcalgtest import (
 )
 from algtestprocess.modules.pages.page import Page
 from algtestprocess.modules.pages.utils import run_helper
-from algtestprocess.modules.tpmalgtest import ProfilePerformanceTPM
+from algtestprocess.modules.profiles.tpm.performance import \
+    ProfilePerformanceTPM
 
 Profile = ProfilePerformanceFixedJC | ProfilePerformanceTPM
 

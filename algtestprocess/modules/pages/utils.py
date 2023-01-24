@@ -4,7 +4,7 @@ from typing import List, Tuple, Callable, Union, Dict
 from tqdm import tqdm
 
 from algtestprocess.modules.jcalgtest import ProfileJC, PerformanceResultJC
-from algtestprocess.modules.tpmalgtest import ProfileTPM
+from algtestprocess.modules.profiles.tpm.base import ProfileTPM
 
 Name = str
 Href = str

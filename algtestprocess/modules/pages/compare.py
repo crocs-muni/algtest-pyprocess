@@ -11,10 +11,10 @@ from algtestprocess.modules.jcalgtest import (
 from algtestprocess.modules.pages.page import Page
 from algtestprocess.modules.pages.radar import Radar, RadarJC, RadarTPM
 from algtestprocess.modules.pages.utils import run_helper_multi
-from algtestprocess.modules.tpmalgtest import (
-    ProfilePerformanceTPM,
-    PerformanceResultTPM,
-)
+from algtestprocess.modules.data.tpm.results.performance import \
+    PerformanceResultTPM
+from algtestprocess.modules.profiles.tpm.performance import \
+    ProfilePerformanceTPM
 
 
 def colored_span(name: str, color: str):

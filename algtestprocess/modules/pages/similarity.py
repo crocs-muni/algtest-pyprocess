@@ -11,8 +11,10 @@ from algtestprocess.modules.config import SimilarityFunctionsJC, \
 from algtestprocess.modules.jcalgtest import ProfilePerformanceFixedJC, \
     PerformanceResultJC
 from algtestprocess.modules.pages.page import Page
-from algtestprocess.modules.tpmalgtest import ProfilePerformanceTPM, \
+from algtestprocess.modules.data.tpm.results.performance import \
     PerformanceResultTPM
+from algtestprocess.modules.profiles.tpm.performance import \
+    ProfilePerformanceTPM
 
 Profile = Union[ProfilePerformanceFixedJC, ProfilePerformanceTPM]
 ProfilePairSimilarity = Dict[Tuple[Profile, Profile], float]
