@@ -2,7 +2,7 @@ from typing import Dict
 
 from overrides import overrides
 
-from algtestprocess.modules.profiles.tpm.base import ProfileTPM
+from algtestprocess.modules.data.tpm.profiles.base import ProfileTPM
 from algtestprocess.modules.data.tpm.results.performance import \
     PerformanceResultTPM
 

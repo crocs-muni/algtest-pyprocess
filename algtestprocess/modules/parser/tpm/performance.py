@@ -1,14 +1,11 @@
 import re
 
-from functools import partial
-
 from algtestprocess.modules.config import TPM2Identifier
 from algtestprocess.modules.data.tpm.profiles.performance import \
     ProfilePerformanceTPM
-from algtestprocess.modules.parser.tpm.utils import get_params, to_int
 from algtestprocess.modules.data.tpm.results.performance import \
     PerformanceResultTPM
-
+from algtestprocess.modules.parser.tpm.utils import get_params, to_int
 
 
 def get_data(path: str):
@@ -66,7 +63,8 @@ class PerformanceParserTPM:
             ("key_length", r"Key length:;(?P<key_length>[0-9]+)"),
             ("mode", r"Mode:;(?P<mode>0x[0-9a-fA-F]+)"),
             ("encrypt_decrypt", r"Encrypt/decrypt\?:;(?P<encrypt_decrypt>\w+)"),
-            ("data_length", r"[Dd]ata length \(bytes\):[; ](?P<data_length>[0-9]+)"),
+            ("data_length",
+             r"[Dd]ata length \(bytes\):[; ](?P<data_length>[0-9]+)"),
             ("key_params", r"[Kk]ey parameters:[; ](?P<key_params>[^;$\n]+)"),
             ("scheme", r"[\Ss]cheme:[; ](?P<scheme>0x[0-9a-fA-F]+)"),
         ]
@@ -119,7 +117,8 @@ class PerformanceParserTPM:
                 parsed_testinfo = True
                 result = PerformanceResultTPM()
                 offset = get_offset(lines, i)
-                entry = "\n".join(lines[i:] if offset == -1 else lines[i : i + offset])
+                entry = "\n".join(
+                    lines[i:] if offset == -1 else lines[i: i + offset])
                 PerformanceParserTPM.parse_info(entry, result)
                 PerformanceParserTPM.parse_parameters(entry, result)
                 PerformanceParserTPM.parse_operation(entry, result)
@@ -213,7 +212,7 @@ class PerformanceParserTPMYaml:
         result.error = info["error"]
 
     def process_entry(
-        self, result: PerformanceResultTPM, category: str, contents: dict
+            self, result: PerformanceResultTPM, category: str, contents: dict
     ):
         assert isinstance(contents, dict)
         # All entries contain Operation Stats, and Operatien Info
@@ -246,7 +245,7 @@ class PerformanceParserTPMYaml:
                 handlers[i](result, contents)
 
     def process_tpm_commands(
-        self, profile: ProfilePerformanceTPM, category: str, entries
+            self, profile: ProfilePerformanceTPM, category: str, entries
     ):
         for sub in entries:
             result = PerformanceResultTPM()

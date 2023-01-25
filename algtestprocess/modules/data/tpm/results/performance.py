@@ -1,7 +1,5 @@
 from typing import Optional
 
-from overrides import overrides
-
 from algtestprocess.modules.data.tpm.results.base import MeasurementResultTPM
 
 
