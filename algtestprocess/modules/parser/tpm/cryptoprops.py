@@ -1,5 +1,5 @@
 import os
-import re
+from typing import Optional
 
 from algtestprocess.modules.data.tpm.profiles.cryptoprops import \
     CryptoPropCategory, CryptoProps
@@ -9,44 +9,13 @@ from algtestprocess.modules.data.tpm.results.cryptoprops import CryptoPropResult
 class CryptoPropsParser:
     """
     Cryptographic properties parser
-    Note: reads several CSV files
     """
-
-    # Counter for devices of which device name was not available
-    # Needs to be unique so class variable is useful
-    unknown_devname_counter = 0
 
     def __init__(self, path: str):
         self.path = path
-        self.device_name = self.get_device_name()
+        assert os.path.exists(path) and os.path.isdir(path)
 
-    def get_device_name(self):
-        """Retrieves device name from neighbour folder"""
-        files = [
-            os.path.join(root, file)
-            for root, _, files in os.walk(f"{self.path}/..")
-            for file in files
-        ]
-        files = list(
-            filter(
-                lambda name: ".csv" in name
-                             and (
-                                     "/performance/" in name.lower() or "/results/" in name.lower()),
-                files,
-            )
-        )
-        filenames = list(set(map(lambda name: re.sub(".*/", "", name), files)))
-        if len(filenames) < 1:
-            self.unknown_devname_counter += 1
-            filename = f"Unknown TPM {self.unknown_devname_counter}"
-        else:
-            filename = filenames[0].replace(".csv", "").replace("_", " ")
-        return filename
-
-    def parse_legacy(self):
-        return self.parse(legacy=True)
-
-    def parse(self, legacy=False):
+    def parse(self) -> Optional[CryptoProps]:
         items = [
             ("rsa_1024", "Keygen:RSA_1024.csv"),
             ("rsa_1024", "Keygen_RSA_1024.csv"),
@@ -74,17 +43,15 @@ class CryptoPropsParser:
         profile = CryptoProps()
         for key, filename in items:
             path = f"{self.path}/{filename}"
-            if not os.path.exists(path):
+            if not os.path.exists(path) or not os.path.isfile(path):
                 continue
 
             result = CryptoPropResult()
             result.category = CryptoPropCategory[key]
-            result.delimiter = ";" if legacy else ","
             result.path = path
             profile.add_result(result)
 
         if not profile.results:
             return None
 
-        profile.rename(self.device_name)
         return profile
