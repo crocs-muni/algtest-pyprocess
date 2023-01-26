@@ -9,17 +9,19 @@ from algtestprocess.modules.visualization.plot import Plot
 class Heatmap(Plot):
     """Class for plotting RSA most significant bytes into a heatmap"""
 
-    def __init__(self, rsa_df, device_name, pqnf=None):
+    def __init__(self, rsa_df, device_name, pqnf=None, title=""):
         """
         Init function  the p,q,n bytes and builds the plot
         :param rsa_df: pandas dataframe containing the private prime an moduli
         :param device_name: to draw into the plot
         :param pqnf: possibly a function which takes df as input and returns the PQN MSBs
+        :param title: text, possibly short abbreviation for the host computer
         """
         super().__init__()
         pqnf = pqnf or Heatmap.compute_pqn_bytes
         self.p_byte, self.q_byte, self.n_byte = pqnf(rsa_df)
         self.device_name = device_name
+        self.title = title
         self.build()
 
     @staticmethod
@@ -63,6 +65,9 @@ class Heatmap(Plot):
 
         fig = plt.figure(figsize=(7.5, 12))
         self.fig = fig
+
+        if self.title:
+            fig.suptitle(self.title, fontsize=38)
 
         # Outer means two main plots
         outer = gridspec.GridSpec(3, 1, height_ratios=(3, 0.5, 1))

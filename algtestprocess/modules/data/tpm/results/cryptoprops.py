@@ -2,21 +2,20 @@ from typing import Optional
 
 import pandas as pd
 
-from algtestprocess.modules.data.tpm.profiles.cryptoprops import \
-    CryptoPropCategory
+from algtestprocess.modules.data.tpm.enums import CryptoPropResultCategory
 
 
 class CryptoPropResult:
     def __init__(self):
-        self.category: Optional[CryptoPropCategory] = None
+        self.category: Optional[CryptoPropResultCategory] = None
         self.path: Optional[str] = None
         self.delimiter: str = ","
         self._data: Optional[pd.DataFrame] = None
 
     @property
-    def data(self):
+    def data(self) -> pd.DataFrame:
         assert self.path
-        if not self._data:
+        if self._data is None:
             self._data = pd.read_csv(
                 self.path,
                 header=0,

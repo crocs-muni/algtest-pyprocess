@@ -37,5 +37,5 @@ class Plot(ABC):
         self.finalize()
 
     def finalize(self):
-        plt.close(self.fig)
+        plt.close('all')
         self.fig = None

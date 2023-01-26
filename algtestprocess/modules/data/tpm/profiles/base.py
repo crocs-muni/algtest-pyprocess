@@ -1,4 +1,6 @@
+import re
 from abc import ABC, abstractmethod
+from typing import Optional
 
 from overrides import EnforceOverrides
 
@@ -10,17 +12,67 @@ class ProfileTPM(ABC, EnforceOverrides):
         self.test_info = {}
 
     @property
-    def device_name(self):
-        if not self.test_info.get('TPM name'):
-            # Only way to reconstruct TPM name if it was not provided
-            manufacturer = self.test_info.get('Manufacturer')
-            version = self.test_info.get('Firmware version')
-            self.test_info['TPM name'] = f"{manufacturer} {version}"
-        return self.test_info.get('TPM name')
+    def manufacturer(self) -> Optional[str]:
+        return self.test_info.get('Manufacturer')
 
-    @device_name.setter
-    def device_name(self, value: str):
-        self.test_info['TPM name'] = value
+    @manufacturer.setter
+    def manufacturer(self, value):
+        assert isinstance(value, str)
+        self.test_info['Manufacturer'] = value
+
+    @property
+    def vendor_string(self) -> Optional[str]:
+        return self.test_info.get('Vendor string')
+
+    @vendor_string.setter
+    def vendor_string(self, value):
+        assert isinstance(value, str)
+        self.test_info['Vendor string'] = value
+
+    @property
+    def firmware_version(self) -> Optional[str]:
+        fv = self.test_info.get('Firmware version')
+        if fv:
+            assert re.match(r'\d+\.\d+\.\d+\.\d+', fv)
+        return self.test_info.get('Firmware version')
+
+    @firmware_version.setter
+    def firmware_version(self, value):
+        assert isinstance(value, str)
+        assert re.match(r'\d+\.\d+\.\d+\.\d+', value)
+        self.test_info['Firmware version'] = value
+
+    @property
+    def device_name(self) -> Optional[str]:
+        m = self.manufacturer
+        vs = self.vendor_string
+        fv = self.firmware_version
+        if not m or not vs or not fv:
+            return ''
+        return f"{m} {vs} {fv}"
+
+    def __eq__(self, other):
+        if not isinstance(other, ProfileTPM):
+            return False
+        return self.device_name == other.device_name
+
+    def __lt__(self, other):
+        assert isinstance(other, ProfileTPM)
+        if self.manufacturer != other.manufacturer:
+            return self.manufacturer < other.manufacturer
+
+        if self.vendor_string != other.vendor_string:
+            return self.vendor_string < other.vendor_string
+
+        fv_mine = [int(x) for x in self.firmware_version.split('.')]
+        fv_other = [int(x) for x in other.firmware_version.split('.')]
+        for mine, their in zip(fv_mine, fv_other):
+            if mine < their:
+                return True
+            elif mine > their:
+                return False
+
+        return False
 
     @abstractmethod
     def add_result(self, result):

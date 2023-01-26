@@ -71,6 +71,7 @@ class SupportParserTPM:
                 if legacy:
                     split = current.split(";", maxsplit=1)
                 key, val = split
+                val = val.strip()
                 profile.test_info[key] = val
 
             else:

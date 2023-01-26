@@ -10,8 +10,9 @@ from algtestprocess.modules.data.tpm.profiles.performance import \
 from algtestprocess.modules.data.tpm.profiles.support import ProfileSupportTPM
 from algtestprocess.modules.parser.tpm.cryptoprops import CryptoPropsParser
 from algtestprocess.modules.parser.tpm.performance import \
-    PerformanceParserTPMYaml
-from algtestprocess.modules.parser.tpm.support import SupportParserTPMYaml
+    PerformanceParserTPMYaml, PerformanceParserTPM
+from algtestprocess.modules.parser.tpm.support import SupportParserTPMYaml, \
+    SupportParserTPM
 
 
 class TPMProfileManager:
@@ -40,15 +41,24 @@ class TPMProfileManager:
             return self._perf_handle
 
         # Easy, we know the filename.
-        yaml_path = f"{self._root_path}/performance.yaml"
+        yaml_path = os.path.join(self._root_path, 'performance.yaml')
 
         try:
             profile = PerformanceParserTPMYaml(yaml_path).parse()
-        except yaml.YAMLError:
+        except yaml.YAMLError as err:
             # TODO: logger
-            print(f"TPMProfileManager: Couldn't parse perf profile",
+            print(f"TPMProfileManager: Couldn't parse perf profile"
+                  f"\n{err}"
+                  f"\nTrying old parser implementation",
                   file=stderr)
-            return None
+
+            profile = PerformanceParserTPM(yaml_path).parse()
+
+            if not profile.results:
+                print(f"Old parser implementation was not successful",
+                      file=stderr)
+                profile = None
+                print("SUCCESS")
 
         # TODO: Based on image tag for older measurements infer the
         #       project structure. Necessary for measurements created
@@ -61,14 +71,22 @@ class TPMProfileManager:
         if self._supp_handle:
             return self._supp_handle
 
-        yaml_path = f"{self._root_path}/results.yaml"
+        yaml_path = os.path.join(self._root_path, 'results.yaml')
 
         try:
             profile = SupportParserTPMYaml(yaml_path).parse()
-        except yaml.YAMLError:
-            print(f"TPMProfileManager: Couldn't parse supp profile",
+        except yaml.YAMLError as err:
+            print(f"TPMProfileManager: Couldn't parse supp profile"
+                  f"\n{err}"
+                  f"\nTrying old parser implementation",
                   file=stderr)
-            return None
+            profile = SupportParserTPM(yaml_path).parse()
+            if not profile.results:
+                print(f"Old parser implementation was not successful",
+                      file=stderr)
+                profile = None
+            else:
+                print(f"SUCCESS")
 
         # TODO: Same as previous
         self._supp_handle = profile
@@ -82,8 +100,27 @@ class TPMProfileManager:
         path = f"{self._root_path}/detail"
 
         # TODO: 1. Infer delimiters based on image tag
-        #       2. Somehow infer device name without parsing the supp or perf p.
+        # TODO: 2. Somehow infer device name without parsing the supp or perf p.
 
         profile = CryptoPropsParser(path).parse()
+
+        # To get TPM device name ... we need to parse supp or perf profile
+        handle = self.support_profile
+
+        if handle is None:
+            print(
+                f"TPMProfileManager: Unable to load support profile "
+                f"for {self._root_path}"
+            )
+
+        if handle:
+            profile.manufacturer = handle.manufacturer
+            profile.vendor_string = handle.vendor_string
+            profile.firmware_version = handle.firmware_version
+
+        # No references are supposed to reclaim memory
+        self._supp_handle = None
+        del handle
+
         self._cpps_handle = profile
         return profile
