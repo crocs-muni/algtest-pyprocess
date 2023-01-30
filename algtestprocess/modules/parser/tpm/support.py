@@ -7,11 +7,11 @@ from algtestprocess.modules.parser.tpm.utils import get_params
 from algtestprocess.modules.data.tpm.results.support import SupportResultTPM
 
 
-
 def get_data(path: str):
     with open(path) as f:
         data = f.readlines()
-    return list(filter(None, map(lambda x: x.strip(), data))), f.name.rsplit("/", 1)[1]
+    return list(filter(None, map(lambda x: x.strip(), data))), \
+        f.name.rsplit("/", 1)[1]
 
 
 class SupportParserTPM:
@@ -28,7 +28,8 @@ class SupportParserTPM:
         joined = "\n".join(lines)
 
         if "raw" not in joined and lines and "value" not in joined and lines:
-            match = re.search("(?P<name>TPM[2]?_PT.+);[ ]*(?P<value>[^\n]+)", lines[0])
+            match = re.search("(?P<name>TPM[2]?_PT.+);[ ]*(?P<value>[^\n]+)",
+                              lines[0])
             if not match:
                 return 1
             result.name = match.group("name")
@@ -43,7 +44,8 @@ class SupportParserTPM:
             params = get_params(joined, items)
             result.name = params.get("name")
             result.value = (
-                params.get("value") if params.get("value") else params.get("raw")
+                params.get("value") if params.get("value") else params.get(
+                    "raw")
             )
             shift = 0
             # Each result can have up to 1 to 3 rows
@@ -53,10 +55,19 @@ class SupportParserTPM:
             return shift
         return 1
 
-    def parse_legacy(self):
-        return self.parse(legacy=True)
+    def parse(self):
+        try:
+            profile = self._parse(legacy=False)
+        except:
+            try:
+                profile = self._parse(legacy=True)
+            except:
+                return None
+        if not profile.results:
+            return None
+        return profile
 
-    def parse(self, legacy: bool = False):
+    def _parse(self, legacy: bool = False):
         profile = ProfileSupportTPM()
         lines = self.lines
         category = None
@@ -82,9 +93,10 @@ class SupportParserTPM:
 
                 if "properties-fixed" in category:
                     result.category = category
-                    i += self.parse_props_fixed(lines[i : i + 3], result)
+                    i += self.parse_props_fixed(lines[i: i + 3], result)
                     result.name = (
-                        result.name.replace("TPM_", "TPM2_") if result.name else None
+                        result.name.replace("TPM_",
+                                            "TPM2_") if result.name else None
                     )
                     profile.add_result(result)
                     continue
@@ -99,7 +111,8 @@ class SupportParserTPM:
                     try:
                         if not re.match("0x[0-9a-f]+", current):
                             current = current.split(":")[1]
-                        name = TPM2Identifier.ECC_CURVE_STR.get(int(current, 16))
+                        name = TPM2Identifier.ECC_CURVE_STR.get(
+                            int(current, 16))
                     except ValueError:
                         i += 1
                         continue
@@ -129,10 +142,10 @@ class SupportParserTPMYaml:
         assert self.data
 
     def process_property_fixed(
-        self,
-        result: SupportResultTPM,
-        name: str,
-        contents,
+            self,
+            result: SupportResultTPM,
+            name: str,
+            contents,
     ) -> None:
         result.name = name
         if "value" in contents:
@@ -141,22 +154,22 @@ class SupportParserTPMYaml:
             result.value = contents.get("raw")
 
     def process_algorithms(
-        self, result: SupportResultTPM, name: str, contents: int
+            self, result: SupportResultTPM, name: str, contents: int
     ) -> None:
         result.name = TPM2Identifier.ALG_ID_STR.get(contents)
 
     def process_commands(
-        self, result: SupportResultTPM, name: str, contents: int
+            self, result: SupportResultTPM, name: str, contents: int
     ) -> None:
         result.name = TPM2Identifier.CC_STR.get(contents)
 
     def process_curves(
-        self, result: SupportResultTPM, name: str, contents: int
+            self, result: SupportResultTPM, name: str, contents: int
     ) -> None:
         result.name = TPM2Identifier.ECC_CURVE_STR.get(contents)
 
     def process_capabilities(
-        self, category, capabilities, profile, process_capability_f
+            self, category, capabilities, profile, process_capability_f
     ):
         for key in capabilities:
             result = SupportResultTPM()

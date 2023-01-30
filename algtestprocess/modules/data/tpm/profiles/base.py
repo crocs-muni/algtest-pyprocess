@@ -47,9 +47,9 @@ class ProfileTPM(ABC, EnforceOverrides):
         m = self.manufacturer
         vs = self.vendor_string
         fv = self.firmware_version
-        if not m or not vs or not fv:
+        if not m or not fv:
             return ''
-        return f"{m} {vs} {fv}"
+        return m + (f" {vs}" if vs else '') + f" {fv}"
 
     def __eq__(self, other):
         if not isinstance(other, ProfileTPM):

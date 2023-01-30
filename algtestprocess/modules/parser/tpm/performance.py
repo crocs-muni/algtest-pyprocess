@@ -107,6 +107,18 @@ class PerformanceParserTPM:
         result.error = params.get("error")
 
     def parse(self):
+        try:
+            profile = self._parse()
+        except:
+            try:
+                profile = self._parse_legacy()
+            except:
+                return None
+        if not profile.results:
+            return None
+        return profile
+
+    def _parse(self):
         parsed_testinfo = False
         lines = list(filter(None, self.lines))
         profile = ProfilePerformanceTPM()
@@ -136,7 +148,7 @@ class PerformanceParserTPM:
             i += offset
         return profile
 
-    def parse_legacy(self):
+    def _parse_legacy(self):
         category = None
         profile = ProfilePerformanceTPM()
         lines = list(filter(None, self.lines))
