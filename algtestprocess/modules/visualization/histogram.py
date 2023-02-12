@@ -17,7 +17,8 @@ def get_msb_from_hexstring(hexstring: str) -> int:
 Occurences = List[Union[int, float]]
 Title = XLabel = YLabel = LegendLabel = str
 Bins = int
-RSAValuesPlotData = Tuple[Occurences, Title, XLabel, YLabel, LegendLabel, Bins]
+Density = bool
+RSAValuesPlotData = Tuple[Occurences, Title, XLabel, YLabel, LegendLabel, Bins, Density]
 
 
 class RSAValues(Plot):
@@ -42,6 +43,7 @@ class RSAValues(Plot):
         title: str = "Time of the key generation",
         time_unit: Tuple[str, int] = ("ms", 1000),
         name: str = "time distribution",
+        density: bool = True,
     ):
         """
         :param df: pandas dataframe
@@ -58,7 +60,14 @@ class RSAValues(Plot):
         )
 
         self.add_to_plots_data(
-            time, title, f"time in {unit}", "Density (%)", f"RSA {rsa}", name, bins
+            time,
+            title,
+            f"time in {unit}",
+            "Density (%)",
+            f"RSA {rsa}",
+            name,
+            bins,
+            density,
         )
 
     def add_value_mix_distribution(
@@ -74,6 +83,7 @@ class RSAValues(Plot):
         ylabel: str = "Density",
         name: str = "MSB 1024 Nd",
         bins: int = 1000,
+        density: bool = False,
     ):
         """
         :param df: pandas dataframe
@@ -92,8 +102,20 @@ class RSAValues(Plot):
             xx: List[Union[int, float]] = list(
                 map(lambda x: getval_f(x), list(df[col]))
             )
+            xxx = {}
+            for x in xx:
+                xxx.setdefault(x, 0)
+                xxx[x] += 1
+            print((col, xxx))
             self.add_to_plots_data(
-                xx, title, xlabel, ylabel, label=col, name=name, bins=bins
+                xx,
+                title,
+                xlabel,
+                ylabel,
+                label=col,
+                name=name,
+                bins=bins,
+                density=density,
             )
 
     def add_to_plots_data(
@@ -105,15 +127,16 @@ class RSAValues(Plot):
         label: str,
         name: str,
         bins: int,
+        density: bool,
     ):
         assert xx and title and xlabel and ylabel and label
         self.plots_data.setdefault(name, [])
-        self.plots_data[name].append((xx, title, xlabel, ylabel, label, bins))
+        self.plots_data[name].append((xx, title, xlabel, ylabel, label, bins, density))
 
     def histogram(self, ax: plt.Axes, data: List[RSAValuesPlotData]):
         set_metadata = False
-        for (xx, title, xlabel, ylabel, label, bins) in data:
-            ax.hist(xx, density=True, bins=bins, label=label)
+        for (xx, title, xlabel, ylabel, label, bins, density) in data:
+            ax.hist(xx, density=density, bins=bins, label=label, alpha=0.5)
 
             if not set_metadata:
                 set_metadata = True
