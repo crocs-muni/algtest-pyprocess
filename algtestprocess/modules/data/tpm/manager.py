@@ -63,9 +63,13 @@ class TPMProfileManager:
             print("Older version of tpm2-algtest did not use yaml format.\n"
                   "Trying performance folder for csv file",
                   file=stderr)
-            performance_path = os.path.join(self._root_path, 'performance')
-            assert os.path.exists(performance_path) and os.path.isdir(
-                performance_path)
+
+            try:
+                performance_path = os.path.join(self._root_path, 'performance')
+                assert os.path.exists(performance_path) and os.path.isdir(
+                    performance_path)
+            except (FileNotFoundError, AssertionError):
+                return None
 
             files = [x.name for x in os.scandir(performance_path)]
             assert len(files) == 1
@@ -104,8 +108,11 @@ class TPMProfileManager:
             print("Older version of tpm2-algtest did not use yaml format.\n"
                   "Trying results folder for csv file",
                   file=stderr)
-            results_path = os.path.join(self._root_path, 'results')
-            assert os.path.exists(results_path) and os.path.isdir(results_path)
+            try:
+                results_path = os.path.join(self._root_path, 'results')
+                assert os.path.exists(results_path) and os.path.isdir(results_path)
+            except (FileNotFoundError, AssertionError):
+                return None
 
             files = [x.name for x in os.scandir(results_path)]
             assert len(files) == 1
