@@ -3,6 +3,7 @@ import os.path
 from datetime import datetime
 
 import click
+import pandas as pd
 from checksumdir import dirhash
 
 from algtestprocess.modules.data.tpm.enums import CryptoPropResultCategory
@@ -36,7 +37,7 @@ def sum_up(measurement_folder: Path, data) -> None:
     created_signatures = 0
 
     if cpps:
-        signatures = cpps.results.get(CryptoPropResultCategory.ECC_BN256_ECDSA)
+        signatures = cpps.results.get(CryptoPropResultCategory.ECC_P256_ECDAA)
         kpairs = cpps.results.get(CryptoPropResultCategory.RSA_1024)
 
         if signatures:
@@ -55,20 +56,21 @@ def sum_up(measurement_folder: Path, data) -> None:
     except FileNotFoundError:
         rng_data_collected = 0
 
+    date = None
     if man.support_profile:
-        time = datetime.strptime(
+        date = datetime.strptime(
             man.support_profile.test_info['Execution date/time'],
             '%Y/%m/%d %H:%M:%S'
         )
-
 
     if data.get(tpm_name) is None:
         data[tpm_name] = {
             "TPM name": tpm_name,
             "total measurements": 1,
+            "date": date.strftime('%Y/%m/%d %H:%M:%S') if date else '-',
             "keypairs generated": generated_keypairs,
             "signatures created": created_signatures,
-            "rng data collected": rng_data_collected
+            "rng data collected": rng_data_collected,
         }
     else:
         data[tpm_name]["total measurements"] += 1
@@ -124,7 +126,7 @@ def summary_update(measurements_path, output_path, prev_summary_path, hash_file)
 
 @click.command()
 @click.argument("summary_path", type=click.Path(file_okay=True, dir_okay=False, readable=True))
-@click.argument("export_type", type=click.Choice(["latex"]))
+@click.argument("export_type", type=click.Choice(["latex", "md", "fancy-md"]))
 @click.option(
     "-o",
     "--output-path",
@@ -132,6 +134,22 @@ def summary_update(measurements_path, output_path, prev_summary_path, hash_file)
     default=".",
 )
 def summary_export(summary_path, export_type, output_path):
-    pass
+    with open(summary_path, "r") as f:
+        summary_data = json.load(f)
+
+    df = pd.DataFrame(summary_data.values())
+    df = df.sort_values(by=['TPM name'])
+
+    if 'latex' in export_type:
+        fmt = 'latex'
+    elif 'md' in export_type:
+        fmt = 'github'
+    else:
+        fmt = 'fancy_grid'
+
+    print(df.to_markdown(index=False, tablefmt=fmt))
+
+
+
 
 

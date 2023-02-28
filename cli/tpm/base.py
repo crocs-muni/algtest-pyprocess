@@ -1,6 +1,6 @@
 import click
 
-from cli.tpm.commands.misc.summary import summary, summary_export
+from cli.tpm.commands.misc.summary import summary_export, summary_update
 from cli.tpm.commands.plot.heatmaps import heatmaps_single, heatmaps_grouped
 from cli.tpm.commands.plot.spectrograms import spectrograms_single, \
     spectrograms_grouped
