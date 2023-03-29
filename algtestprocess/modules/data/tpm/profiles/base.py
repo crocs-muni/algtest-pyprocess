@@ -33,11 +33,13 @@ class ProfileTPM(ABC, EnforceOverrides):
     def firmware_version(self) -> Optional[str]:
         fv = self.test_info.get('Firmware version')
         if fv:
+            fv = fv.replace('"', '')
             assert re.match(r'\d+\.\d+\.\d+\.\d+', fv)
         return self.test_info.get('Firmware version')
 
     @firmware_version.setter
     def firmware_version(self, value):
+        value = value.replace('"', '')
         assert isinstance(value, str)
         assert re.match(r'\d+\.\d+\.\d+\.\d+', value)
         self.test_info['Firmware version'] = value

@@ -4,6 +4,10 @@ from enum import Enum
 class CryptoPropResultCategory(Enum):
     RSA_1024 = "rsa_1024"
     RSA_2048 = "rsa_2048"
+    RSA_1024_RSAPSS = "rsa_1024_rsapss"
+    RSA_2048_RSAPSS = "rsa_2048_rsapss"
+    RSA_1024_RSASSA = "rsa_1024_rsassa"
+    RSA_2048_RSASSA = "rsa_2048_rsassa"
     ECC_P192 = "ecc_p192"
     ECC_P224 = "ecc_p224"
     ECC_P256 = "ecc_p256"

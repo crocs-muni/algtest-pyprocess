@@ -49,7 +49,7 @@ def process_profile(
     items = []
     device_name = cpps.device_name
     for alg_id, alg_enum in algs_to_prepare:
-        if algs is not None or alg_id in algs:
+        if algs is not None and alg_id in algs:
             # TODO: handle exception
             result = cpps.results.get(alg_enum)
             if not result:
@@ -99,7 +99,7 @@ def heatmaps_single(root_path, output_path, algs, title):
     ./performance.yaml
     ./results.yaml
     """
-    _, items = process_profile(root_path, algs)
+    _, items = process_profile(root_path, algs=algs)
     for _, df, device_name, filename, title_suff in items:
         plot_heatmap(
             df,
@@ -138,13 +138,13 @@ def heatmaps_grouped(measurements_path, output_path, group_by_tpm, sort, title):
     """
 
     measurement_folders = _walk(measurements_path, 3)
-    processed_profiles = filter(
+    processed_profiles = list(filter(
         None,
         [
-            process_profile(root_path, dupes={} if not group_by_tpm else None)
+            process_profile(root_path, dupes={} if not group_by_tpm else None, algs=['rsa-1024', 'rsa-2048'])
             for root_path in measurement_folders
         ],
-    )
+    ))
 
     csv_data = {}
     if group_by_tpm:
@@ -182,7 +182,7 @@ def heatmaps_grouped(measurements_path, output_path, group_by_tpm, sort, title):
 
     if sort:
         # ProfileTPM has __eq__ and __lt__ which should be sufficient
-        processed_profiles.sort()
+        processed_profiles = list(processed_profiles).sort()
 
     for cp, profile_items in processed_profiles:
         for _, df, device_name, filename, title_suff in profile_items:
