@@ -1,3 +1,11 @@
+import logging
+
+logging.basicConfig(
+    filename="pyprocess_log.txt",
+    encoding='utf-8',
+    level=logging.DEBUG
+)
+
 import click
 
 from cli.tpm.base import tpm_cli
