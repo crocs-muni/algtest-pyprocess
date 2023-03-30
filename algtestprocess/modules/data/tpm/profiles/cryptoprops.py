@@ -1,7 +1,7 @@
 import logging
 import os
 from functools import partial
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from overrides import overrides
 
@@ -18,6 +18,7 @@ class CryptoProps(ProfileTPM):
         super().__init__()
         self.path = path
         self.results: Dict[CryptoPropResultCategory, CryptoPropResult] = {}
+        self.merged = False
 
     @overrides
     def add_result(self, result):
@@ -31,6 +32,31 @@ class CryptoProps(ProfileTPM):
             result = self.results.get(category)
             if result:
                 del result.data
+
+    def __add__(self, other):
+        assert isinstance(other, CryptoProps)
+        new = CryptoProps(f"{self.path}:{other.path}")
+        new.manufacturer = self.manufacturer
+        new.vendor_string = self.vendor_string
+        new.firmware_version = self.firmware_version
+        new.merged = True
+
+        for alg in CryptoPropResultCategory.list():
+            my_result = self.results.get(alg)
+            other_result = other.results.get(alg)
+
+            if my_result is None and other_result is None:
+                continue
+
+            if my_result is None:
+                new.results[alg] = other_result
+                continue
+
+            if other_result is None:
+                new.results[alg] = my_result
+                continue
+
+            new.results[alg] = my_result + other_result
 
     def _plot(self, plot, algs, output_path, allowed_algs, fname, pname):
         if set(algs) - allowed_algs != {}:
@@ -70,7 +96,8 @@ class CryptoProps(ProfileTPM):
                 title=title
             )
 
-        self._plot(plot_f, algs, output_path, allowed,"plot_heatmaps","heatmap")
+        CryptoProps._plot(plot_f, algs, output_path, allowed, "plot_heatmaps",
+                          "heatmap")
 
     def plot_spectrograms(self,
                           algs: List[CryptoPropResultCategory],
@@ -96,8 +123,5 @@ class CryptoProps(ProfileTPM):
                 title=title
             )
 
-        self._plot(plot_f,algs, output_path, allowed, "plot_spectrograms","spectrogram")
-
-
-
-
+        self._plot(plot_f, algs, output_path, allowed, "plot_spectrograms",
+                   "spectrogram")
