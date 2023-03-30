@@ -45,7 +45,7 @@ class CryptoPropsParser:
             ("ecc_bn256_ecdaa", "Cryptoops_Sign:ECC_0x0010_0x001a.csv"),
             ("ecc_bn256_ecschnorr", "Cryptoops_Sign:ECC_0x0010_0x001c.csv"),
         ]
-        profile = CryptoProps()
+        profile = CryptoProps(path)
         for key, filename in items:
             path = f"{self.path}/{filename}"
             if not os.path.exists(path) or not os.path.isfile(path):
