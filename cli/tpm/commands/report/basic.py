@@ -198,8 +198,10 @@ def process_vendor(entries: List[ReportEntry], vendor: str, vendor_path: str):
 
         # For each algorithm, create smaller dataframe which will fit in memory
         items = [
-        (CryptoPropResultCategory.RSA_1024, ["n", "p", "q"], heatmap,"heatmap"),
-            (CryptoPropResultCategory.RSA_2048, ["n", "p", "q"], heatmap,"heatmap"),
+            (CryptoPropResultCategory.RSA_1024, ["n", "p", "q"], heatmap,
+             "heatmap"),
+            (CryptoPropResultCategory.RSA_2048, ["n", "p", "q"], heatmap,
+             "heatmap"),
         ]
 
         for alg, cols, plot, pname in items:
@@ -208,7 +210,8 @@ def process_vendor(entries: List[ReportEntry], vendor: str, vendor_path: str):
                 cpps = man.cryptoprops
 
                 if cpps is None:
-                    logging.warning(f"process_vendor: manager for one of {tpm_name}{title} didn't find cryptoprops")
+                    logging.warning(
+                        f"process_vendor: manager for one of {tpm_name}{title} didn't find cryptoprops")
                     continue
 
                 res = cpps.results.get(alg)
@@ -224,12 +227,16 @@ def process_vendor(entries: List[ReportEntry], vendor: str, vendor_path: str):
                         df = pd.concat([df, stripped_df])
 
             if df is None:
-                logging.warning(f"process_vendor: {alg.value} for {tpm_name}{title} not found")
+                logging.warning(
+                    f"process_vendor: {alg.value} for {tpm_name}{title} not found")
                 continue
 
             if len(df.index) >= 5:
-                plot(df)().build().save(os.path.join(tpm_dir, f"{pname}_{alg.value}.png"), format='png')
+                plot(df)().build().save(
+                    os.path.join(tpm_dir, f"{pname}_{alg.value}.png"),
+                    format='png')
             gc.collect()
+
 
 @click.command()
 @click.argument("report_metadata_path",
