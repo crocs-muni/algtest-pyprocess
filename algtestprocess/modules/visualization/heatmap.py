@@ -23,12 +23,10 @@ class Heatmap(Plot):
         self.p_byte, self.q_byte, self.n_byte = pqnf(rsa_df)
         self.device_name = device_name
         self.title = title
-        self.build()
 
     @staticmethod
     def compute_pqn_bytes(df):
         # As the data doesn't contain q prime it needs to be computed
-
         n = list(map(lambda x: int(x, 16), list(df.n)))
         p = list(map(lambda x: int(x, 16), list(df.p)))
         q = [a // b for a, b in zip(n, p)]

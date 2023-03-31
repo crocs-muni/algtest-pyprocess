@@ -1,3 +1,4 @@
+import gc
 import logging
 import os
 from functools import partial
@@ -27,12 +28,6 @@ class CryptoProps(ProfileTPM):
         if not self.results.get(category):
             self.results[category] = result
 
-    def free(self, categories: List[CryptoPropResultCategory]):
-        for category in categories:
-            result = self.results.get(category)
-            if result:
-                del result.data
-
     def __add__(self, other):
         assert isinstance(other, CryptoProps)
         new = CryptoProps(f"{self.path}:{other.path}")
@@ -57,9 +52,13 @@ class CryptoProps(ProfileTPM):
                 continue
 
             new.results[alg] = my_result + other_result
+        return new
 
     def _plot(self, plot, algs, output_path, allowed_algs, fname, pname):
-        if set(algs) - allowed_algs != {}:
+        if not algs:
+            algs = allowed_algs
+
+        if set(algs) - allowed_algs != set():
             logging.warning(
                 f"{fname}:{self.path} trying to build {pname} for some unallowed algs")
             return
@@ -71,22 +70,21 @@ class CryptoProps(ProfileTPM):
             assert df is not None
             assert os.path.exists(os.path.join(output_path))
             try:
-                plot(df).save(
-                    os.path.join(output_path, f"heatmap_{alg.value}.png"),
+                plot(df)().build().save(
+                    os.path.join(output_path, f"{pname}_{alg.value}.png"),
                     'png'
                 )
-            except:
+            except BaseException as e:
                 logging.warning(
-                    f"{fname}:{self.path} {pname} build failed for {alg.value}")
+                    f"{fname}:{self.path} {pname} build failed for {alg.value}, {str(e)}")
+            gc.collect()
 
     def plot_heatmaps(self,
                       algs: List[CryptoPropResultCategory],
                       output_path: str,
                       title: str = ""):
-        allowed = {
-            CryptoPropResultCategory.RSA_1024,
-            CryptoPropResultCategory.RSA_2048
-        }
+        allowed = {CryptoPropResultCategory.RSA_1024,
+                   CryptoPropResultCategory.RSA_2048}
 
         def plot_f(df):
             return partial(
@@ -96,8 +94,8 @@ class CryptoProps(ProfileTPM):
                 title=title
             )
 
-        CryptoProps._plot(plot_f, algs, output_path, allowed, "plot_heatmaps",
-                          "heatmap")
+        self._plot(plot_f, algs, output_path, allowed, "plot_heatmaps",
+                   "heatmap")
 
     def plot_spectrograms(self,
                           algs: List[CryptoPropResultCategory],
