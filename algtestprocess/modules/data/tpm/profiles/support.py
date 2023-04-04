@@ -17,3 +17,6 @@ class ProfileSupportTPM(ProfileTPM):
     def add_result(self, result):
         if result.name:
             self.results[result.name] = result
+
+    def __str__(self):
+        return str([x for x in self.results.keys()])

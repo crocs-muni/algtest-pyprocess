@@ -44,16 +44,36 @@ class CryptoPropsParser:
             ("ecc_bn256_ecdsa", "Cryptoops_Sign:ECC_0x0010_0x0018.csv"),
             ("ecc_bn256_ecdaa", "Cryptoops_Sign:ECC_0x0010_0x001a.csv"),
             ("ecc_bn256_ecschnorr", "Cryptoops_Sign:ECC_0x0010_0x001c.csv"),
+
         ]
         profile = CryptoProps(self.path)
         for key, filename in items:
-            path = f"{self.path}/{filename}"
+            path = os.path.join(self.path, filename)
             if not os.path.exists(path) or not os.path.isfile(path):
                 continue
 
             result = CryptoPropResult()
             result.category = CryptoPropResultCategory(key)
             result.paths.append(path)
+            profile.add_result(result)
+
+        eks = [
+            ("ek_rsa", "Capability_ek-rsa.txt"),
+            ("ek_ecc", "Capability_ek-ecc.txt")
+        ]
+
+        for key, filename in eks:
+            path = os.path.join(self.path, filename)
+            if not os.path.exists(path) or not os.path.isfile(path):
+                continue
+
+            result = CryptoPropResult()
+            result.category = CryptoPropResultCategory(key)
+            result.paths.append(path)
+
+            with open(path, "rb") as f:
+                result.data = f.read()
+
             profile.add_result(result)
 
         if not profile.results:

@@ -25,6 +25,8 @@ class CryptoPropResultCategory(Enum):
     ECC_BN256_ECDSA = "ecc_bn256_ecdsa"
     ECC_BN256_ECDAA = "ecc_bn256_ecdaa"
     ECC_BN256_ECSCHNORR = "ecc_bn256_ecschnorr"
+    EK_RSA = "ek_rsa"
+    EK_ECC = "ek_ecc"
 
     @classmethod
     def list(cls):

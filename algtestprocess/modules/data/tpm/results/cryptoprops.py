@@ -1,5 +1,5 @@
 import logging
-from typing import Optional, List
+from typing import Optional, List, Union
 
 import pandas as pd
 
@@ -15,7 +15,7 @@ class CryptoPropResult:
         self.paths: List[str] = []
 
     @property
-    def data(self) -> pd.DataFrame:
+    def data(self) -> Union[pd.DataFrame, bytes]:
         if self._data:
             return self._data
 
@@ -43,6 +43,11 @@ class CryptoPropResult:
                 df = pd.concat([df, next_df])
 
         return df
+
+    @data.setter
+    def data(self, value):
+        assert isinstance(value, bytes) or isinstance(value, pd.DataFrame)
+        self._data = value
 
     def __add__(self, other):
         assert isinstance(other, CryptoPropResult)

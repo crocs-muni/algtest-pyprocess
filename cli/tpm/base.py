@@ -1,11 +1,11 @@
 import click
 
-from cli.tpm.commands.misc.summary import summary_export, summary_update
 from cli.tpm.commands.plot.heatmaps import heatmaps_single, heatmaps_grouped
 from cli.tpm.commands.plot.spectrograms import spectrograms_single, \
     spectrograms_grouped
 from cli.tpm.commands.report.basic import report_update, \
     report_create
+from cli.tpm.commands.report.summary import summary_create
 
 
 @click.group(
@@ -27,21 +27,16 @@ plot.add_command(heatmaps_single)
 plot.add_command(heatmaps_grouped)
 
 
-@tpm_cli.group(help='Create outputs such as summary table and other '
-                    'miscellaneous stuff')
-def misc():
-    pass
-
-misc.add_command(summary_update)
-misc.add_command(summary_export)
-
-
-@tpm_cli.group(help='Create and export reports containing various information and visualisations')
+@tpm_cli.group(
+    help='Create and export reports containing various information and visualisations')
 def report():
     pass
 
+
 report.add_command(report_update)
 report.add_command(report_create)
+report.add_command(summary_create)
+
 
 @tpm_cli.group(help='Create static HTML files from given data')
 def pages():

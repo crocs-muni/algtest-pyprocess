@@ -11,35 +11,39 @@ class ProfileTPM(ABC, EnforceOverrides):
     def __init__(self):
         self.test_info = {}
 
+    def _satinize(self, x):
+        if x is None:
+            return None
+        return x.replace('"', '').replace(' ', '')
+
     @property
     def manufacturer(self) -> Optional[str]:
-        return self.test_info.get('Manufacturer')
+        return self._satinize(self.test_info.get('Manufacturer'))
 
     @manufacturer.setter
     def manufacturer(self, value):
         assert isinstance(value, str)
-        self.test_info['Manufacturer'] = value
+        self.test_info['Manufacturer'] = self._satinize(value)
 
     @property
     def vendor_string(self) -> Optional[str]:
-        return self.test_info.get('Vendor string')
+        return self._satinize(self.test_info.get('Vendor string'))
 
     @vendor_string.setter
     def vendor_string(self, value):
         assert isinstance(value, str)
-        self.test_info['Vendor string'] = value
+        self.test_info['Vendor string'] = self._satinize(value)
 
     @property
     def firmware_version(self) -> Optional[str]:
-        fv = self.test_info.get('Firmware version')
+        fv = self._satinize(self.test_info.get('Firmware version'))
         if fv:
-            fv = fv.replace('"', '')
             assert re.match(r'\d+\.\d+\.\d+\.\d+', fv)
-        return self.test_info.get('Firmware version')
+        return fv
 
     @firmware_version.setter
     def firmware_version(self, value):
-        value = value.replace('"', '')
+        value = self._satinize(value)
         assert isinstance(value, str)
         assert re.match(r'\d+\.\d+\.\d+\.\d+', value)
         self.test_info['Firmware version'] = value

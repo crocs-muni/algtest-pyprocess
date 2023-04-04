@@ -25,9 +25,9 @@ ReportEntry = Dict[str, Union[str, List[str]]]
 """
 
 Hashes = List[str]
-ReportMetadata = Dict[str, Union[ReportEntry, Hashes]]
+ReportMetadata = Dict[str, Union[Dict[str, ReportEntry], Hashes]]
 """
-ReportEntry = {
+{
     "hashes" = List[str],
     "entries" = Dict[tpm_name||key, ReportEntry]
 }
@@ -83,6 +83,9 @@ def process_measurement_folders(metadata: ReportMetadata, measurement_folders,
             logging.error(
                 f"process_measurement_folders: {folder} unknown error, typically parsing old format")
             continue
+
+        tpm_name = tpm_name.replace('"', '').strip()
+        vendor = vendor.replace('"', '').strip()
 
         prefix = "" if key == "" else " "
         entry_key = f"{tpm_name}{prefix}{key}"
@@ -156,17 +159,41 @@ def report_update(measurements_path, output_path, prev_report_metadata_path,
         json.dump(metadata, f, indent=2)
 
 
+def _table(l: List[List[any]], cols, header):
+    # header repeat col times
+    out = ""
+    out += "| " + (" | ".join(header) + " | ") * cols + "\n"
+    out += "| " + ("|".join(["---"] * (cols * len(header))) + " | ") + "\n"
+
+    i = 0
+    while i < len(l):
+        out += "| "
+        for _ in range(cols):
+            if i < len(l):
+                entries = l[i]
+            else:
+                entries = [" " for _ in range(len(header))]
+
+            assert len(entries) == len(header)
+
+            out += " | ".join(map(str, entries)) + " | "
+            i += 1
+        out += "\n"
+    return out
+
+
 def process_vendor(entries: List[ReportEntry], vendor: str, vendor_path: str):
-    vendor_support_count = 0
+    vendor_tpm_count = 0
     vendor_support_stats = {}
     for entry in entries:
         tpm_name = entry["TPM name"]
         title = entry["title"]
-        performance = None
-        support = None
+        support_found = False
 
-        tpm_support_count = 0
-        tpm_support_stats = {}
+        # Assuming that all TPMs with exact same firmware version and manufacturer support same capabilities
+        # Because I have no idea to tell if the tpm2-algtest was just unsuccessful retrieving them, crashed,
+        # or same TPMs really can have different capabilities
+        tpm_support_stats = set()
 
         tpm_dir = os.path.join(vendor_path, f"{tpm_name}{title}")
         os.mkdir(tpm_dir)
@@ -178,17 +205,21 @@ def process_vendor(entries: List[ReportEntry], vendor: str, vendor_path: str):
             managers.append(manager)
 
             support_handle = manager.support_profile
-            if support is None:
-                support = support_handle
 
-            if support_handle is not None:
-                tpm_support_count += 1
-                for result in support_handle.results.keys():
-                    tpm_support_stats.setdefault(result, 0)
-                    tpm_support_stats[result] += 1
-
+            if support_handle is not None and len(support_handle.results) > 0:
+                support_found = True
+                for capability in support_handle.results.keys():
+                    tpm_support_stats.add(capability)
             gc.collect()
 
+        if support_found:
+            for capability in tpm_support_stats:
+                if vendor_support_stats.get(capability) is None:
+                    vendor_support_stats.setdefault(capability, 0)
+                vendor_support_stats[capability] += 1
+            vendor_tpm_count += 1
+
+        # The plotting section
         heatmap = lambda df: partial(
             Heatmap,
             rsa_df=df,
@@ -236,6 +267,16 @@ def process_vendor(entries: List[ReportEntry], vendor: str, vendor_path: str):
                     os.path.join(tpm_dir, f"{pname}_{alg.value}.png"),
                     format='png')
             gc.collect()
+
+    return vendor_tpm_count, vendor_support_stats
+
+
+def make_support_table(stats, count, title, output_path):
+    stats = [[alg] + [value, round(100 * (value / count), 2)] for
+             alg, value in sorted(stats.items(), key=lambda x: x[0])]
+    with open(os.path.join(output_path, "support.md"), "w") as f:
+        f.write(f"# {title}\n")
+        f.write(_table(stats, 1, ["Algorithm", "Support", "%"]))
 
 
 @click.command()
@@ -294,10 +335,25 @@ def report_create(report_metadata_path, output_path):
         grouped.setdefault(vendor, [])
         grouped[vendor].append(entry)
 
+    # Create the tpms folder
     tpms_folder = os.path.join(output_path, "tpms")
     os.mkdir(tpms_folder)
 
+    total_count, total_stats = 0, {}
     for vendor in grouped.keys():
         vendor_folder = os.path.join(tpms_folder, vendor)
         os.mkdir(vendor_folder)
-        process_vendor(grouped[vendor], vendor, vendor_folder)
+        vendor_tpm_count, vendor_stats = process_vendor(grouped[vendor], vendor,
+                                                        vendor_folder)
+
+        if vendor_tpm_count > 0:
+            total_count += vendor_tpm_count
+            for capability, count in vendor_stats.items():
+                if total_stats.get(capability) is None:
+                    total_stats.setdefault(capability, 0)
+                total_stats[capability] += count
+            # Vendor support table
+            make_support_table(vendor_stats, vendor_tpm_count, vendor,
+                               vendor_folder)
+
+    make_support_table(total_stats, total_count, 'Total support', tpms_folder)
