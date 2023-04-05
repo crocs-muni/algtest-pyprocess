@@ -96,7 +96,7 @@ def measure(measurement_folder: str,
         if ecdsa_result is not None:
             ecdsa_df = ecdsa_result.data
             if ecdsa_df is not None:
-                rsa_signatures = len(ecdsa_df.index)
+                ecdsa_signatures = len(ecdsa_df.index)
 
     date = None
     if support:
@@ -167,4 +167,4 @@ def summary_create(report_metadata_path, output_path):
 
     path = os.path.join(output_path, "measurement_stats.json")
     with open(path, "w") as f:
-        json.dump(stats.values(), f, indent=2)
+        json.dump({"data": list(stats.values())}, f, indent=2)
