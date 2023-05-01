@@ -1,10 +1,11 @@
+import os
 import re
-from typing import Dict, List
+from typing import List, Callable, Any, Optional
 
 from algtestprocess.modules.config import TPM2Identifier
 from algtestprocess.modules.data.tpm.profiles.support import ProfileSupportTPM
-from algtestprocess.modules.parser.tpm.utils import get_params
 from algtestprocess.modules.data.tpm.results.support import SupportResultTPM
+from algtestprocess.modules.parser.tpm.utils import get_params
 
 
 def get_data(path: str):
@@ -12,6 +13,14 @@ def get_data(path: str):
         data = f.readlines()
     return list(filter(None, map(lambda x: x.strip(), data))), \
         f.name.rsplit("/", 1)[1]
+
+
+def get_data_yaml(path: str):
+    data = None
+    with open(path) as f:
+        data = load(f, Loader)
+    assert data
+    return data
 
 
 class SupportParserTPM:
@@ -136,10 +145,7 @@ except ImportError:
 
 class SupportParserTPMYaml:
     def __init__(self, path: str):
-        self.data = None
-        with open(path) as f:
-            self.data = load(f, Loader)
-        assert self.data
+        self.data = get_data_yaml(path)
 
     def process_property_fixed(
             self,
@@ -203,4 +209,126 @@ class SupportParserTPMYaml:
         # Remaining data is put into test info dictionary
         profile.test_info = data
 
+        return profile
+
+
+class SupportParserTPMQuicktestYAML:
+    """
+    Class which parses support profile out of several, other files
+    located in the detail directory of the measurement,
+    """
+    QUICKTEST_ALGORITHMS = "Quicktest_algorithms.txt"
+    QUICKTEST_COMMANDS = "Quicktest_commands.txt"
+    QUICKTEST_ECC_CURVES = "Quicktest_ecc-curves.txt"
+    QUICKTEST_PROPERTIES_FIXED = "Quicktest_properties-fixed.txt"
+    QUICKTEST_PROPERTIES_VARIABLE = "Quicktest_properties-variable.txt"
+
+    def __init__(self, path: str, strict: bool):
+        """
+        Constructor for Quicktest parser
+        :param path: path to the `detail` folder
+        """
+        path = os.path.join(path)
+        assert os.path.exists(path)
+        self.path = path
+        self.strict = strict
+
+    def parse_generic(self, profile: ProfileSupportTPM, filename: str,
+                      projector: Callable[[Any, Any], int | str]):
+        path = os.path.join(self.path, filename)
+        assert os.path.exists(path)
+
+        data = get_data_yaml(path)
+        for key, value in data.items():
+            result = SupportResultTPM()
+            result.name = projector(key, value)
+            result.value = value["value"] if value.get("value") else value.get(
+                "raw")
+            result.other = value
+            assert result.name
+            profile.add_result(result)
+
+    def parse_properties_fixed(self, profile: ProfileSupportTPM):
+        def projector(k, v):
+            return k
+
+        self.parse_generic(
+            profile,
+            SupportParserTPMQuicktestYAML.QUICKTEST_PROPERTIES_FIXED,
+            projector
+        )
+
+    def parse_properties_variable(self, profile: ProfileSupportTPM):
+        def projector(k, v):
+            return k
+
+        self.parse_generic(
+            profile,
+            SupportParserTPMQuicktestYAML.QUICKTEST_PROPERTIES_VARIABLE,
+            projector
+        )
+
+    def parse_algorithms(self, profile: ProfileSupportTPM):
+        def projector(k, v):
+            return TPM2Identifier.ALG_ID_STR.get(v["value"])
+
+        self.parse_generic(
+            profile,
+            SupportParserTPMQuicktestYAML.QUICKTEST_ALGORITHMS,
+            projector
+        )
+
+    def parse_commands(self, profile: ProfileSupportTPM):
+        def projector(k, v):
+            return TPM2Identifier.CC_STR.get(v["commandIndex"])
+
+        self.parse_generic(
+            profile,
+            SupportParserTPMQuicktestYAML.QUICKTEST_COMMANDS,
+            projector
+        )
+
+    def parse_ecc_curves(self, profile: ProfileSupportTPM):
+        def projector(k, v):
+            return TPM2Identifier.ECC_CURVE_STR.get(v)
+
+        self.parse_generic(
+            profile,
+            SupportParserTPMQuicktestYAML.QUICKTEST_ECC_CURVES,
+            projector
+        )
+
+    def strict_check(self):
+        assert os.path.exists(os.path.join(
+            self.path, SupportParserTPMQuicktestYAML.QUICKTEST_ALGORITHMS))
+        assert os.path.exists(os.path.join(
+            self.path, SupportParserTPMQuicktestYAML.QUICKTEST_COMMANDS))
+        assert os.path.exists(os.path.join(
+            self.path,
+            SupportParserTPMQuicktestYAML.QUICKTEST_PROPERTIES_FIXED))
+        assert os.path.exists(os.path.join(
+            self.path,
+            SupportParserTPMQuicktestYAML.QUICKTEST_PROPERTIES_VARIABLE))
+        assert os.path.exists(os.path.join(
+            self.path, SupportParserTPMQuicktestYAML.QUICKTEST_ECC_CURVES))
+
+    def parse(self) -> Optional[ProfileSupportTPM]:
+        profile = ProfileSupportTPM()
+        if self.strict:
+            # Asserts invariants on Quicktest files existence
+            self.strict_check()
+        handles: List[Callable[[ProfileSupportTPM], None]] = [
+            self.parse_properties_fixed, self.parse_properties_variable,
+            self.parse_commands, self.parse_algorithms,
+            self.parse_ecc_curves]
+
+        for handle in handles:
+            try:
+                handle(profile)
+            except:
+                if self.strict:
+                    return None
+
+        if len(profile.results) == 0:
+            return None
         return profile

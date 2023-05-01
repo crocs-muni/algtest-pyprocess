@@ -1,5 +1,5 @@
+import logging
 import os.path
-from sys import stderr
 from typing import Optional
 
 import yaml
@@ -12,7 +12,7 @@ from algtestprocess.modules.parser.tpm.cryptoprops import CryptoPropsParser
 from algtestprocess.modules.parser.tpm.performance import \
     PerformanceParserTPMYaml, PerformanceParserTPM
 from algtestprocess.modules.parser.tpm.support import SupportParserTPMYaml, \
-    SupportParserTPM
+    SupportParserTPM, SupportParserTPMQuicktestYAML
 
 
 class TPMProfileManager:
@@ -40,78 +40,114 @@ class TPMProfileManager:
         if self._perf_handle:
             return self._perf_handle
 
-        # Easy, we know the filename.
+        # First we try the easiest option, parsing the yaml file
+        # present in the latest versions of tpm2-algtest
+        file_path = os.path.join(self._root_path, 'performance.yaml')
         try:
-            file_path = os.path.join(self._root_path, 'performance.yaml')
             profile = PerformanceParserTPMYaml(file_path).parse()
         except yaml.YAMLError as err:
-            # TODO: logger, this is ugly
-            print(f"TPMProfileManager: Couldn't parse perf profile"
-                  f"\n{err}"
-                  f"\nTrying old parser implementation",
-                  file=stderr)
+            logging.warning(
+                f"Could not parse performance profile at {file_path=}"
+                f", possibly caused by old version of the measurement."
+                f"Will try other parser implementations.")
 
             profile = PerformanceParserTPM(file_path).parse()
 
-            print(f"Old parser implementation was ", end="", file=stderr)
-            if not profile.results:
-                print("not ", end="", file=stderr)
-                profile = None
-            print("successful.")
+            if profile is None or len(profile.results) == 0:
+                logging.error(
+                    f"Old parser implementation was not successful, for "
+                    f"performance profile file at {file_path=}."
+                )
 
         except FileNotFoundError as err:
-            print("Older version of tpm2-algtest did not use yaml format.\n"
-                  "Trying performance folder for csv file",
-                  file=stderr)
+            logging.warning(
+                f"Performance profile file at {file_path=} was not found,"
+                "older measurements have csv file in performance folder instead.")
 
+            performance_path = os.path.join(self._root_path, 'performance')
             try:
-                performance_path = os.path.join(self._root_path, 'performance')
                 assert os.path.exists(performance_path) and os.path.isdir(
                     performance_path)
             except (FileNotFoundError, AssertionError):
+                logging.error(
+                    f"performance folder not found or is not a directory "
+                    f"at {performance_path=}")
                 return None
 
             files = [x.name for x in os.scandir(performance_path)]
             assert len(files) == 1
 
-            profile = PerformanceParserTPM(
-                os.path.join(performance_path, files[0])).parse()
+            file_path = os.path.join(performance_path, files[0])
+            profile = PerformanceParserTPM(file_path).parse()
 
-        # TODO: Based on image tag for older measurements infer the
-        #       project structure. Necessary for measurements created
-        #       by older versions of tpm2-algtest
+            if profile is None:
+                logging.error(f"csv file could not be parsed at {file_path=}")
+
         self._perf_handle = profile
         return profile
+
+    def _post_process_support_profile(self,
+                                      profile: Optional[ProfileSupportTPM]):
+        if profile is None:
+            return
+
+        detail_path = os.path.join(self._root_path, 'detail')
+        try:
+            assert os.path.exists(detail_path) and os.path.isdir(detail_path)
+        except (FileNotFoundError, AssertionError):
+            logging.error("detail folder not found or is not a directory "
+                          f"at {detail_path=}")
+            return
+
+        quicktest_profile = \
+            SupportParserTPMQuicktestYAML(detail_path, strict=False).parse()
+
+        if quicktest_profile is None or len(quicktest_profile.results) == 0:
+            logging.error(f"quicktest parser failed at {detail_path=}")
+            return
+
+        # If the Quicktest Profile found out some missing entries, we add them
+        for key, obj in quicktest_profile.results.items():
+            if profile.results.get(key) is None:
+                profile.results[key] = obj
 
     @property
     def support_profile(self) -> Optional[ProfileSupportTPM]:
         if self._supp_handle:
             return self._supp_handle
 
+        # First we try the easiest option, that is yaml file
+        # created by latest versions of tpm2-algtest
+
+        file_path = os.path.join(self._root_path, 'results.yaml')
         try:
-            file_path = os.path.join(self._root_path, 'results.yaml')
             profile = SupportParserTPMYaml(file_path).parse()
         except yaml.YAMLError as err:
-            print(f"TPMProfileManager: Couldn't parse supp profile"
-                  f"\n{err}"
-                  f"\nTrying old parser implementation",
-                  file=stderr)
+            logging.warning(
+                f"Could not parse support profile at {file_path=}"
+                f", possibly caused by old version of the measurement."
+                f"Will try other parser implementations.")
+
             profile = SupportParserTPM(file_path).parse()
 
-            print(f"Old parser implementation was ", end="", file=stderr)
-            if not profile.results:
-                print("not ", end="", file=stderr)
-                profile = None
-            print("successful.")
+            if profile is None or len(profile.results) == 0:
+                logging.error(
+                    "Old parser implementation was not successful"
+                    f"for support profile file at {file_path=}")
 
         except FileNotFoundError as err:
-            print("Older version of tpm2-algtest did not use yaml format.\n"
-                  "Trying results folder for csv file",
-                  file=stderr)
+            logging.warning(
+                f"Support profile file at {file_path=} was not found,"
+                "older measurements have csv file in results folder instead.")
+
+            results_path = os.path.join(self._root_path, 'results')
             try:
-                results_path = os.path.join(self._root_path, 'results')
-                assert os.path.exists(results_path) and os.path.isdir(results_path)
+                assert os.path.exists(results_path) and \
+                       os.path.isdir(results_path)
             except (FileNotFoundError, AssertionError):
+                logging.error(
+                    f"results folder not found or is not a directory "
+                    f"at {results_path=}")
                 return None
 
             files = [x.name for x in os.scandir(results_path)]
@@ -120,7 +156,28 @@ class TPMProfileManager:
             file_path = os.path.join(results_path, files[0])
             profile = SupportParserTPM(file_path).parse()
 
-        # TODO: Same as previous
+            if profile is None or len(profile.results) == 0:
+                logging.error(f"csv file could not be parsed at {file_path=}")
+
+        # Lastly we run the Quicktest files parser so that we possibly
+        # retrieve some missed measurements. If it does not succeed,
+        # we ignore it.
+
+        self._post_process_support_profile(profile)
+
+        # Finally we need to make sure that the profile has name for TPM
+        # if not we log it and fail.
+
+        checks = [
+            profile.manufacturer is None,
+            profile.firmware_version is None,
+            profile.device_name == ''
+        ]
+        if any(checks):
+            logging.error(f"could not retrieve TPM identification "
+                          f"(manufacturer, firmware version) at {file_path=}")
+            return None
+
         self._supp_handle = profile
         return profile
 
@@ -130,9 +187,6 @@ class TPMProfileManager:
             return self._cpps_handle
 
         path = f"{self._root_path}/detail"
-
-        # TODO: 1. Infer delimiters based on image tag
-        # TODO: 2. Somehow infer device name without parsing the supp or perf p.
 
         profile = CryptoPropsParser(path).parse()
 

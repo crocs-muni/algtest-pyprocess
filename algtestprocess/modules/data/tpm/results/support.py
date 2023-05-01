@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Dict
 
 from algtestprocess.modules.data.tpm.results.base import MeasurementResultTPM
 
@@ -10,3 +10,4 @@ class SupportResultTPM(MeasurementResultTPM):
         super().__init__()
         self.name: Optional[str] = None
         self.value: Optional[str] = None
+        self.other: Optional[Dict[str, str]] = None

@@ -66,6 +66,10 @@ def process_measurement_folders(metadata: ReportMetadata, measurement_folders,
                 tpm_name = support.device_name
                 vendor = support.manufacturer
 
+            if support is None or len(support.results) == 0:
+                logging.info(
+                    f"process_measurement_folders: no support results in {folder=}")
+
             if tpm_name is None:
                 performance = manager.performance_profile
                 if performance:
