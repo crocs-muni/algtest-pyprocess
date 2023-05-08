@@ -1,3 +1,4 @@
+import gc
 import logging
 from typing import Optional, List, Union
 
@@ -15,7 +16,7 @@ class CryptoPropResult:
         self.paths: List[str] = []
 
     @property
-    def data(self) -> Union[pd.DataFrame, bytes]:
+    def data(self) -> Union[pd.DataFrame, str]:
         if self._data:
             return self._data
 
@@ -31,7 +32,6 @@ class CryptoPropResult:
                 if len(next_df.columns) > 1:
                     break
 
-            next_df = next_df.dropna().reset_index(drop=True)
             if next_df is None:
                 logging.warning(
                     f"CryptoPropResult.data:{path} could not be parsed")
@@ -46,7 +46,9 @@ class CryptoPropResult:
 
     @data.setter
     def data(self, value):
-        assert isinstance(value, bytes) or isinstance(value, pd.DataFrame)
+        assert isinstance(value, str) or isinstance(value,
+                                                    pd.DataFrame) or isinstance(
+            value, list)
         self._data = value
 
     def __add__(self, other):
@@ -55,4 +57,19 @@ class CryptoPropResult:
         new.category = self.category
         new.merged = True
         new.paths = list(set(self.paths) | set(other.paths))
+        if isinstance(self.data, str) and isinstance(other.data, str):
+            new.data = [self.data, other.data]
+        elif isinstance(self.data, list) or isinstance(other.data, list):
+            new_data = []
+            if isinstance(self.data, list):
+                new_data += self.data
+            elif not isinstance(self.data, pd.DataFrame):
+                new_data += [self.data]
+
+            if isinstance(other.data, list):
+                new_data += other.data
+            elif not isinstance(other.data, pd.DataFrame):
+                new_data += [other.data]
+            new.data = new_data
+        gc.collect()
         return new
