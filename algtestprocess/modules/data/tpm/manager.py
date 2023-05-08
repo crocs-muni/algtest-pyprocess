@@ -103,7 +103,7 @@ class TPMProfileManager:
             SupportParserTPMQuicktestYAML(detail_path, strict=False).parse()
 
         if quicktest_profile is None or len(quicktest_profile.results) == 0:
-            logging.error(f"quicktest parser failed at {detail_path=}")
+            logging.warning(f"quicktest parser failed at {detail_path=}")
             return
 
         # If the Quicktest Profile found out some missing entries, we add them
@@ -197,7 +197,7 @@ class TPMProfileManager:
         handle = self.support_profile
 
         if handle is None:
-            print(
+            logging.error(
                 f"TPMProfileManager: Unable to load support profile "
                 f"for {self._root_path}"
             )
