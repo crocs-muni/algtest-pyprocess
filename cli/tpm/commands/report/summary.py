@@ -104,7 +104,7 @@ def measure(measurement_folder: str,
             support.test_info['Execution date/time'].replace('"', ''),
             '%Y/%m/%d %H:%M:%S'
         )
-        date = date.strftime('%Y/%m') if date else None
+        date = date.strftime('%Y/%m/%d') if date else None
 
     if stats.get(tpm_name):
         statistic = stats.get(tpm_name)
@@ -113,13 +113,10 @@ def measure(measurement_folder: str,
         statistic["ECC EKs"] += ek_ecc
         statistic["RSA Keys"] += rsa_keys
         statistic["ECC Signatures"] += ecdsa_signatures
-        if statistic["monthly additions"].get(date):
-            statistic["monthly additions"][date] += 1
-        else:
-            statistic["monthly additions"][date] = 1
-        statistic["performance profiles"] = 1 if performance else 0
-        statistic["support profiles"] = 1 if support else 0
-        statistic["cryptoprops profiles"] = 1 if cpps else 0
+        statistic["dates"].append(date)
+        statistic["performance profiles"] += 1 if performance else 0
+        statistic["support profiles"] += 1 if support else 0
+        statistic["cryptoprops profiles"] += 1 if cpps else 0
 
     else:
         statistic = {
@@ -131,7 +128,7 @@ def measure(measurement_folder: str,
             "ECC EKs": ek_ecc,
             "RSA Keys": rsa_keys,
             "ECC Signatures": ecdsa_signatures,
-            "monthly additions": {date: 1},
+            "dates": [date],
             "performance profiles": 1 if performance else 0,
             "support profiles": 1 if support else 0,
             "cryptoprops profiles": 1 if cpps else 0
