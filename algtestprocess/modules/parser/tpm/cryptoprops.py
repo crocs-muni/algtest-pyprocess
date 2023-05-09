@@ -1,9 +1,9 @@
 import os
 from typing import Optional
 
+from algtestprocess.modules.data.tpm.enums import CryptoPropResultCategory
 from algtestprocess.modules.data.tpm.profiles.cryptoprops import \
     CryptoProps
-from algtestprocess.modules.data.tpm.enums import CryptoPropResultCategory
 from algtestprocess.modules.data.tpm.results.cryptoprops import CryptoPropResult
 
 
@@ -71,7 +71,7 @@ class CryptoPropsParser:
             result.category = CryptoPropResultCategory(key)
             result.paths.append(path)
 
-            with open(path, "rb") as f:
+            with open(path, "r") as f:
                 result.data = f.read()
 
             profile.add_result(result)
