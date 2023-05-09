@@ -54,7 +54,7 @@ class CryptoProps(ProfileTPM):
             new.results[alg] = my_result + other_result
         return new
 
-    def _plot(self, plot, algs, output_path, allowed_algs, fname, pname):
+    def _plot(self, plot, algs, output_path, allowed_algs, fname, pname, save):
         if not algs:
             algs = allowed_algs
 
@@ -62,27 +62,36 @@ class CryptoProps(ProfileTPM):
             logging.warning(
                 f"{fname}:{self.path} trying to build {pname} for some unallowed algs")
             return
+        plots = []
         for alg in algs:
             if self.results.get(alg) is None:
                 logging.info(f"{fname}:{self.path} has no {alg.value}")
                 continue
             df = self.results.get(alg).data
             assert df is not None
-            assert os.path.exists(os.path.join(output_path))
+            if save:
+                assert os.path.exists(os.path.join(output_path))
             try:
-                plot(df)().build().save(
-                    os.path.join(output_path, f"{pname}_{alg.value}.png"),
-                    'png'
-                )
+                p = plot(df)().build()
+
+                if save:
+                    p.save(
+                        os.path.join(output_path, f"{pname}_{alg.value}.png"),
+                        'png'
+                    )
+                else:
+                    plots.append(p)
             except BaseException as e:
                 logging.warning(
                     f"{fname}:{self.path} {pname} build failed for {alg.value}, {str(e)}")
             gc.collect()
+        return plots
 
     def plot_heatmaps(self,
                       algs: List[CryptoPropResultCategory],
-                      output_path: str,
-                      title: str = ""):
+                      output_path: Optional[str] = ".",
+                      title: str = "",
+                      save: bool = False):
         allowed = {CryptoPropResultCategory.RSA_1024,
                    CryptoPropResultCategory.RSA_2048}
 
@@ -94,13 +103,14 @@ class CryptoProps(ProfileTPM):
                 title=title
             )
 
-        self._plot(plot_f, algs, output_path, allowed, "plot_heatmaps",
-                   "heatmap")
+        return self._plot(plot_f, algs, output_path, allowed, "plot_heatmaps",
+                          "heatmap", save)
 
     def plot_spectrograms(self,
                           algs: List[CryptoPropResultCategory],
-                          output_path: str,
-                          title: str = ""):
+                          output_path: Optional[str] = ".",
+                          title: str = "",
+                          save: bool = False):
         allowed = {
             CryptoPropResultCategory.ECC_P256_ECDSA,
             CryptoPropResultCategory.ECC_P256_ECDAA,
@@ -121,5 +131,6 @@ class CryptoProps(ProfileTPM):
                 title=title
             )
 
-        self._plot(plot_f, algs, output_path, allowed, "plot_spectrograms",
-                   "spectrogram")
+        return self._plot(plot_f, algs, output_path, allowed,
+                          "plot_spectrograms",
+                          "spectrogram", save)
