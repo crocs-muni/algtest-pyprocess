@@ -1,11 +1,7 @@
 import click
-
-from cli.tpm.commands.plot.heatmaps import heatmaps_single, heatmaps_grouped
-from cli.tpm.commands.plot.spectrograms import spectrograms_single, \
-    spectrograms_grouped
-from cli.tpm.commands.report.basic import report_update, \
-    report_create
-from cli.tpm.commands.report.summary import summary_create
+from cli.tpm.commands.metadata_update import metadata_update
+from cli.tpm.commands.report_create import report_create
+from cli.tpm.commands.summary_create import summary_create
 
 
 @click.group(
@@ -16,28 +12,6 @@ def tpm_cli():
     pass
 
 
-@tpm_cli.group(help='Plot various visualisations from given data')
-def plot():
-    pass
-
-
-plot.add_command(spectrograms_single)
-plot.add_command(spectrograms_grouped)
-plot.add_command(heatmaps_single)
-plot.add_command(heatmaps_grouped)
-
-
-@tpm_cli.group(
-    help='Create and export reports containing various information and visualisations')
-def report():
-    pass
-
-
-report.add_command(report_update)
-report.add_command(report_create)
-report.add_command(summary_create)
-
-
-@tpm_cli.group(help='Create static HTML files from given data')
-def pages():
-    pass
+tpm_cli.add_command(metadata_update)
+tpm_cli.add_command(report_create)
+tpm_cli.add_command(summary_create)

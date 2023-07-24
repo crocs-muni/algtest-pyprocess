@@ -1,34 +1,17 @@
-import json
-import logging
-import os.path
+from algtestprocess.modules.data.tpm.enums import CryptoPropResultCategory
+from algtestprocess.modules.data.tpm.manager import TPMProfileManager
+from cli.tpm.types import TPMName
 from datetime import datetime
-from typing import Dict, Union
+from typing import Dict
+from cli.tpm.types import MeasurementsStatistic, ReportMetadata
+
 
 import click
 
-from algtestprocess.modules.data.tpm.enums import CryptoPropResultCategory
-from algtestprocess.modules.data.tpm.manager import TPMProfileManager
-from cli.tpm.commands.report.basic import ReportMetadata
 
-Date = str
-TPMName = str
-MeasurementsStatistic = Dict[str, Union[str, int, Dict[Date, int]]]
-"""
-{
-    "TPM name": str,
-    "vendor": str,
-    "firmware": str, 
-    "count": str,
-    "RSA EKs": int,
-    "ECC EKs": int,
-    "RSA Keys": int, 
-    "ECC Signatures": int,
-    "monthly additions": Dict[Date, int],
-    "performance profiles": int,
-    "support profiles": int,
-    "cryptoprops profiles": int
-}
-"""
+import json
+import logging
+import os.path
 
 
 def measure(measurement_folder: str,
