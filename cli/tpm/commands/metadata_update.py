@@ -125,19 +125,19 @@ def metadata_update(measurements_path, output_path, prev_report_metadata_path,
             with open(os.path.join(prev_report_metadata_path), "r") as f:
                 metadata = json.load(f)
         except:
-            logging.critical("report_update: opening metadata didn't work")
+            logging.critical("metadata_update: opening metadata didn't work")
 
     if not metadata and prev_report_metadata_path is not None:
-        logging.warning("report_update: metadata is empty")
+        logging.warning("metadata_update: metadata is empty")
 
     measurement_folders = _walk(measurements_path, 3)
 
     if not measurement_folders:
         logging.warning(
-            f"report_update: no measurements folder found in {measurements_path=}")
+            f"metadata_update: no measurements folder found in {measurements_path=}")
         return
 
     process_measurement_folders(metadata, measurement_folders, key)
 
-    with open(os.path.join(output_path, "report-metadata.json"), "w") as f:
+    with open(os.path.join(output_path, "metadata.json"), "w") as f:
         json.dump(metadata, f, indent=2)
