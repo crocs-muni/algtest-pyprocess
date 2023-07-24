@@ -1,5 +1,6 @@
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
+import logging
 from matplotlib.colors import LinearSegmentedColormap
 from overrides import overrides
 
@@ -18,14 +19,19 @@ class Heatmap(Plot):
         :param title: text, possibly short abbreviation for the host computer
         """
         super().__init__()
-        pqnf = pqnf or Heatmap.compute_pqn_bytes
+        pqnf = pqnf or self.compute_pqn_bytes
         print(device_name, len(rsa_df))
-        self.p_byte, self.q_byte, self.n_byte = pqnf(rsa_df)
         self.device_name = device_name
         self.title = title
+        self.p_byte, self.q_byte, self.n_byte = pqnf(rsa_df)
 
-    @staticmethod
-    def compute_pqn_bytes(df):
+
+    def compute_pqn_bytes(self, df):
+        df = df.dropna(subset=['p', 'q', 'n'])
+        
+        if len(df) < 1:
+            raise ValueError("visualized dataframe must not be empty")
+        
         # As the data doesn't contain q prime it needs to be computed
         n = list(map(lambda x: int(x, 16), list(df.n)))
         p = list(map(lambda x: int(x, 16), list(df.p)))

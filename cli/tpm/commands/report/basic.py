@@ -267,9 +267,13 @@ def process_vendor(entries: List[ReportEntry], vendor: str, vendor_path: str):
                 continue
 
             if len(df.index) >= 5:
-                plot(df)().build().save(
+                try:
+                    plot(df)().build().save(
                     os.path.join(tpm_dir, f"{pname}_{alg.value}.png"),
                     format='png')
+                except ValueError:
+                    logging.error(f"Heatmap: RSA dataframe has {len(df)} for {tpm_name} has no rows")
+                    
             gc.collect()
 
     return vendor_tpm_count, vendor_support_stats
