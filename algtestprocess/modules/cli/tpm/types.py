@@ -1,7 +1,5 @@
 from typing import Dict, List, Union
 
-
-
 Hashes = List[str]
 ReportEntry = Dict[str, Union[str, List[str]]]
 """

@@ -1,20 +1,19 @@
-from algtestprocess.modules.data.tpm.enums import CryptoPropResultCategory
-from algtestprocess.modules.data.tpm.manager import TPMProfileManager
-from algtestprocess.modules.visualization.heatmap import Heatmap
-import pandas as pd
 import gc
-from functools import partial
-from typing import List
-from cli.tpm.types import ReportEntry, ReportMetadata
-
-
-import click
-
-
 import json
 import logging
 import os
 import os.path
+from functools import partial
+from typing import List
+
+import click
+import pandas as pd
+
+from algtestprocess.modules.cli.tpm.types import ReportEntry, ReportMetadata
+from algtestprocess.modules.data.tpm.enums import CryptoPropResultCategory
+from algtestprocess.modules.data.tpm.manager import TPMProfileManager
+from algtestprocess.modules.visualization.heatmap import Heatmap
+from algtestprocess.modules.visualization.spectrogram import Spectrogram
 
 
 def process_vendor(entries: List[ReportEntry], vendor: str, vendor_path: str):
@@ -61,6 +60,12 @@ def process_vendor(entries: List[ReportEntry], vendor: str, vendor_path: str):
             device_name=tpm_name,
             title=title
         )
+        
+        spectrogram = lambda df: partial(
+            Spectrogram,
+            df=df,
+            device_name=tpm_name
+        )
 
         # For each algorithm, create smaller dataframe which will fit in memory
         items = [
@@ -68,6 +73,9 @@ def process_vendor(entries: List[ReportEntry], vendor: str, vendor_path: str):
              "heatmap"),
             (CryptoPropResultCategory.RSA_2048, ["n", "p", "q"], heatmap,
              "heatmap"),
+            (CryptoPropResultCategory.ECC_BN256_ECDSA, ["duration", "duration_extra","nonce"], spectrogram, "spectrogam"),
+            (CryptoPropResultCategory.ECC_P256_ECDSA, ["duration", "duration_extra","nonce"], spectrogram, "spectrogam"),
+            (CryptoPropResultCategory.ECC_P384_ECDSA, ["duration", "duration_extra","nonce"], spectrogram, "spectrogam"),
         ]
 
         for alg, cols, plot, pname in items:
@@ -84,6 +92,13 @@ def process_vendor(entries: List[ReportEntry], vendor: str, vendor_path: str):
 
                 if res is not None:
                     current_df = res.data
+                    
+                    # If the dataframe does not contain nonce, then we will skip
+                    # Some nonces, can be computed back from their coordinates on EC
+                    # but for now those wont be recovered
+                    if not set(cols).issubset(current_df.columns):
+                        continue
+                    
                     stripped_df = current_df.loc[:, cols]
                     if df is None:
                         df = stripped_df
@@ -173,29 +188,10 @@ def report_create(report_metadata_path, output_path):
 
     Links to visualizations
     """
-    try:
-        metadata: ReportMetadata = {}
-        with open(report_metadata_path, "r") as f:
-            metadata = json.load(f)
-
-        assert metadata
-        entries = metadata["entries"].values()
-        assert 0 < len(entries)
-    except:
-        logging.error("report_create: retrieving metadata was unsuccessful")
+    grouped = load_metadata(report_metadata_path)
+    
+    if grouped == {}:
         return
-
-    # We now group entries by vendor
-    grouped = {}
-    for entry in entries:
-        vendor = entry.get("vendor")
-        if vendor is None:
-            logging.error(
-                f"report_create: entry {entry} does not contain vendor")
-            continue
-
-        grouped.setdefault(vendor, [])
-        grouped[vendor].append(entry)
 
     # Create the tpms folder
     tpms_folder = os.path.join(output_path, "tpms")
@@ -219,3 +215,29 @@ def report_create(report_metadata_path, output_path):
                                vendor_folder)
 
     make_support_table(total_stats, total_count, 'Total support', tpms_folder)
+
+def load_metadata(metadata_path):
+    try:
+        metadata: ReportMetadata = {}
+        with open(metadata_path, "r") as f:
+            metadata = json.load(f)
+
+        assert metadata
+        entries = metadata["entries"].values()
+        assert 0 < len(entries)
+    except:
+        logging.error("report_create: retrieving metadata was unsuccessful")
+        return {}
+
+    # We now group entries by vendor
+    grouped = {}
+    for entry in entries:
+        vendor = entry.get("vendor")
+        if vendor is None:
+            logging.error(
+                f"report_create: entry {entry} does not contain vendor")
+            continue
+
+        grouped.setdefault(vendor, [])
+        grouped[vendor].append(entry)
+    return grouped

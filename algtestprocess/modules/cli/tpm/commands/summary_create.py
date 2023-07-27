@@ -1,17 +1,15 @@
-from algtestprocess.modules.data.tpm.enums import CryptoPropResultCategory
-from algtestprocess.modules.data.tpm.manager import TPMProfileManager
-from cli.tpm.types import TPMName
-from datetime import datetime
-from typing import Dict
-from cli.tpm.types import MeasurementsStatistic, ReportMetadata
-
-
-import click
-
-
 import json
 import logging
 import os.path
+from datetime import datetime
+from typing import Dict
+
+import click
+
+from algtestprocess.modules.cli.tpm.types import (MeasurementsStatistic,
+                                                  ReportMetadata, TPMName)
+from algtestprocess.modules.data.tpm.enums import CryptoPropResultCategory
+from algtestprocess.modules.data.tpm.manager import TPMProfileManager
 
 
 def measure(measurement_folder: str,

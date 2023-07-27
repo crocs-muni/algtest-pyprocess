@@ -77,6 +77,11 @@ class Spectrogram(Plot):
 
         """
         # assert all(map(lambda x: len(x) % 2 == 0, df.nonce))
+        df = df.dropna(subset=['nonce', 'duration', 'duration_extra'])
+        
+        if len(df) < 1:
+            raise ValueError("visualized dataframe must not be empty")
+        
         nonce_bytes = list(map(lambda x: int(x, 16), list(df.nonce)))
         nonce_bytes = list(
             map(

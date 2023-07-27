@@ -1,4 +1,4 @@
-from cli.base import cli
+from algtestprocess.modules.cli.base import cli
 
 if __name__ == "__main__":
     cli()

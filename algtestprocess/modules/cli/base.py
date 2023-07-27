@@ -9,7 +9,7 @@ logging.basicConfig(
 
 import click
 
-from cli.tpm.base import tpm_cli
+from algtestprocess.modules.cli.tpm.base import tpm_cli
 
 
 @click.group()

@@ -1,15 +1,13 @@
-from algtestprocess.modules.data.tpm.manager import TPMProfileManager
-from checksumdir import dirhash
-from cli.tpm.types import ReportMetadata
-from cli.tpm.utils import _walk
-
-
-import click
-
-
 import json
 import logging
 import os.path
+
+import click
+from checksumdir import dirhash
+
+from algtestprocess.modules.cli.tpm.types import ReportMetadata
+from algtestprocess.modules.data.tpm.manager import TPMProfileManager
+from algtestprocess.modules.parser.tpm.utils import _walk
 
 
 def process_measurement_folders(metadata: ReportMetadata, measurement_folders,

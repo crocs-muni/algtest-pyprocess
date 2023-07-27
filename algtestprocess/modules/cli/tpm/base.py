@@ -1,7 +1,10 @@
 import click
-from cli.tpm.commands.metadata_update import metadata_update
-from cli.tpm.commands.report_create import report_create
-from cli.tpm.commands.summary_create import summary_create
+
+from algtestprocess.modules.cli.tpm.commands.metadata_update import \
+    metadata_update
+from algtestprocess.modules.cli.tpm.commands.report_create import report_create
+from algtestprocess.modules.cli.tpm.commands.summary_create import \
+    summary_create
 
 
 @click.group(
