@@ -72,7 +72,8 @@ class CryptoProps(ProfileTPM):
             if save:
                 assert os.path.exists(os.path.join(output_path))
             try:
-                p = plot(df)().build()
+                title = f"{alg.value.replace('_', ' ').upper()}, {len(df.index)} entries"
+                p = plot(df, title)().build()
 
                 if save:
                     p.save(
@@ -90,12 +91,11 @@ class CryptoProps(ProfileTPM):
     def plot_heatmaps(self,
                       algs: List[CryptoPropResultCategory],
                       output_path: Optional[str] = ".",
-                      title: str = "",
                       save: bool = False):
         allowed = {CryptoPropResultCategory.RSA_1024,
                    CryptoPropResultCategory.RSA_2048}
 
-        def plot_f(df):
+        def plot_f(df, title):
             return partial(
                 Heatmap,
                 rsa_df=df,
@@ -109,7 +109,6 @@ class CryptoProps(ProfileTPM):
     def plot_spectrograms(self,
                           algs: List[CryptoPropResultCategory],
                           output_path: Optional[str] = ".",
-                          title: str = "",
                           save: bool = False):
         allowed = {
             CryptoPropResultCategory.ECC_P256_ECDSA,
@@ -123,7 +122,7 @@ class CryptoProps(ProfileTPM):
             CryptoPropResultCategory.ECC_BN256_ECSCHNORR
         }
 
-        def plot_f(df):
+        def plot_f(df, title):
             return partial(
                 Spectrogram,
                 df=df,

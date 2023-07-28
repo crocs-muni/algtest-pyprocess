@@ -10,7 +10,24 @@ from algtestprocess.modules.visualization.plot import Plot
 class Heatmap(Plot):
     """Class for plotting RSA most significant bytes into a heatmap"""
 
-    def __init__(self, rsa_df, device_name, pqnf=None, title=""):
+    DEFAULT_PARTS = {"heatmap", "text", "distributions"}
+
+    def __init__(
+        self,
+        rsa_df,
+        device_name,
+        pqnf=None,
+        title="",
+        fig=None,
+        ticks=True,
+        legend=True,
+        parts=DEFAULT_PARTS,
+        part_height_ratios=(3, 0.5, 1),
+        verbose=False,
+        text_font_size=12,
+        title_font_size=24,
+        label_values=True
+    ):
         """
         Init function  the p,q,n bytes and builds the plot
         :param rsa_df: pandas dataframe containing the private prime an moduli
@@ -24,14 +41,22 @@ class Heatmap(Plot):
         self.device_name = device_name
         self.title = title
         self.p_byte, self.q_byte, self.n_byte = pqnf(rsa_df)
-
+        self.fig = fig
+        self.ticks = ticks
+        self.legend = legend
+        self.parts = set(parts) if not isinstance(parts, set) else parts
+        self.part_height_ratios = part_height_ratios
+        self.verbose = verbose
+        self.text_font_size = text_font_size
+        self.title_font_size = title_font_size
+        self.label_values = label_values
 
     def compute_pqn_bytes(self, df):
-        df = df.dropna(subset=['p', 'q', 'n'])
-        
+        df = df.dropna(subset=["p", "q", "n"])
+
         if len(df) < 1:
             raise ValueError("visualized dataframe must not be empty")
-        
+
         # As the data doesn't contain q prime it needs to be computed
         n = list(map(lambda x: int(x, 16), list(df.n)))
         p = list(map(lambda x: int(x, 16), list(df.p)))
@@ -69,14 +94,19 @@ class Heatmap(Plot):
         n_min = min(n_byte)
         n_max = max(n_byte)
 
-        fig = plt.figure(figsize=(7.5, 12))
-        self.fig = fig
+        fig = self.fig
+        if fig is None:
+            fig = plt.figure(figsize=(7.5, 12))
+            self.fig = fig
 
-        if self.title:
-            fig.suptitle(self.title, fontsize=28)
+        if "title" in self.parts:
+            fig.suptitle(self.title, fontsize=self.title_font_size)
 
-        # Outer means two main plots
-        outer = gridspec.GridSpec(3, 1, height_ratios=(3, 0.5, 1))
+        # Now we create a number of rows based on desired parts
+        nrows = len(self.parts & Heatmap.DEFAULT_PARTS)
+        if self.verbose:
+            print(f"Plot will have {nrows=}")
+        outer = gridspec.GridSpec(nrows, 1, height_ratios=self.part_height_ratios)
 
         # Top gridspec where heatmap + hists will be
         top_gs = gridspec.GridSpecFromSubplotSpec(
@@ -88,174 +118,188 @@ class Heatmap(Plot):
             width_ratios=(7, 2),
             height_ratios=(2, 7),
         )
-        top_gs.left = 0.1
-        top_gs.right = 0.9
-        top_gs.bottom = 0.1
-        top_gs.top = 0.9
+        # top_gs.left = 0.1
+        # top_gs.right = 0.9
+        # top_gs.bottom = 0.1
+        # top_gs.top = 0.9
 
-        # Text gs for device name
-        text_gs = gridspec.GridSpecFromSubplotSpec(
-            1, 1, subplot_spec=outer[1], wspace=0, hspace=0
-        )
+        if "text" in self.parts:
+            # Text gs for device name
+            text_gs = gridspec.GridSpecFromSubplotSpec(
+                1, 1, subplot_spec=outer[1], wspace=0, hspace=0, 
+            )
 
-        # Bottom where small hists will be
-        bottom_gs = gridspec.GridSpecFromSubplotSpec(
-            5, 6, subplot_spec=outer[2], wspace=0.1, hspace=0
-        )
-        bottom_gs.left = 0.5
-        bottom_gs.right = 0.5
-        bottom_gs.bottom = 0.1
-        bottom_gs.top = 0.9
+        if "distributions" in self.parts:
+            # Bottom where small hists will be
+            bottom_gs = gridspec.GridSpecFromSubplotSpec(
+                5, 6, subplot_spec=outer[2], wspace=0.1, hspace=0
+            )
+            bottom_gs.left = 0.5
+            bottom_gs.right = 0.5
+            bottom_gs.bottom = 0.1
+            bottom_gs.top = 0.9
 
-        hm_ax = fig.add_subplot(top_gs[1, 0])
-        hm_histx_ax = fig.add_subplot(top_gs[0, 0], sharex=hm_ax)
-        hm_histy_ax = fig.add_subplot(top_gs[1, 1], sharey=hm_ax)
+        if "heatmap" in self.parts:
+            hm_ax = fig.add_subplot(top_gs[1, 0])
+            hm_histx_ax = fig.add_subplot(top_gs[0, 0], sharex=hm_ax)
+            hm_histy_ax = fig.add_subplot(top_gs[1, 1], sharey=hm_ax)
 
-        text_ax = fig.add_subplot(text_gs[0, 0])
-        text_ax.set_axis_off()
-        text_ax.text(
-            0.5,
-            0,
-            device_name,
-            transform=text_ax.transAxes,
-            ha="center",
-            va="center",
-            fontsize=24,
-            color="black",
-        )
+        if "text" in self.parts:
+            text_ax = fig.add_subplot(text_gs[0, 0])
+            text_ax.set_axis_off()
+            text_ax.text(
+                0.5,
+                -1,
+                device_name,
+                transform=text_ax.transAxes,
+                ha="center",
+                va="center",
+                fontsize=self.text_font_size,
+                color="black",
+                fontweight='bold',
+                fontfamily='serif'
+            )
 
-        p_dens_ax = fig.add_subplot(bottom_gs[0:2, 0:2])
-        q_dens_ax = fig.add_subplot(bottom_gs[3:, 0:2])
-        n_dens_ax = fig.add_subplot(bottom_gs[:, 2:8])
+        if "distributions" in self.parts:
+            p_dens_ax = fig.add_subplot(bottom_gs[0:2, 0:2])
+            q_dens_ax = fig.add_subplot(bottom_gs[3:, 0:2])
+            n_dens_ax = fig.add_subplot(bottom_gs[:, 2:8])
 
         cmap = LinearSegmentedColormap.from_list(
             "", Heatmap.COLORS, N=len(Heatmap.COLORS)
         )
 
         # Draw heatmap/scatterplot
-        hm_ax.hist2d(p_byte, q_byte, bins=range(128, 256), cmap=cmap)
-        hm_ax.set_xlabel("P", loc="left")
-        hm_ax.set_ylabel("Q", loc="bottom")
+        if "heatmap" in self.parts:
+            hm_ax.hist2d(p_byte, q_byte, bins=range(128, 256), cmap=cmap)
+            hm_ax.set_xlabel("P", loc="left")
+            hm_ax.set_ylabel("Q", loc="bottom")
 
-        # Position label for P (xaxis)
-        xlbl = hm_ax.xaxis.get_label()
-        x0, y0 = xlbl.get_position()
-        hm_ax.xaxis.set_label_coords(x0 - 0.1, y0 - 0.175)
+            # Position label for P (xaxis)
+            xlbl = hm_ax.xaxis.get_label()
+            x0, y0 = xlbl.get_position()
+            hm_ax.xaxis.set_label_coords(x0 - 0.1, y0 - 0.175)
 
-        # Position label for Q (yaxis)
-        ylbl = hm_ax.yaxis.get_label()
-        x0, y0 = ylbl.get_position()
-        hm_ax.yaxis.set_label_coords(x0 - 0.1, y0 - 0.1)
+            # Position label for Q (yaxis)
+            ylbl = hm_ax.yaxis.get_label()
+            x0, y0 = ylbl.get_position()
+            hm_ax.yaxis.set_label_coords(x0 - 0.1, y0 - 0.1)
 
-        # Colored vertical lines for maximums and minimums
-        hm_ax.vlines(
-            x=p_min,
-            ymin=128,
-            ymax=256,
-            colors="green",
-            ls=":",
-            lw=2,
-            label="$P_{min}$ =" + format(p_min, "b"),
-        )
-        hm_ax.vlines(
-            x=p_max,
-            ymin=128,
-            ymax=256,
-            colors="blue",
-            ls=":",
-            lw=2,
-            label="$P_{max}$ =" + format(p_max, "b"),
-        )
-        hm_ax.hlines(
-            y=q_min,
-            xmin=128,
-            xmax=256,
-            colors="orange",
-            ls=":",
-            lw=2,
-            label="$Q_{min}$ =" + format(q_min, "b"),
-        )
-        hm_ax.hlines(
-            y=q_max,
-            xmin=128,
-            xmax=256,
-            colors="purple",
-            ls=":",
-            lw=2,
-            label="$Q_{max}$ =" + format(q_max, "b"),
-        )
+            # Colored vertical lines for maximums and minimums
+            hm_ax.vlines(
+                x=p_min,
+                ymin=128,
+                ymax=256,
+                colors="green",
+                ls=":",
+                lw=2,
+                label="$P_{min}$" + (" =" + format(p_min, "b") if self.label_values else ""),
+            )
+            hm_ax.vlines(
+                x=p_max,
+                ymin=128,
+                ymax=256,
+                colors="blue",
+                ls=":",
+                lw=2,
+                label="$P_{max}$"+ (" =" + format(p_max, "b") if self.label_values else ""),
+            )
+            hm_ax.hlines(
+                y=q_min,
+                xmin=128,
+                xmax=256,
+                colors="orange",
+                ls=":",
+                lw=2,
+                label="$Q_{min}$"+ (" =" + format(q_min, "b") if self.label_values else ""),
+            )
+            hm_ax.hlines(
+                y=q_max,
+                xmin=128,
+                xmax=256,
+                colors="purple",
+                ls=":",
+                lw=2,
+                label="$Q_{max}$" + (" =" + format(q_max, "b") if self.label_values else ""),
+            )
 
-        hm_ax.plot(
-            list(range(128, 256)),
-            list(range(128, 256)),
-            "skyblue",
-            linestyle=":",
-            marker="",
-            lw=2,
-            label="P=Q",
-        )
+            hm_ax.plot(
+                list(range(128, 256)),
+                list(range(128, 256)),
+                "skyblue",
+                linestyle=":",
+                marker="",
+                lw=2,
+                label="P=Q",
+            )
 
         # Show legend
-        hm_ax.legend(loc="lower left")
+        if self.legend:
+            hm_ax.legend(loc="lower left")
 
-        # Set the ticks in binary form
-        ticks = list(range(128, 256, 8)) + [255]
-        hm_ax.set_xticks(ticks)
-        hm_ax.set_yticks(ticks)
-        hm_ax.set_xticklabels(
-            list(map(lambda num: format(num, "b"), ticks)), rotation="vertical"
-        )
-        hm_ax.set_yticklabels(list(map(lambda num: format(num, "b"), ticks)))
+        if self.ticks:
+            # Set the ticks in binary form
+            ticks = list(range(128, 256, 8)) + [255]
+            hm_ax.set_xticks(ticks)
+            hm_ax.set_yticks(ticks)
+            hm_ax.set_xticklabels(
+                list(map(lambda num: format(num, "b"), ticks)), rotation="vertical"
+            )
+            hm_ax.set_yticklabels(list(map(lambda num: format(num, "b"), ticks)))
+            hm_ax.set_aspect("equal", adjustable="box")
 
-        # Add histograms for P and Q
-        bins = list(range(128, 257, 1))
-        hm_histx_ax.hist(p_byte, bins=bins, color="black", ec="white", density=True)
-        hm_histy_ax.hist(
-            q_byte,
-            bins=bins,
-            orientation="horizontal",
-            color="black",
-            ec="white",
-            density=True,
-        )
+        if "heatmap" in self.parts:
+            # Add histograms for P and Q
+            bins = list(range(128, 257, 1))
+            hm_histx_ax.hist(p_byte, bins=bins, color="white", ec="black", density=True)
+            hm_histy_ax.hist(
+                q_byte,
+                bins=bins,
+                orientation="horizontal",
+                color="white",
+                ec="black",
+                density=True,
+            )
 
-        # Turn off their axes
-        hm_histx_ax.set_axis_off()
-        hm_histy_ax.set_axis_off()
+            # Turn off their axes
+            hm_histx_ax.set_axis_off()
+            hm_histy_ax.set_axis_off()
 
-        # Draw p,q,n histograms
-        p_dens_ax.hist(
-            p_byte, bins=bins, color="black", histtype="stepfilled", density=True
-        )
-        q_dens_ax.hist(
-            q_byte, bins=bins, color="black", histtype="stepfilled", density=True
-        )
-        n_dens_ax.hist(
-            n_byte, bins=bins, color="black", histtype="stepfilled", density=True
-        )
+        if "distributions" in self.parts:
+            # Draw p,q,n histograms
+            p_dens_ax.hist(
+                p_byte, bins=bins, color="black", histtype="stepfilled", density=True
+            )
+            q_dens_ax.hist(
+                q_byte, bins=bins, color="black", histtype="stepfilled", density=True
+            )
+            n_dens_ax.hist(
+                n_byte, bins=bins, color="black", histtype="stepfilled", density=True
+            )
 
-        p_dens_ax.spines["top"].set_visible(False)
-        p_dens_ax.spines["left"].set_visible(False)
-        p_dens_ax.spines["right"].set_visible(False)
-        p_dens_ax.set_xticks([128, 256])
-        p_dens_ax.set_yticks([])
+            p_dens_ax.spines["top"].set_visible(False)
+            p_dens_ax.spines["left"].set_visible(False)
+            p_dens_ax.spines["right"].set_visible(False)
+            p_dens_ax.set_xticks([128, 256])
+            p_dens_ax.set_yticks([])
 
-        q_dens_ax.spines["top"].set_visible(False)
-        q_dens_ax.spines["left"].set_visible(False)
-        q_dens_ax.spines["right"].set_visible(False)
-        q_dens_ax.set_xticks([128, 256])
-        q_dens_ax.set_yticks([])
+            q_dens_ax.spines["top"].set_visible(False)
+            q_dens_ax.spines["left"].set_visible(False)
+            q_dens_ax.spines["right"].set_visible(False)
+            q_dens_ax.set_xticks([128, 256])
+            q_dens_ax.set_yticks([])
 
-        n_dens_ax.spines["top"].set_visible(False)
-        n_dens_ax.spines["left"].set_visible(False)
-        n_dens_ax.spines["right"].set_visible(False)
-        n_dens_ax.set_xticks([128, 256])
-        n_dens_ax.set_yticks([])
+            n_dens_ax.spines["top"].set_visible(False)
+            n_dens_ax.spines["left"].set_visible(False)
+            n_dens_ax.spines["right"].set_visible(False)
+            n_dens_ax.set_xticks([128, 256])
+            n_dens_ax.set_yticks([])
 
     @overrides
     def plot(self):
         self.heatmap()
 
+    # This was copypasted from R, no way im gonna compute the sequence
     COLORS = [
         "#00000000",
         "#FFFFF0",
