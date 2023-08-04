@@ -1,6 +1,6 @@
 import re
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import List, Optional
 
 from overrides import EnforceOverrides
 
@@ -35,17 +35,21 @@ class ProfileTPM(ABC, EnforceOverrides):
         self.test_info['Vendor string'] = self._satinize(value)
 
     @property
-    def firmware_version(self) -> Optional[str]:
-        fv = self._satinize(self.test_info.get('Firmware version'))
-        if fv:
-            assert re.match(r'\d+\.\d+\.\d+\.\d+', fv)
+    def firmware_version(self) -> Optional[str|List[str]]:
+        fv = self.test_info.get('Firmware version')
         return fv
 
     @firmware_version.setter
     def firmware_version(self, value):
-        value = self._satinize(value)
-        assert isinstance(value, str)
-        assert re.match(r'\d+\.\d+\.\d+\.\d+', value)
+        if isinstance(value, list):
+            value = list(map(lambda x :self._satinize(x), value))
+            # Check if all fw versions are strings matching pattern 
+            assert isinstance(value, list) and \
+            all(map(lambda x: isinstance(x, str) and re.match(r'\d+\.\d+\.\d+\.\d+', x), value))
+        else:
+            assert isinstance(value, str)
+            value =self._satinize(value)
+            assert re.match(r'\d+\.\d+\.\d+\.\d+', value)
         self.test_info['Firmware version'] = value
 
     @property

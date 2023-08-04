@@ -1,6 +1,9 @@
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 import logging
+import numpy as np
+import seaborn as sns
+import matplotlib as mpl
 from matplotlib.colors import LinearSegmentedColormap
 from overrides import overrides
 
@@ -26,7 +29,7 @@ class Heatmap(Plot):
         verbose=False,
         text_font_size=12,
         title_font_size=24,
-        label_values=True
+        label_values=True,
     ):
         """
         Init function  the p,q,n bytes and builds the plot
@@ -126,7 +129,11 @@ class Heatmap(Plot):
         if "text" in self.parts:
             # Text gs for device name
             text_gs = gridspec.GridSpecFromSubplotSpec(
-                1, 1, subplot_spec=outer[1], wspace=0, hspace=0, 
+                1,
+                1,
+                subplot_spec=outer[1],
+                wspace=0,
+                hspace=0,
             )
 
         if "distributions" in self.parts:
@@ -156,8 +163,8 @@ class Heatmap(Plot):
                 va="center",
                 fontsize=self.text_font_size,
                 color="black",
-                fontweight='bold',
-                fontfamily='serif'
+                fontweight="bold",
+                fontfamily="serif",
             )
 
         if "distributions" in self.parts:
@@ -165,13 +172,26 @@ class Heatmap(Plot):
             q_dens_ax = fig.add_subplot(bottom_gs[3:, 0:2])
             n_dens_ax = fig.add_subplot(bottom_gs[:, 2:8])
 
-        cmap = LinearSegmentedColormap.from_list(
-            "", Heatmap.COLORS, N=len(Heatmap.COLORS)
-        )
-
         # Draw heatmap/scatterplot
         if "heatmap" in self.parts:
-            hm_ax.hist2d(p_byte, q_byte, bins=range(128, 256), cmap=cmap)
+            cmap = LinearSegmentedColormap.from_list(
+                "Random gradient 9291",
+                (
+                    # Edit this gradient at https://eltos.github.io/gradient/#Random%20gradient%209291=25:D35248-50:E2453B-75:BA0700-100:710000
+                    (0.000, (0.827, 0.322, 0.282)),
+                    (0.250, (0.827, 0.322, 0.282)),
+                    (0.500, (0.886, 0.271, 0.231)),
+                    (0.750, (0.729, 0.027, 0.000)),
+                    (1.000, (0.443, 0.000, 0.000)),
+                ),
+            )
+            cmap.set_bad("#F0F8FF")
+            sns.histplot(
+                x=p_byte, y=q_byte, bins=range(128, 256), ax=hm_ax, cmap=cmap, vmin=1
+            )
+
+            hm_ax.set_xlim(128, 255)
+            hm_ax.set_ylim(128, 255)
             hm_ax.set_xlabel("P", loc="left")
             hm_ax.set_ylabel("Q", loc="bottom")
 
@@ -192,8 +212,9 @@ class Heatmap(Plot):
                 ymax=256,
                 colors="green",
                 ls=":",
-                lw=2,
-                label="$P_{min}$" + (" =" + format(p_min, "b") if self.label_values else ""),
+                lw=1,
+                label="$P_{min}$"
+                + (" =" + format(p_min, "b") if self.label_values else ""),
             )
             hm_ax.vlines(
                 x=p_max,
@@ -201,8 +222,9 @@ class Heatmap(Plot):
                 ymax=256,
                 colors="blue",
                 ls=":",
-                lw=2,
-                label="$P_{max}$"+ (" =" + format(p_max, "b") if self.label_values else ""),
+                lw=1,
+                label="$P_{max}$"
+                + (" =" + format(p_max, "b") if self.label_values else ""),
             )
             hm_ax.hlines(
                 y=q_min,
@@ -210,8 +232,9 @@ class Heatmap(Plot):
                 xmax=256,
                 colors="orange",
                 ls=":",
-                lw=2,
-                label="$Q_{min}$"+ (" =" + format(q_min, "b") if self.label_values else ""),
+                lw=1,
+                label="$Q_{min}$"
+                + (" =" + format(q_min, "b") if self.label_values else ""),
             )
             hm_ax.hlines(
                 y=q_max,
@@ -219,17 +242,18 @@ class Heatmap(Plot):
                 xmax=256,
                 colors="purple",
                 ls=":",
-                lw=2,
-                label="$Q_{max}$" + (" =" + format(q_max, "b") if self.label_values else ""),
+                lw=1,
+                label="$Q_{max}$"
+                + (" =" + format(q_max, "b") if self.label_values else ""),
             )
 
             hm_ax.plot(
                 list(range(128, 256)),
                 list(range(128, 256)),
-                "skyblue",
+                "black",
                 linestyle=":",
                 marker="",
-                lw=2,
+                lw=1,
                 label="P=Q",
             )
 
@@ -301,7 +325,7 @@ class Heatmap(Plot):
 
     # This was copypasted from R, no way im gonna compute the sequence
     COLORS = [
-        "#00000000",
+        "#D3D3D3",
         "#FFFFF0",
         "#FFFFE6",
         "#FFFFDB",

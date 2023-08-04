@@ -28,12 +28,34 @@ class CryptoProps(ProfileTPM):
         if not self.results.get(category):
             self.results[category] = result
 
+    def __radd__(self, other):
+        if other == 0:
+            return self
+        else:
+            return self.__add__(other)
+    
     def __add__(self, other):
         assert isinstance(other, CryptoProps)
         new = CryptoProps(f"{self.path}:{other.path}")
+        # Makes sense to merge only same vendors. 
+        assert self.manufacturer == other.manufacturer
         new.manufacturer = self.manufacturer
-        new.vendor_string = self.vendor_string
-        new.firmware_version = self.firmware_version
+        # If we merge same TPMs we can len the vendor string be
+        if self.vendor_string == other.vendor_string:
+            new.vendor_string = self.vendor_string
+        else:
+            new.vendor_string = ''
+        
+        if not isinstance(self.firmware_version, list) and self.firmware_version == other.firmware_version:
+            fw = self.firmware_version
+        else:
+            if isinstance(self.firmware_version, list):
+                fw = self.firmware_version
+            else:
+                fw = [self.firmware_version]
+            fw.extend(other.firmware_version if isinstance(other.firmware_version, list) else [other.firmware_version])
+            fw.sort(key=lambda x: x.split('.'))
+        new.firmware_version = fw
         new.merged = True
 
         for alg in CryptoPropResultCategory.list():
