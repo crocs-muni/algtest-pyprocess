@@ -104,7 +104,7 @@ class CryptoProps(ProfileTPM):
                     )
                 else:
                     plots.append(p)
-            except BaseException as e:
+            except Exception as e:
                 logging.warning(
                     f"{fname}:{self.path} {pname} build failed for {alg.value}, {str(e)}")
             gc.collect()

@@ -14,6 +14,8 @@ class ProfileTPM(ABC, EnforceOverrides):
     def _satinize(self, x):
         if x is None:
             return None
+        if isinstance(x, list):
+            return list(map(self._satinize, x))
         return x.replace('"', '').replace(' ', '')
 
     @property
@@ -37,7 +39,7 @@ class ProfileTPM(ABC, EnforceOverrides):
     @property
     def firmware_version(self) -> Optional[str|List[str]]:
         fv = self.test_info.get('Firmware version')
-        return fv
+        return self._satinize(fv)
 
     @firmware_version.setter
     def firmware_version(self, value):

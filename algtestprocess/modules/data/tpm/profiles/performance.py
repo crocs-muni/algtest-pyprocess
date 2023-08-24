@@ -17,11 +17,12 @@ class ProfilePerformanceTPM(ProfileTPM):
     @overrides
     def add_result(self, result):
         # Result name representation required to be unique
-        name = f"{result.category}"
+        name = f"{result.category}" if result.category else ""
         name += f" {result.key_params}" if result.key_params else ""
         name += f" {result.algorithm}" if result.algorithm else ""
         name += f" {result.mode}" if result.mode else ""
         name += f" {result.encrypt_decrypt}" if result.encrypt_decrypt else ""
         name += f" {result.scheme}" if result.scheme else ""
+        name = name.lstrip(' ')
         self.results[name] = result
         return name
