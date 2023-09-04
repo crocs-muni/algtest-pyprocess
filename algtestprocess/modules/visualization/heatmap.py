@@ -30,6 +30,8 @@ class Heatmap(Plot):
         text_font_size=12,
         title_font_size=24,
         label_values=True,
+        additional_text=None,
+        additional_text_font_size=5
     ):
         """
         Init function  the p,q,n bytes and builds the plot
@@ -53,6 +55,8 @@ class Heatmap(Plot):
         self.text_font_size = text_font_size
         self.title_font_size = title_font_size
         self.label_values = label_values
+        self.additional_text = additional_text
+        self.additional_text_font_size = additional_text_font_size
 
     def compute_pqn_bytes(self, df):
         df = df.dropna(subset=["p", "q", "n"])
@@ -103,7 +107,7 @@ class Heatmap(Plot):
             self.fig = fig
 
         if "title" in self.parts:
-            fig.suptitle(self.title, fontsize=self.title_font_size)
+            fig.suptitle(self.title, fontsize=self.title_font_size, horizontalalignment='left')
 
         # Now we create a number of rows based on desired parts
         nrows = len(self.parts & Heatmap.DEFAULT_PARTS)
@@ -129,12 +133,13 @@ class Heatmap(Plot):
         if "text" in self.parts:
             # Text gs for device name
             text_gs = gridspec.GridSpecFromSubplotSpec(
-                1,
+                1 if self.additional_text is None else 4,
                 1,
                 subplot_spec=outer[1],
                 wspace=0,
                 hspace=0,
             )
+            text_gs.top = 0.9
 
         if "distributions" in self.parts:
             # Bottom where small hists will be
@@ -152,20 +157,37 @@ class Heatmap(Plot):
             hm_histy_ax = fig.add_subplot(top_gs[1, 1], sharey=hm_ax)
 
         if "text" in self.parts:
-            text_ax = fig.add_subplot(text_gs[0, 0])
+            text_ax = fig.add_subplot(text_gs[0, 0] if self.additional_text is None else text_gs[1, 0])
             text_ax.set_axis_off()
             text_ax.text(
-                0.5,
-                -1,
+                0.4,
+                -5 if self.additional_text is not None else -1.2,
                 device_name,
                 transform=text_ax.transAxes,
                 ha="center",
-                va="center",
+                va="top",
                 fontsize=self.text_font_size,
                 color="black",
                 fontweight="bold",
                 fontfamily="serif",
             )
+
+            if self.additional_text is not None:
+                additional_text_ax = fig.add_subplot(text_gs[2:, 0])
+                additional_text_ax.set_axis_off()
+                additional_text_ax.text(
+                    0,
+                    -5,
+                    self.additional_text,
+                    transform=additional_text_ax.transAxes,
+                    ha="left",
+                    va="center",
+                    fontsize=self.additional_text_font_size,
+                    color="black",
+                    fontweight="regular",
+                    fontfamily="serif",
+                    zorder=10000
+                )
 
         if "distributions" in self.parts:
             p_dens_ax = fig.add_subplot(bottom_gs[0:2, 0:2])
