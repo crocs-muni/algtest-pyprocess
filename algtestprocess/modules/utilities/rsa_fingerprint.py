@@ -3,7 +3,7 @@ Functions to obtain 5p_5q_blum_mod_roca fingerprint from https://crocs.fi.muni.c
 Use RSAFingerprint to obtain fingerprint for single key
 Use RSAFingerprintSet to obtain fingerprint and aggregated results for list with multiple keys
 """
-import roca
+import algtestprocess.modules.utilities.roca as roca
 app = roca.RocaFingerprinter()
 
 
@@ -59,8 +59,13 @@ class RSAFingerprintSet:
     at_least_one_roca_fingerprint = False   # by default False, True if at least one key is with ROCA fingerprint
     avoid_factors_max = -1  # -1 if no avoidance of small factors in p-1/q-1, 5/251/17863 if no small factors below given limit are factors
 
-    def __init__(self, pqn: list):
+    def __init__(self, pqn: list, recompute_q=True):
         self.pqn_list = pqn
+        self.pqn_fingerprints = []
+        self.is_blum = True  # True if all keys are in the form of Blum prime, False if at least one key is not Blum prime
+        self.at_least_one_roca_fingerprint = False  # by default False, True if at least one key is with ROCA fingerprint
+        self.avoid_factors_max = -1  # -1 if no avoidance of small factors in p-1/q-1, 5/251/17863 if no small factors below given limit are factors
+        self.recompute_q = recompute_q
 
     def compute_fingerprint(self):
         never_below_17863 = True
@@ -68,7 +73,7 @@ class RSAFingerprintSet:
         never_below_5 = True
         for item in self.pqn_list:
             p, q, n = item
-            fingerprint = RSAFingerprint(p, q, n)
+            fingerprint = RSAFingerprint(p, q, n, recompute_q=self.recompute_q)
             fingerprint.compute_fingerprint()
             self.pqn_fingerprints.append(fingerprint)
 
@@ -95,9 +100,9 @@ class RSAFingerprintSet:
             self.avoid_factors_max = 17863
 
     def __str__(self):
-        return f"Total keys: {self.pqn_fingerprints}, All are Blum: {self.is_blum}, " \
-               f"At least one ROCA: {self.at_least_one_roca_fingerprint}, " \
-               f"Avoidance of small factors in primes: {self.avoid_factors_max}"
+        return (f"Total keys: {len(self.pqn_fingerprints)}, All are Blum: {self.is_blum},\n" \
+                f"At least one ROCA: {self.at_least_one_roca_fingerprint},\n" \
+                f"Avoidance of small factors in primes: {self.avoid_factors_max}\n")
 
 
 class RSAFingerprint:
@@ -120,15 +125,23 @@ class RSAFingerprint:
     is_roca = False
     is_blum = False
 
-    def __init__(self, p: str, q: str, n: str):
+    def __init__(self, p: str, q: str, n: str, recompute_q=False):
         self.p = p
         self.q = q
         self.n = n
+        self.recompute_q = recompute_q
 
     def compute_fingerprint(self):
-        num_p = int(self.p, 16)
-        num_q = int(self.q, 16)
-        num_n = int(self.n, 16)
+        # In some measurements, q prime might be omitted, so we need to recompute that
+        if self.recompute_q:
+            num_n = int(self.n, 16)
+            num_p = int(self.p, 16)
+            num_q = num_n // num_p
+        else:
+            num_p = int(self.p, 16)
+            num_q = int(self.q, 16)
+            num_n = int(self.n, 16)
+
         self.msb5_p, self.second_lsb_p = extract_bits5(num_p)
         self.msb5_q, self.second_lsb_q = extract_bits5(num_q)
         self.msb8_n, self.second_lsb_n = extract_bits8(num_n)

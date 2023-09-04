@@ -33,17 +33,12 @@ Script requirements:
     https://roca.crocs.fi.muni.cz
 """
 
-from future.utils import iteritems
-from builtins import bytes
-from past.builtins import basestring
-from past.builtins import long
 
 from functools import reduce
 
 import json
 import argparse
 import logging
-import coloredlogs
 import base64
 import hashlib
 import sys
@@ -63,7 +58,13 @@ LOG_FORMAT = '%(asctime)s [%(process)d] %(levelname)s %(message)s'
 
 
 logger = logging.getLogger(__name__)
-coloredlogs.install(level=logging.INFO, fmt=LOG_FORMAT)
+logging.basicConfig(
+    filename="roce_log.txt",
+    encoding='utf-8',
+    format=LOG_FORMAT,
+    level=logging.INFO,
+    filemode='a'
+)
 
 
 #
@@ -457,7 +458,7 @@ class TestResult(object):
     """
     def __init__(self, data=None, **kwargs):
         self._data = collections.OrderedDict(data if data is not None else {})
-        for key, value in iteritems(kwargs):
+        for key, value in kwargs.items():
             self._data[key] = value
 
     @property
@@ -2243,7 +2244,13 @@ class RocaFingerprinter(object):
         self.args = parser.parse_args()
 
         if self.args.debug:
-            coloredlogs.install(level=logging.DEBUG, fmt=LOG_FORMAT)
+            logging.basicConfig(
+                filename="roce_log.txt",
+                encoding='utf-8',
+                format=LOG_FORMAT,
+                level=logging.DEBUG,
+                filemode='a'
+            )
 
         self.work()
 
