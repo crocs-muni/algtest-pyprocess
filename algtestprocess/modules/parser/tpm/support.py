@@ -204,7 +204,8 @@ class SupportParserTPMYaml:
         for name, handler in capabilities:
             if name in data:
                 entry = data.pop(name)
-                self.process_capabilities(name, entry, profile, handler)
+                if entry is not None:
+                    self.process_capabilities(name, entry, profile, handler)
 
         # Remaining data is put into test info dictionary
         profile.test_info = data
