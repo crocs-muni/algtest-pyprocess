@@ -15,6 +15,23 @@ def get_params(line: str, items: List[Tuple[str, str]]):
     ])
 
 
+def parse_ek(ek):
+    # Actual EK may look like yaml, but yaml parser does not work
+    rgx = r"n prefix: ([a-f0-9]+)\s*n suffix: ([a-f0-9]+)$"
+    result = re.search(rgx, ek, flags=re.MULTILINE)
+    if result is None:
+        return None
+    return int(result.group(1), 16), int(result.group(2), 16)
+
+
+def get_ek_msb(ek):
+    if isinstance(ek, str):
+        return [parse_ek(ek)[0] >> 8]
+    elif isinstance(ek, list):
+        return [parse_ek(x)[0] >> 8 for x in ek]
+    return []
+
+
 def to_int(item: Optional[str], base: int):
     return int(item, base) if item else None
 

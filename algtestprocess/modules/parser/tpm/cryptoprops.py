@@ -1,3 +1,4 @@
+import logging
 import os
 from typing import Optional
 
@@ -5,6 +6,7 @@ from algtestprocess.modules.data.tpm.enums import CryptoPropResultCategory
 from algtestprocess.modules.data.tpm.profiles.cryptoprops import \
     CryptoProps
 from algtestprocess.modules.data.tpm.results.cryptoprops import CryptoPropResult
+from algtestprocess.modules.parser.tpm.utils import parse_ek
 
 
 class CryptoPropsParser:
@@ -72,7 +74,9 @@ class CryptoPropsParser:
             result.paths.append(path)
 
             with open(path, "r") as f:
-                result.data = f.read()
+                result.data = [parse_ek(f.read())]
+                if result.data is None:
+                    logging.log(logging.ERROR, f"Parsing of EK at {path=} was not successful")
 
             profile.add_result(result)
 
