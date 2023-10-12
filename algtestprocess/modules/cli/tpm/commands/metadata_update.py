@@ -59,9 +59,9 @@ def process_measurement_folders(metadata: ReportMetadata, measurement_folders,
                     continue
 
             del manager
-        except:
+        except Exception as e:
             logging.error(
-                f"process_measurement_folders: {folder} unknown error, typically parsing old format")
+                f"process_measurement_folders: {folder} unknown error, typically parsing old format {e}")
             continue
 
         tpm_name = tpm_name.replace('"', '').strip()
