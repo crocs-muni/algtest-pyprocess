@@ -10,12 +10,17 @@ A tool for simple visualizations of gathered TPM and JavaCard smart card data co
 
 ### Installing
 
-* Setup virtual environment, then run *setup.py*
+* Setup virtual environment
 ```
 python -m venv venv
 source venv/bin/activate
-python setup.py
 ```
+
+* Install package using `pip` or run `setup.py`
+```
+pip install -e .
+```
+
 ---
 **NOTE**
 
@@ -25,9 +30,9 @@ If you are an user of fish shell, right command is `source venv/bin/activate.fis
 
 ### Usage
 
-#### process.py script
+#### pyprocess command
 
-An entry point to the command line interface, which consists of several scripts for processing datasets.
+An entry point to the command line interface, which is used mostly to preprocess the datasets which are then analysed in jupyter notebooks.
 
 ```
 Commands:
@@ -39,11 +44,12 @@ Commands:
 
 ###### metadata-update
 
-Important command which goal is to find measurements on a given path, group them by exact firmware and output `metadata.json` file which is used as an input to other commands. It also prevents inclusion of exact same measurements more than once. An example of such file is shown below.
+Command which is used to find all measurements on a given path, and group them by exact firmware. The output is `metadata.json` which contains these aggregated paths. Latter part of this file contains directory hashes, to prevent duplicate inclusion of the same measurement. An example of `metadata.json` file is shown below.
 
+If you have already created a `metadata.json` file and just want to add more measurements, you may use `-i` option which takes path to old `metadata.json` file.
 ```
-python process.py tpm metadata-update ./results/tpmalgtest_results_2022
-python process.py tpm metadata-update -i metadata.json ./results/tpmalgtest_results_2023
+pyprocess tpm metadata-update ./results/tpmalgtest_results_2022
+pyprocess tpm metadata-update -i metadata.json ./results/tpmalgtest_results_2023
 ```
 
 An example of `metadata.json` file.
@@ -79,14 +85,6 @@ An example of `metadata.json` file.
 }
 ```
 
-##### report-create
-
-Batch command which creates several kinds of outputs from the measurements noted in `metadata.json` created by `metadata-update` command. 
-
-
-```
-python process.py report-create metadata.json
-```
 ## License
 
 This project is licensed under [MIT License](./LICENSE) - see the LICENSE file for details
