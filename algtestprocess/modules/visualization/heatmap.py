@@ -31,7 +31,7 @@ class Heatmap(Plot):
         title_font_size=24,
         label_values=True,
         additional_text=None,
-        additional_text_font_size=5
+        additional_text_font_size=5,
     ):
         """
         Init function  the p,q,n bytes and builds the plot
@@ -107,7 +107,9 @@ class Heatmap(Plot):
             self.fig = fig
 
         if "title" in self.parts:
-            fig.suptitle(self.title, fontsize=self.title_font_size, horizontalalignment='left')
+            fig.suptitle(
+                self.title, fontsize=self.title_font_size, ha="right", va="top"
+            )
 
         # Now we create a number of rows based on desired parts
         nrows = len(self.parts & Heatmap.DEFAULT_PARTS)
@@ -157,7 +159,9 @@ class Heatmap(Plot):
             hm_histy_ax = fig.add_subplot(top_gs[1, 1], sharey=hm_ax)
 
         if "text" in self.parts:
-            text_ax = fig.add_subplot(text_gs[0, 0] if self.additional_text is None else text_gs[1, 0])
+            text_ax = fig.add_subplot(
+                text_gs[0, 0] if self.additional_text is None else text_gs[1, 0]
+            )
             text_ax.set_axis_off()
             text_ax.text(
                 0.4,
@@ -168,7 +172,6 @@ class Heatmap(Plot):
                 va="top",
                 fontsize=self.text_font_size,
                 color="black",
-                fontweight="bold",
                 fontfamily="serif",
             )
 
@@ -186,7 +189,7 @@ class Heatmap(Plot):
                     color="black",
                     fontweight="regular",
                     fontfamily="serif",
-                    zorder=10000
+                    zorder=10000,
                 )
 
         if "distributions" in self.parts:
@@ -207,7 +210,7 @@ class Heatmap(Plot):
                     (1.000, (0.443, 0.000, 0.000)),
                 ),
             )
-            cmap.set_bad("#F0F8FF")
+            cmap.set_bad("#FFFFFF")
             sns.histplot(
                 x=p_byte, y=q_byte, bins=range(128, 256), ax=hm_ax, cmap=cmap, vmin=1
             )
