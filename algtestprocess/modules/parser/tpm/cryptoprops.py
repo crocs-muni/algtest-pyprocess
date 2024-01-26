@@ -3,8 +3,7 @@ import os
 from typing import Optional
 
 from algtestprocess.modules.data.tpm.enums import CryptoPropResultCategory
-from algtestprocess.modules.data.tpm.profiles.cryptoprops import \
-    CryptoProps
+from algtestprocess.modules.data.tpm.profiles.cryptoprops import CryptoProps
 from algtestprocess.modules.data.tpm.results.cryptoprops import CryptoPropResult
 from algtestprocess.modules.parser.tpm.utils import parse_ek
 
@@ -25,6 +24,7 @@ class CryptoPropsParser:
             ("rsa_2048", "Keygen:RSA_2048.csv"),
             ("rsa_2048", "Keygen_RSA_2048.csv"),
             ("rsa_2048", "Keygen:RSA_2048.csv"),
+            ("rsa_3072", "Keygen:RSA_3072.csv"),
             ("rsa_1024_rsassa", "Cryptoops_Sign:RSA_1024_0x0014.csv"),
             ("rsa_2048_rsassa", "Cryptoops_Sign:RSA_2048_0x0014.csv"),
             ("rsa_1024_rsapss", "Cryptoops_Sign:RSA_1024_0x0016.csv"),
@@ -46,7 +46,6 @@ class CryptoPropsParser:
             ("ecc_bn256_ecdsa", "Cryptoops_Sign:ECC_0x0010_0x0018.csv"),
             ("ecc_bn256_ecdaa", "Cryptoops_Sign:ECC_0x0010_0x001a.csv"),
             ("ecc_bn256_ecschnorr", "Cryptoops_Sign:ECC_0x0010_0x001c.csv"),
-
         ]
         profile = CryptoProps(self.path)
         for key, filename in items:
@@ -61,7 +60,9 @@ class CryptoPropsParser:
 
         eks = [
             ("ek_rsa", "Capability_ek-rsa.txt"),
-            ("ek_ecc", "Capability_ek-ecc.txt")
+            ("ek_rsa", "Certs_ek-rsa.txt"),
+            ("ek_ecc", "Capability_ek-ecc.txt"),
+            ("ek_ecc", "Certs_ek-ecc.txt"),
         ]
 
         for key, filename in eks:
@@ -76,7 +77,9 @@ class CryptoPropsParser:
             with open(path, "r") as f:
                 result.data = [parse_ek(f.read())]
                 if result.data is None:
-                    logging.log(logging.ERROR, f"Parsing of EK at {path=} was not successful")
+                    logging.log(
+                        logging.ERROR, f"Parsing of EK at {path=} was not successful"
+                    )
 
             profile.add_result(result)
 
