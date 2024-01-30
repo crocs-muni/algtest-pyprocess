@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="algtestprocess",
-    version="0.1.4",
+    version="0.1.5",
     packages=find_packages(),
     description="A Python package for algtestprocess",
     long_description=open("README.md").read(),
