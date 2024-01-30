@@ -11,9 +11,5 @@ setup(
     author_email="tjaros.822@gmail.com",
     url="https://github.com/crocs-muni/algtest-pyprocess",
     install_requires=open("requirements.txt").read().splitlines(),
-    entry_points={
-        "console_scripts": [
-            "pyprocess=pyprocess:main",
-        ],
-    },
+    scripts=["bin/pyprocess"],
 )
